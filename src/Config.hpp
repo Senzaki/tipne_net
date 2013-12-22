@@ -25,15 +25,15 @@ struct Config
 	private:
 	Config();
 
-	std::unordered_map<std::string, std::function<bool(std::string &)>> m_parsers;
+	std::unordered_map<std::string, std::function<bool(const char *)>> m_parsers;
 
 	void writeError(const char *command);
 
-	bool parseName(std::string &args);
-	bool parseVideoMode(std::string &args);
-	bool parseFullscreen(std::string &args);
-	bool parseVSync(std::string &args);
-	bool parseDispFreq(std::string &args);
+	bool parseName(const char *args);
+	bool parseVideoMode(const char *args);
+	bool parseFullscreen(const char *args);
+	bool parseVSync(const char *args);
+	bool parseDispFreq(const char *args);
 };
 
 #endif // CONFIG_HPP_INCLUDED

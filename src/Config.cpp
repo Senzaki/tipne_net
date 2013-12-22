@@ -52,7 +52,7 @@ bool Config::load()
 		//Load the config file if the file could be opened.
 		std::string line;
 		std::string command;
-		std::string args;
+		const char *args;
 		size_t firstspace;
 
 		//Parse each line
@@ -65,7 +65,7 @@ bool Config::load()
 			firstspace = line.find(' ');
 			//Separate command and args
 			command = (firstspace == std::string::npos) ? line : line.substr(0, firstspace);
-			args = (firstspace == std::string::npos) ? "" : line.substr(firstspace + 1);
+			args = (firstspace == std::string::npos) ? "" : line.c_str() + firstspace + 1;
 			try
 			{
 				//Call the appropriate parsing func
@@ -112,10 +112,10 @@ void Config::writeError(const char *command)
 	std::cerr << "Error while parsing configuration file : invalid value for \"" << command << "\" parameter." << std::endl;
 }
 
-bool Config::parseName(std::string &args)
+bool Config::parseName(const char *args)
 {
-	//Check that the name is correct
-	if(args.empty())
+	//Check that the name is correct (not empty)
+	if(args[0] == '\0')
 	{
 		writeError("name");
 		return false;
@@ -125,7 +125,7 @@ bool Config::parseName(std::string &args)
 	return true;
 }
 
-bool Config::parseVideoMode(std::string &args)
+bool Config::parseVideoMode(const char *args)
 {
 	unsigned int tempw, temph;
 	std::istringstream strm(args);//Parse args : wwww hhhh
@@ -141,7 +141,7 @@ bool Config::parseVideoMode(std::string &args)
 	return true;
 }
 
-bool Config::parseFullscreen(std::string &args)
+bool Config::parseFullscreen(const char *args)
 {
 	int temp;
 	std::istringstream strm(args);
@@ -156,7 +156,7 @@ bool Config::parseFullscreen(std::string &args)
 	return true;
 }
 
-bool Config::parseVSync(std::string &args)
+bool Config::parseVSync(const char *args)
 {
 	int temp;
 	std::istringstream strm(args);
@@ -171,7 +171,7 @@ bool Config::parseVSync(std::string &args)
 	return true;
 }
 
-bool Config::parseDispFreq(std::string &args)
+bool Config::parseDispFreq(const char *args)
 {
 	unsigned int temp;
 	std::istringstream strm(args);
