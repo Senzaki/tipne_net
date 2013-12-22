@@ -18,7 +18,8 @@ Config::Config():
 	height(sf::VideoMode::getDesktopMode().height),
 	fullscreen(true),
 	vsync(true),
-	dispfreq(0)
+	dispfreq(0),
+	lang(DEFAULT_LANGUAGE)
 {
 	using namespace std::placeholders;
 	//Setup parsing functions table (1 command = 1 function)
@@ -27,6 +28,7 @@ Config::Config():
 	m_parsers["fullscreen"] = std::bind(&Config::parseFullscreen, this, _1);
 	m_parsers["vsync"] = std::bind(&Config::parseVSync, this, _1);
 	m_parsers["dispfreq"] = std::bind(&Config::parseDispFreq, this, _1);
+	m_parsers["lang"] = std::bind(&Config::parseLanguage, this, _1);
 
 	load();
 }
@@ -100,7 +102,8 @@ bool Config::save() const
 		 << "\nvideomode " << (int)width << " " << (int)height
 		 << "\nfullscreen " << (int)fullscreen
 		 << "\nvsync " << (int)vsync
-		 << "\ndispfreq " << (int)dispfreq;
+		 << "\ndispfreq " << (int)dispfreq
+		 << "\nlang " << lang;
 
 	file.close();
 
@@ -183,5 +186,18 @@ bool Config::parseDispFreq(const char *args)
 	}
 
 	dispfreq = temp;
+	return true;
+}
+
+bool Config::parseLanguage(const char *args)
+{
+	//Check that the language is correct (not empty)
+	if(args[0] == '\0')
+	{
+		writeError("lang");
+		return false;
+	}
+
+	lang = std::move(args);
 	return true;
 }

@@ -1,6 +1,7 @@
 #include "Application.hpp"
 #include "Config.hpp"
 #include "Menu.hpp"
+#include "Translator.hpp"
 
 Application::Application():
 	m_curstate(nullptr),
@@ -20,8 +21,10 @@ int Application::execute(int argc, char **argv)
 {
 	const Config &conf = Config::getInstance();
 
+	//Load base language package (for window title)
+	Translator::getInstance().loadPackage("base");
 	//Create the window
-	m_window.create(sf::VideoMode(conf.width, conf.height), "TIPNE", conf.fullscreen ? sf::Style::Fullscreen : sf::Style::Titlebar | sf::Style::Close);
+	m_window.create(sf::VideoMode(conf.width, conf.height), tr("window_title"), conf.fullscreen ? sf::Style::Fullscreen : sf::Style::Titlebar | sf::Style::Close);
 	m_window.setVerticalSyncEnabled(conf.vsync);
 	if(conf.dispfreq != 0)
 		m_window.setFramerateLimit(conf.dispfreq);

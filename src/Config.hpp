@@ -5,6 +5,8 @@
 #include <functional>
 #include <unordered_map>
 
+constexpr const char *DEFAULT_LANGUAGE = "en";
+
 struct Config
 {
 	static Config &getInstance();
@@ -21,6 +23,7 @@ struct Config
 	bool fullscreen;
 	bool vsync;
 	unsigned int dispfreq;
+	std::string lang;
 
 	private:
 	Config();
@@ -34,6 +37,7 @@ struct Config
 	bool parseFullscreen(const char *args);
 	bool parseVSync(const char *args);
 	bool parseDispFreq(const char *args);
+	bool parseLanguage(const char *args);
 };
 
 #endif // CONFIG_HPP_INCLUDED
