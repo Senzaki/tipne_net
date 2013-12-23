@@ -8,6 +8,7 @@ class ApplicationState
 	public:
 	virtual ~ApplicationState() { }
 
+	virtual void load() = 0;
 	virtual void update(float etime) = 0;
 	virtual void draw() = 0;
 

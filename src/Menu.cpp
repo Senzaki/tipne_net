@@ -1,5 +1,6 @@
 #include "Menu.hpp"
 #include "Application.hpp"
+#include "ResourceManager.hpp"
 
 Menu::Menu(sf::RenderWindow &window):
 	m_window(window)
@@ -10,6 +11,11 @@ Menu::Menu(sf::RenderWindow &window):
 Menu::~Menu()
 {
 
+}
+
+void Menu::load()
+{
+	ResourceManager::getInstance().loadSection(ResourceSection::Menu);
 }
 
 void Menu::update(float etime)

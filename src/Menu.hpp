@@ -13,6 +13,7 @@ class Menu : public ApplicationState
 	Menu(const Menu &) = delete;
 	Menu &operator=(const Menu &) = delete;
 
+	virtual void load();
 	virtual void update(float etime);
 	virtual void draw();
 

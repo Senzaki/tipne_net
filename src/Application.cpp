@@ -43,6 +43,8 @@ int Application::execute(int argc, char **argv)
 		m_nextstate = nullptr;
 		m_running = true;
 
+		m_curstate->load();
+
 		//Enter the main loop for this state
 		while(m_running)
 		{
