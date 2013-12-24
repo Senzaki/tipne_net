@@ -73,7 +73,7 @@ bool Config::load()
 				//Call the appropriate parsing func
 				m_parsers.at(command)(args);
 			}
-			catch(...)
+			catch(const std::out_of_range &)
 			{
 				//command isn't a key of the map
 				std::cerr << "Error : configuration option " << command << " does not exist." << std::endl;

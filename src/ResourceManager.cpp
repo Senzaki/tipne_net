@@ -96,7 +96,7 @@ const sf::Texture &ResourceManager::getTexture(ResourceSection section, const st
 	{
 		return *sec.textures.at(name);
 	}
-	catch(...)
+	catch(const std::out_of_range &)
 	{
 		std::cerr << "Error : Texture " << TEXTURE_PATH << name << " does not exist in this section." << std::endl;
 		return m_defaulttex;
@@ -117,7 +117,7 @@ const sf::Font &ResourceManager::getFont(ResourceSection section, const std::str
 	{
 		return *m_sections[(int)section].fonts.at(name);
 	}
-	catch(...)
+	catch(const std::out_of_range &)
 	{
 		std::cerr << "Error : Font " << FONT_PATH << name << " does not exist in this section." << std::endl;
 		return m_defaultfont;

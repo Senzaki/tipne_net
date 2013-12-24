@@ -99,7 +99,7 @@ const std::string &Translator::translate(const std::string &id) const
 	{
 		return m_texts.at(id);
 	}
-	catch(...)
+	catch(const std::out_of_range &)
 	{
 		std::cerr << "Error : Text ID \"" << id << "\" could not be found in the translation tables." << std::endl;
 		return id;
