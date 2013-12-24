@@ -10,12 +10,14 @@ Menu::Menu(sf::RenderWindow &window):
 
 Menu::~Menu()
 {
-
+	ResourceManager::getInstance().unloadSection(ResourceSection::Menu);
 }
 
 void Menu::load()
 {
-	ResourceManager::getInstance().loadSection(ResourceSection::Menu);
+	ResourceManager &rmgr = ResourceManager::getInstance();
+	rmgr.loadSection(ResourceSection::Menu);
+	m_cursor.setTexture(rmgr.getTexture(ResourceSection::Base, "cursor.png"));
 }
 
 void Menu::update(float etime)
@@ -25,7 +27,8 @@ void Menu::update(float etime)
 
 void Menu::draw()
 {
-
+	m_window.clear();
+	m_window.draw(m_cursor);
 }
 
 void Menu::onWindowClosed()
@@ -44,4 +47,9 @@ void Menu::onKeyPressed(const sf::Event::KeyEvent &evt)
 		default:
 			break;
 	}
+}
+
+void Menu::onMouseMoved(const sf::Event::MouseMoveEvent &evt)
+{
+	m_cursor.setPosition(evt.x, evt.y);
 }

@@ -19,9 +19,12 @@ class Menu : public ApplicationState
 
 	virtual void onWindowClosed();
 	virtual void onKeyPressed(const sf::Event::KeyEvent &evt);
+	virtual void onMouseMoved(const sf::Event::MouseMoveEvent &evt);
 
 	private:
 	sf::RenderWindow &m_window;
+
+	sf::Sprite m_cursor;
 };
 
 #endif // MENU_HPP_INCLUDED

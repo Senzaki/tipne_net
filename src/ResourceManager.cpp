@@ -13,6 +13,8 @@ ResourceManager &ResourceManager::getInstance()
 ResourceManager::ResourceManager()
 {
 	m_sections.resize((int)ResourceSection::Count);
+	//Base
+	m_sections[(int)ResourceSection::Base].textures["cursor.png"] = nullptr;
 	//Menu
 }
 
@@ -24,6 +26,8 @@ ResourceManager::~ResourceManager()
 void ResourceManager::loadSection(ResourceSection name)
 {
 	Section &sec = m_sections[(int)name];
+	if(sec.loaded)
+		return;
 	//Load all fonts
 	for(auto &it : sec.fonts)
 	{
@@ -42,6 +46,8 @@ void ResourceManager::loadSection(ResourceSection name)
 void ResourceManager::unloadSection(ResourceSection name)
 {
 	Section &sec = m_sections[(int)name];
+	if(!sec.loaded)
+		return;
 	//Unload all fonts
 	for(auto &it : sec.fonts)
 	{
@@ -61,6 +67,8 @@ void ResourceManager::unloadAllSections()
 {
 	for(Section &sec : m_sections)
 	{
+		if(!sec.loaded)
+			continue;
 		//Unload all fonts
 		for(auto &it : sec.fonts)
 		{

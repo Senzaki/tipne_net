@@ -8,7 +8,8 @@
 
 enum class ResourceSection : int
 {
-	Menu = 0,
+	Base = 0,
+	Menu = 1,
 	Count
 };
 

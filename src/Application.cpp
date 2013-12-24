@@ -2,6 +2,7 @@
 #include "Config.hpp"
 #include "Menu.hpp"
 #include "Translator.hpp"
+#include "ResourceManager.hpp"
 
 Application::Application():
 	m_curstate(nullptr),
@@ -28,6 +29,10 @@ int Application::execute(int argc, char **argv)
 	m_window.setVerticalSyncEnabled(conf.vsync);
 	if(conf.dispfreq != 0)
 		m_window.setFramerateLimit(conf.dispfreq);
+	m_window.setMouseCursorVisible(false);
+
+	//Load base resources
+	ResourceManager::getInstance().loadSection(ResourceSection::Base);
 
 	//Let's start with the menu
 	setNextAppState(new Menu(m_window));
