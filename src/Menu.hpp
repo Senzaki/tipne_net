@@ -7,7 +7,7 @@
 class Menu : public ApplicationState
 {
 	public:
-	Menu(sf::RenderWindow &window);
+	Menu(sf::RenderWindow &window, float vratio, float xyratio);
 	virtual ~Menu();
 
 	Menu(const Menu &) = delete;
@@ -23,6 +23,9 @@ class Menu : public ApplicationState
 
 	private:
 	sf::RenderWindow &m_window;
+	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)
+	float m_vratio;
+	float m_xyratio;
 
 	sf::Sprite m_cursor;
 };

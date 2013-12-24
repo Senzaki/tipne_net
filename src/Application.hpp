@@ -4,6 +4,8 @@
 #include <SFML/Graphics.hpp>
 #include "ApplicationState.hpp"
 
+#define DEFAULT_SCREEN_HEIGHT 1080.f //Default max resolution : 1920x1080 (16:9) -> but 1920x1200 won't display correctly :s
+
 class Application
 {
 	public:

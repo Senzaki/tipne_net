@@ -35,7 +35,7 @@ int Application::execute(int argc, char **argv)
 	ResourceManager::getInstance().loadSection(ResourceSection::Base);
 
 	//Let's start with the menu
-	setNextAppState(new Menu(m_window));
+	setNextAppState(new Menu(m_window, m_window.getSize().y / DEFAULT_SCREEN_HEIGHT, (float)m_window.getSize().x / (float)m_window.getSize().y));
 	sf::Event evt;
 	sf::Clock clock;
 	float etime;
