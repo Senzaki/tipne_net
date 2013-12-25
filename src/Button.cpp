@@ -7,10 +7,12 @@ Button::Button() :
 	ResourceManager &rmgr = ResourceManager::getInstance();
 	//Load all textures & fonts
 	rmgr.loadSection(ResourceSection::Menu);
-	m_text.setFont(rmgr.getFont(ResourceSection::Base , "ASafePlacetoFall.ttf"));
+	m_text.setFont(rmgr.getFont(ResourceSection::Menu , "ASafePlacetoFall.ttf"));
 	m_text.setPosition(m_position);
-	m_text.setCharacterSize(10);
-	m_picture.setTexture(rmgr.getTexture(ResourceSection::Base, "default.png"));
+	m_text.setColor(sf::Color::Black);
+	m_text.setCharacterSize(30);
+	m_text.setString("##DEFAULT##");
+	m_picture.setTexture(rmgr.getTexture(ResourceSection::Menu, "default.png"));
 }
 
 Button::~Button()
@@ -26,10 +28,12 @@ Button::Button(const std::string &pathImage , const std::string &text , const sf
 	//Load all textures & fonts
 	rmgr.loadSection(ResourceSection::Menu);
 	m_text.setString(text);
-	m_text.setFont(rmgr.getFont(ResourceSection::Base , "ASafePlacetoFall.ttf"));
+	m_text.setColor(sf::Color::Black);
+	m_text.setFont(rmgr.getFont(ResourceSection::Menu , "ASafePlacetoFall.ttf"));
 	m_text.setPosition(m_position);
-	m_text.setCharacterSize(10);
-	m_picture.setTexture(rmgr.getTexture(ResourceSection::Base, pathImage));
+	m_text.setCharacterSize(30);
+	m_picture.setTexture(rmgr.getTexture(ResourceSection::Menu, pathImage));
+	m_picture.setPosition(m_position);
 }
 
 void Button::draw(sf::RenderTarget &target , sf::RenderStates) const
@@ -41,6 +45,7 @@ void Button::draw(sf::RenderTarget &target , sf::RenderStates) const
 void Button::setPosition(const sf::Vector2f &position)
 {
 	m_position = position;
+	m_picture.setPosition(m_position);
 }
 
 void Button::setPicture(const std::string &path)
@@ -48,7 +53,7 @@ void Button::setPicture(const std::string &path)
 	ResourceManager &rmgr = ResourceManager::getInstance();
 	//Load all textures & fonts
 	rmgr.loadSection(ResourceSection::Menu);
-	m_picture.setTexture(rmgr.getTexture(ResourceSection::Base, path));
+	m_picture.setTexture(rmgr.getTexture(ResourceSection::Menu, path));
 }
 
 void Button::setText(const std::string &text)
@@ -60,4 +65,4 @@ void Button::setText(const std::string &text)
 void Button::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt){}
 void Button::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt){}
 void Button::onMouseMoved(const sf::Event::MouseMoveEvent &evt){}
-bool Button::isInButton(const sf::Vector2f &positionCursor){}
+bool Button::isInButton(const sf::Vector2f &positionCursor){return true;}

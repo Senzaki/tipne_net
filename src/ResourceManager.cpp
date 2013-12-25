@@ -16,6 +16,8 @@ ResourceManager::ResourceManager()
 	//Base
 	m_sections[(int)ResourceSection::Base].textures["cursor.png"] = nullptr;
 	//Menu
+	m_sections[(int)ResourceSection::Menu].textures["default.png"] = nullptr;
+	m_sections[(int)ResourceSection::Menu].fonts["ASafePlacetoFall.ttf"] = nullptr;
 }
 
 ResourceManager::~ResourceManager()

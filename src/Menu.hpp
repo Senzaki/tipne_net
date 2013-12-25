@@ -26,7 +26,6 @@ class Menu : public ApplicationState
 	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)
 	float m_vratio;
 	float m_xyratio;
-
 	sf::Sprite m_cursor;
 };
 
