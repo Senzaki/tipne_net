@@ -3,27 +3,44 @@
 
 #include <SFML/Graphics.hpp>
 
-class Button : public sf::Drawable
+class Button
 {
 	public:
-	Button();
-	Button(const std::string &pathImage , const std::string &text , const sf::Vector2f &position = sf::Vector2f(0 , 0));
-	virtual ~Button();
-	virtual void onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt);
-	virtual void onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt);
-	virtual void onMouseMoved(const sf::Event::MouseMoveEvent &evt);
-	bool isInButton(const sf::Vector2f &positionCursor);
-	void setPosition(const sf::Vector2f &position);
-	void setPicture(const std::string &path);
-	void setText(const std::string &text);
+	Button(std::function<void()> callback = std::function<void()>());
+	Button(const std::string &text, std::function<void()> callback = std::function<void()>());
+	Button(const std::string &text, const sf::Font &font, const sf::Texture &normaltex, const sf::Texture &hltex, const sf::Texture &clicktex, std::function<void()> callback = std::function<void()>());
 
-	protected:
-	virtual void draw(sf::RenderTarget &target , sf::RenderStates) const;
+	void resetResources();
+
+	void setNormalTexture(const sf::Texture &tex);
+	void setHighlightTexture(const sf::Texture &tex);
+	void setClickedTexture(const sf::Texture &tex);
+	void setFont(const sf::Font &font);
+	void setText(const std::string &text);
+	void setCallback(std::function<void()> callback);
+
+	void setPosition(float x, float y);
+	const sf::FloatRect &getGlobalBounds() const;
+
+	void onMouseButtonPressed(const sf::Vector2f &coords);
+	void onMouseButtonReleased(const sf::Vector2f &coords);
+	void onMouseMoved(const sf::Vector2f &coords);
+
+	void draw(sf::RenderWindow &window);
 
 	private:
-	sf::Sprite m_picture;
+	void updateBackground();
+
+	const sf::Texture *m_stdtex;
+	const sf::Texture *m_hltex;
+	const sf::Texture *m_cltex;
+	sf::Sprite m_background;
 	sf::Text m_text;
-	sf::Vector2f m_position;
+	sf::FloatRect m_rect;
+
+	bool m_highlighted;
+	bool m_clicked;
+	std::function<void()> m_func;
 };
 
 #endif // BUTTON_HPP_INCLUDED

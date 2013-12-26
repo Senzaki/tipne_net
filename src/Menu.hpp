@@ -2,6 +2,7 @@
 #define MENU_HPP_INCLUDED
 
 #include "ApplicationState.hpp"
+#include "Button.hpp"
 #include <SFML/Graphics.hpp>
 
 class Menu : public ApplicationState
@@ -19,6 +20,8 @@ class Menu : public ApplicationState
 
 	virtual void onWindowClosed();
 	virtual void onKeyPressed(const sf::Event::KeyEvent &evt);
+	virtual void onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt);
+	virtual void onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt);
 	virtual void onMouseMoved(const sf::Event::MouseMoveEvent &evt);
 
 	private:
@@ -27,6 +30,8 @@ class Menu : public ApplicationState
 	float m_vratio;
 	float m_xyratio;
 	sf::Sprite m_cursor;
+
+	std::vector<Button> m_buttons;
 };
 
 #endif // MENU_HPP_INCLUDED

@@ -15,9 +15,12 @@ ResourceManager::ResourceManager()
 	m_sections.resize((int)ResourceSection::Count);
 	//Base
 	m_sections[(int)ResourceSection::Base].textures["cursor.png"] = nullptr;
+	m_sections[(int)ResourceSection::Base].textures["btn_bg.png"] = nullptr;
+	m_sections[(int)ResourceSection::Base].textures["btn_hl.png"] = nullptr;
+	m_sections[(int)ResourceSection::Base].textures["btn_cl.png"] = nullptr;
+	m_sections[(int)ResourceSection::Base].fonts["DejaVuSansMono.ttf"] = nullptr;
 	//Menu
 	m_sections[(int)ResourceSection::Menu].textures["default.png"] = nullptr;
-	m_sections[(int)ResourceSection::Menu].fonts["ASafePlacetoFall.ttf"] = nullptr;
 }
 
 ResourceManager::~ResourceManager()
