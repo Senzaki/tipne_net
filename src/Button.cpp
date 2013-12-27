@@ -119,8 +119,8 @@ void Button::onMouseButtonReleased(const sf::Vector2f &coords)
 	bool oldcl = m_clicked;
 	//Does the button contain the coords ?
 	m_highlighted = m_rect.contains(coords);
-	//Call the callback if clicked
-	if(m_highlighted && m_clicked)
+	//Call the callback if clicked (and valid)
+	if(m_highlighted && m_clicked && m_func)
 		m_func();
 	m_clicked = false;
 	//Update the appearance (only if required)
