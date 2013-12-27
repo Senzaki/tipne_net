@@ -43,8 +43,11 @@ void Button::resetResources()
 	ResourceManager &rsmgr = ResourceManager::getInstance();
 	m_text.setFont(rsmgr.getFont(ResourceSection::Base, BUTTON_DEFAULT_FONT));
 	m_stdtex = &rsmgr.getTexture(ResourceSection::Base, BUTTON_DEFAULT_STANDARD_TEX);
+	m_stdcol = sf::Color::White;
 	m_hltex = &rsmgr.getTexture(ResourceSection::Base, BUTTON_DEFAULT_HIGHLIGHTED_TEX);
+	m_hlcol = sf::Color::White;
 	m_cltex = &rsmgr.getTexture(ResourceSection::Base, BUTTON_DEFAULT_CLICKED_TEX);
+	m_clcol = sf::Color::Black;
 	updateBackground();
 }
 
@@ -54,15 +57,33 @@ void Button::setNormalTexture(const sf::Texture &tex)
 	updateBackground();
 }
 
+void Button::setNormalCharColor(const sf::Color &color)
+{
+	m_stdcol = color;
+	updateBackground();
+}
+
 void Button::setHighlightTexture(const sf::Texture &tex)
 {
 	m_hltex = &tex;
 	updateBackground();
 }
 
+void Button::setHighlightCharColor(const sf::Color &color)
+{
+	m_hlcol = color;
+	updateBackground();
+}
+
 void Button::setClickedTexture(const sf::Texture &tex)
 {
 	m_cltex = &tex;
+	updateBackground();
+}
+
+void Button::setClickedCharColor(const sf::Color &color)
+{
+	m_clcol = color;
 	updateBackground();
 }
 
@@ -150,12 +171,21 @@ void Button::updateBackground()
 	if(m_highlighted)
 	{
 		if(m_clicked)
+		{
 			m_background.setTexture(*m_cltex, true);
+			m_text.setColor(m_clcol);
+		}
 		else
+		{
 			m_background.setTexture(*m_hltex, true);
+			m_text.setColor(m_hlcol);
+		}
 	}
 	else
+	{
 		m_background.setTexture(*m_stdtex, true);
+		m_text.setColor(m_stdcol);
+	}
 	//Update the layout
 	setPosition(m_rect.left, m_rect.top);
 }
