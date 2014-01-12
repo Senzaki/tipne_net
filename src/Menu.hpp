@@ -2,8 +2,7 @@
 #define MENU_HPP_INCLUDED
 
 #include "ApplicationState.hpp"
-#include "Button.hpp"
-#include <SFML/Graphics.hpp>
+#include "GUIManager.hpp"
 
 class Menu : public ApplicationState
 {
@@ -26,12 +25,11 @@ class Menu : public ApplicationState
 
 	private:
 	sf::RenderWindow &m_window;
+	GUIManager m_guimgr;
 	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)
 	float m_vratio;
 	float m_xyratio;
 	sf::Sprite m_cursor;
-
-	std::vector<Button> m_buttons;
 };
 
 #endif // MENU_HPP_INCLUDED

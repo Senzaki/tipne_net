@@ -1,111 +1,60 @@
 #include "Button.hpp"
 #include "ResourceManager.hpp"
+#include <iostream>
+#include <GL/gl.h>
 
-static constexpr const char *BUTTON_DEFAULT_FONT = "DejaVuSansMono.ttf";
-static constexpr const unsigned int BUTTON_DEFAULT_FONT_SIZE = 12;
-static constexpr const char *BUTTON_DEFAULT_STANDARD_TEX = "btn_bg.png";
-static constexpr const char *BUTTON_DEFAULT_HIGHLIGHTED_TEX = "btn_hl.png";
-static constexpr const char *BUTTON_DEFAULT_CLICKED_TEX = "btn_cl.png";
+static constexpr const char *BUTTON_FONT = "DejaVuSansMono.ttf";
+static constexpr const unsigned int BUTTON_FONT_SIZE = 12;
+static constexpr const char *BUTTON_STANDARD_TEX = "btn_bg.png";
+static constexpr const char *BUTTON_HIGHLIGHTED_TEX = "btn_hl.png";
+static constexpr const char *BUTTON_CLICKED_TEX = "btn_cl.png";
+static constexpr const unsigned int BUTTON_LEFT_BORDER_WIDTH = 5;
+static constexpr const unsigned int BUTTON_RIGHT_BORDER_WIDTH = 5;
 
-Button::Button(std::function<void()> callback):
-	m_stdtex(nullptr),
-	m_hltex(nullptr),
-	m_cltex(nullptr),
-	m_highlighted(false),
+Button::Button(Widget *parent, std::function<void()> callback):
+	Widget(parent),
+	m_background(sf::TrianglesStrip, 8),
+	m_minw(0.f),
 	m_clicked(false),
 	m_func(callback)
 {
-	m_text.setCharacterSize(BUTTON_DEFAULT_FONT_SIZE);
-	resetResources();
+	m_text.setCharacterSize(BUTTON_FONT_SIZE);
+	m_text.setFont(ResourceManager::getInstance().getFont(ResourceSection::Base, BUTTON_FONT));
+
+	//Set "standard" appearance
+	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, BUTTON_STANDARD_TEX);
+	m_text.setColor(sf::Color::White);
+
+	//Setup texture coords (& positions for the first 4 points, because le position of the left border never changes)
+	float texheight = m_rdstates.texture->getSize().y;
+	m_background[0].position = m_background[0].texCoords = sf::Vector2f(0.f, texheight);
+	m_background[1].position = m_background[1].texCoords = sf::Vector2f(0.f, 0.f);
+	m_background[2].position = m_background[2].texCoords = sf::Vector2f(BUTTON_LEFT_BORDER_WIDTH, texheight);
+	m_background[3].position = m_background[3].texCoords = sf::Vector2f(BUTTON_LEFT_BORDER_WIDTH, 0.f);
+	m_background[4].texCoords = sf::Vector2f(BUTTON_LEFT_BORDER_WIDTH + 1, texheight);
+	m_background[5].texCoords = sf::Vector2f(BUTTON_LEFT_BORDER_WIDTH + 1, 0.f);
+	m_background[6].texCoords = sf::Vector2f(BUTTON_LEFT_BORDER_WIDTH + 1 + BUTTON_RIGHT_BORDER_WIDTH, texheight);
+	m_background[7].texCoords = sf::Vector2f(BUTTON_LEFT_BORDER_WIDTH + 1 + BUTTON_RIGHT_BORDER_WIDTH, 0.f);
+
+	updateSize();
 }
 
-Button::Button(const std::string &text, std::function<void()> callback):
-	Button(callback)
+Button::Button(Widget *parent, const std::string &text, std::function<void()> callback):
+	Button(parent, callback)
 {
 	setText(text);
 }
 
-Button::Button(const std::string &text, const sf::Font &font, const sf::Texture &normaltex, const sf::Texture &hltex, const sf::Texture &clicktex, std::function<void()> callback):
-	m_stdtex(&normaltex),
-	m_hltex(&hltex),
-	m_cltex(&clicktex),
-	m_text(text, font, BUTTON_DEFAULT_FONT_SIZE),
-	m_highlighted(false),
-	m_clicked(false),
-	m_func(callback)
+void Button::onPositionChanged()
 {
-	updateBackground();
-}
-
-void Button::resetResources()
-{
-	//Use all default resources. The "Base" resources section is supposed to be loaded whenever a button is created
-	ResourceManager &rsmgr = ResourceManager::getInstance();
-	m_text.setFont(rsmgr.getFont(ResourceSection::Base, BUTTON_DEFAULT_FONT));
-	m_stdtex = &rsmgr.getTexture(ResourceSection::Base, BUTTON_DEFAULT_STANDARD_TEX);
-	m_stdcol = sf::Color::White;
-	m_hltex = &rsmgr.getTexture(ResourceSection::Base, BUTTON_DEFAULT_HIGHLIGHTED_TEX);
-	m_hlcol = sf::Color::White;
-	m_cltex = &rsmgr.getTexture(ResourceSection::Base, BUTTON_DEFAULT_CLICKED_TEX);
-	m_clcol = sf::Color::Black;
-	updateBackground();
-}
-
-void Button::setNormalTexture(const sf::Texture &tex)
-{
-	m_stdtex = &tex;
-	updateBackground();
-}
-
-void Button::setNormalCharColor(const sf::Color &color)
-{
-	m_stdcol = color;
-	updateBackground();
-}
-
-void Button::setHighlightTexture(const sf::Texture &tex)
-{
-	m_hltex = &tex;
-	updateBackground();
-}
-
-void Button::setHighlightCharColor(const sf::Color &color)
-{
-	m_hlcol = color;
-	updateBackground();
-}
-
-void Button::setClickedTexture(const sf::Texture &tex)
-{
-	m_cltex = &tex;
-	updateBackground();
-}
-
-void Button::setClickedCharColor(const sf::Color &color)
-{
-	m_clcol = color;
-	updateBackground();
-}
-
-void Button::setFont(const sf::Font &font)
-{
-	m_text.setFont(font);
-}
-
-void Button::setPosition(float x, float y)
-{
+	sf::Vector2f pos = getAbsolutePosition();
+	sf::Vector2f size = getSize();
 	//Top left corner
-	m_background.setPosition(x, y);
-	//Get new rectangle
-	m_rect = m_background.getGlobalBounds();
-	//Put the text right in the middle of the button
+	m_rdstates.transform = sf::Transform::Identity;
+	m_rdstates.transform.translate(pos);
+	//Put the text right in the middle of the button (coords are integer so that the text does not look blurred)
 	sf::FloatRect textrect = m_text.getLocalBounds();
-	m_text.setPosition(m_rect.left + (m_rect.width - textrect.width) / 2.f, m_rect.top + (m_rect.height - textrect.height) / 2.f);
-}
-
-const sf::FloatRect &Button::getGlobalBounds() const
-{
-	return m_rect;
+	m_text.setPosition(std::round(pos.x + (size.x - textrect.width) / 2.f), std::round(pos.y + (size.y - textrect.height) / 2.f));
 }
 
 void Button::setText(const std::string &text)
@@ -113,7 +62,7 @@ void Button::setText(const std::string &text)
 	//Tell SFML the string is UTF-8
 	m_text.setString(sf::String::fromUtf8(text.begin(), text.end()));
 	//Update layout
-	setPosition(m_rect.left, m_rect.top);
+	updateSize();
 }
 
 void Button::setCallback(std::function<void()> callback)
@@ -121,71 +70,72 @@ void Button::setCallback(std::function<void()> callback)
 	m_func = callback;
 }
 
-void Button::onMouseButtonPressed(const sf::Vector2f &coords)
+void Button::setMinimumWidth(float minwidth)
 {
-	bool oldhl = m_highlighted;
-	bool oldcl = m_clicked;
-	//Does the button contain the coords ?
-	m_highlighted = m_rect.contains(coords);
-	if(m_highlighted)
-		m_clicked = true;
-	//Update the appearance (only if required)
-	if(oldhl != m_highlighted || oldcl != m_clicked)
-		updateBackground();
-}
-
-void Button::onMouseButtonReleased(const sf::Vector2f &coords)
-{
-	bool oldhl = m_highlighted;
-	bool oldcl = m_clicked;
-	//Does the button contain the coords ?
-	m_highlighted = m_rect.contains(coords);
-	//Call the callback if clicked (and valid)
-	if(m_highlighted && m_clicked && m_func)
-		m_func();
-	m_clicked = false;
-	//Update the appearance (only if required)
-	if(oldhl != m_highlighted || oldcl != m_clicked)
-		updateBackground();
-}
-
-void Button::onMouseMoved(const sf::Vector2f &coords)
-{
-	bool oldhl = m_highlighted;
-	//Does the button contain the coords ?
-	m_highlighted = m_rect.contains(coords);
-	//Update the appearance (only if required)
-	if(oldhl != m_highlighted)
-		updateBackground();
+	m_minw = minwidth;
+	updateSize();
 }
 
 void Button::draw(sf::RenderWindow &window)
 {
-	window.draw(m_background);
+	window.draw(m_background, sf::RenderStates(m_rdstates));
 	window.draw(m_text);
 }
 
-void Button::updateBackground()
+bool Button::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 {
-	//Set the appropriate texture
-	if(m_highlighted)
-	{
-		if(m_clicked)
-		{
-			m_background.setTexture(*m_cltex, true);
-			m_text.setColor(m_clcol);
-		}
-		else
-		{
-			m_background.setTexture(*m_hltex, true);
-			m_text.setColor(m_hlcol);
-		}
-	}
-	else
-	{
-		m_background.setTexture(*m_stdtex, true);
-		m_text.setColor(m_stdcol);
-	}
-	//Update the layout
-	setPosition(m_rect.left, m_rect.top);
+	Widget::onMouseButtonPressed(evt);
+	m_clicked = true;
+	//Set "clicked" appearance
+	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, BUTTON_CLICKED_TEX);
+	m_text.setColor(sf::Color::Black);
+
+	return true;
+}
+
+bool Button::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
+{
+	Widget::onMouseButtonReleased(evt);
+	if(m_clicked && m_func)
+		m_func();
+	m_clicked = false;
+	//Set "highlighted" appearance
+	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, BUTTON_HIGHLIGHTED_TEX);
+	m_text.setColor(sf::Color::Black);
+
+	return true;
+}
+
+void Button::onMouseEntered(const sf::Event::MouseMoveEvent &evt)
+{
+	Widget::onMouseEntered(evt);
+	//Set "highlighted" appearance
+	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, BUTTON_HIGHLIGHTED_TEX);
+	m_text.setColor(sf::Color::Black);
+}
+
+void Button::onMouseLeft()
+{
+	Widget::onMouseLeft();
+	m_clicked = false;
+	//Set "standard" appearance
+	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, BUTTON_STANDARD_TEX);
+	m_text.setColor(sf::Color::White);
+}
+
+void Button::updateSize()
+{
+	float width = m_text.getLocalBounds().width + BUTTON_LEFT_BORDER_WIDTH;
+	if(width < m_minw - BUTTON_RIGHT_BORDER_WIDTH)
+		width = m_minw - BUTTON_RIGHT_BORDER_WIDTH;
+	float texheight = m_rdstates.texture->getSize().y;
+	//Setup points position
+	m_background[4].position = sf::Vector2f(width, texheight);
+	m_background[5].position = sf::Vector2f(width, 0.f);
+	m_background[6].position = sf::Vector2f(width + BUTTON_RIGHT_BORDER_WIDTH, texheight);
+	m_background[7].position = sf::Vector2f(width + BUTTON_RIGHT_BORDER_WIDTH, 0.f);
+
+	onPositionChanged();
+
+	setSize(width + BUTTON_RIGHT_BORDER_WIDTH, texheight);
 }
