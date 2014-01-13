@@ -2,16 +2,31 @@
 #define RESOURCEMANAGER_HPP_INCLUDED
 
 #include <SFML/Graphics.hpp>
-#include <unordered_map>
-#include <list>
+#include <vector>
 #include <string>
 
 enum class ResourceSection : int
 {
 	Base = 0,
-	Menu = 1,
 	Count
 };
+
+namespace Resource
+{
+	enum BaseTexture
+	{
+		CURSOR_TEX = 0,
+		BUTTON_STANDARD_TEX,
+		BUTTON_CLICKED_TEX,
+		BUTTON_HIGHLIGHTED_TEX,
+		BASE_TEXTURES_COUNT
+	};
+	enum BaseFont
+	{
+		STANDARD_FONT = 0,
+		BASE_FONTS_COUNT
+	};
+}
 
 class ResourceManager
 {
@@ -28,8 +43,8 @@ class ResourceManager
 	void unloadAllSections();
 	bool isSectionLoaded(ResourceSection name) const;
 
-	const sf::Texture &getTexture(ResourceSection section, const std::string &name) const;
-	const sf::Font &getFont(ResourceSection section, const std::string &name) const;
+	const sf::Texture &getTexture(ResourceSection section, unsigned int name) const;
+	const sf::Font &getFont(ResourceSection section, unsigned int name) const;
 
 	private:
 	ResourceManager();
@@ -37,8 +52,11 @@ class ResourceManager
 	struct Section
 	{
 		bool loaded;
-		std::unordered_map<std::string, sf::Texture *> textures;
-		std::unordered_map<std::string, sf::Font *> fonts;
+		std::vector<sf::Texture *> textures;
+		std::vector<sf::Font *> fonts;
+
+		std::vector<std::string> tex_files;
+		std::vector<std::string> font_files;
 
 		Section() : loaded(false) { }
 	};

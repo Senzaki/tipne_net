@@ -3,11 +3,7 @@
 #include <iostream>
 #include <GL/gl.h>
 
-static constexpr const char *BUTTON_FONT = "DejaVuSansMono.ttf";
 static constexpr const unsigned int BUTTON_FONT_SIZE = 12;
-static constexpr const char *BUTTON_STANDARD_TEX = "btn_bg.png";
-static constexpr const char *BUTTON_HIGHLIGHTED_TEX = "btn_hl.png";
-static constexpr const char *BUTTON_CLICKED_TEX = "btn_cl.png";
 static constexpr const unsigned int BUTTON_LEFT_BORDER_WIDTH = 5;
 static constexpr const unsigned int BUTTON_RIGHT_BORDER_WIDTH = 5;
 
@@ -19,10 +15,10 @@ Button::Button(Widget *parent, std::function<void()> callback):
 	m_func(callback)
 {
 	m_text.setCharacterSize(BUTTON_FONT_SIZE);
-	m_text.setFont(ResourceManager::getInstance().getFont(ResourceSection::Base, BUTTON_FONT));
+	m_text.setFont(ResourceManager::getInstance().getFont(ResourceSection::Base, Resource::STANDARD_FONT));
 
 	//Set "standard" appearance
-	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, BUTTON_STANDARD_TEX);
+	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_STANDARD_TEX);
 	m_text.setColor(sf::Color::White);
 
 	//Setup texture coords (& positions for the first 4 points, because le position of the left border never changes)
@@ -87,7 +83,7 @@ bool Button::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 	Widget::onMouseButtonPressed(evt);
 	m_clicked = true;
 	//Set "clicked" appearance
-	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, BUTTON_CLICKED_TEX);
+	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_CLICKED_TEX);
 	m_text.setColor(sf::Color::Black);
 
 	return true;
@@ -100,7 +96,7 @@ bool Button::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
 		m_func();
 	m_clicked = false;
 	//Set "highlighted" appearance
-	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, BUTTON_HIGHLIGHTED_TEX);
+	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_HIGHLIGHTED_TEX);
 	m_text.setColor(sf::Color::Black);
 
 	return true;
@@ -110,7 +106,7 @@ void Button::onMouseEntered(const sf::Event::MouseMoveEvent &evt)
 {
 	Widget::onMouseEntered(evt);
 	//Set "highlighted" appearance
-	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, BUTTON_HIGHLIGHTED_TEX);
+	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_HIGHLIGHTED_TEX);
 	m_text.setColor(sf::Color::Black);
 }
 
@@ -119,7 +115,7 @@ void Button::onMouseLeft()
 	Widget::onMouseLeft();
 	m_clicked = false;
 	//Set "standard" appearance
-	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, BUTTON_STANDARD_TEX);
+	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_STANDARD_TEX);
 	m_text.setColor(sf::Color::White);
 }
 

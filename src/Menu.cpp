@@ -16,16 +16,14 @@ Menu::Menu(sf::RenderWindow &window, float vratio, float xyratio):
 
 Menu::~Menu()
 {
-	ResourceManager::getInstance().unloadSection(ResourceSection::Menu);
 }
 
 void Menu::load()
 {
-	ResourceManager &rmgr = ResourceManager::getInstance();
 	Translator::getInstance().loadPackage("menu");
 	//Load all textures & fonts
-	rmgr.loadSection(ResourceSection::Menu);
-	m_cursor.setTexture(rmgr.getTexture(ResourceSection::Base, "cursor.png"));
+	ResourceManager &rsmgr = ResourceManager::getInstance();
+	m_cursor.setTexture(rsmgr.getTexture(ResourceSection::Base, Resource::CURSOR_TEX));
 	//Create buttons
 	Widget *topwidget = m_guimgr.getTopWidget();
 	constexpr const int BUTTONS_COUNT = 4;

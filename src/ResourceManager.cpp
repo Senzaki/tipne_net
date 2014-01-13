@@ -1,8 +1,8 @@
 #include "ResourceManager.hpp"
 #include <iostream>
 
-constexpr const char *TEXTURE_PATH = "data/textures/";
-constexpr const char *FONT_PATH = "data/fonts/";
+static constexpr const char *TEXTURE_PATH = "data/textures/";
+static constexpr const char *FONT_PATH = "data/fonts/";
 
 ResourceManager &ResourceManager::getInstance()
 {
@@ -12,15 +12,24 @@ ResourceManager &ResourceManager::getInstance()
 
 ResourceManager::ResourceManager()
 {
+	using namespace Resource;
+
 	m_sections.resize((int)ResourceSection::Count);
+
 	//Base
-	m_sections[(int)ResourceSection::Base].textures["cursor.png"] = nullptr;
-	m_sections[(int)ResourceSection::Base].textures["btn_bg.png"] = nullptr;
-	m_sections[(int)ResourceSection::Base].textures["btn_hl.png"] = nullptr;
-	m_sections[(int)ResourceSection::Base].textures["btn_cl.png"] = nullptr;
-	m_sections[(int)ResourceSection::Base].fonts["DejaVuSansMono.ttf"] = nullptr;
-	//Menu
-	m_sections[(int)ResourceSection::Menu].textures["default.png"] = nullptr;
+	{
+		Section &sec = m_sections[(int)ResourceSection::Base];
+		sec.tex_files.resize(BASE_TEXTURES_COUNT);
+		sec.textures.resize(BASE_TEXTURES_COUNT, nullptr);
+		sec.font_files.resize(BASE_FONTS_COUNT);
+		sec.fonts.resize(BASE_FONTS_COUNT, nullptr);
+
+		sec.tex_files[CURSOR_TEX] = "cursor.png";
+		sec.tex_files[BUTTON_STANDARD_TEX] = "btn_bg.png";
+		sec.tex_files[BUTTON_CLICKED_TEX] = "btn_cl.png";
+		sec.tex_files[BUTTON_HIGHLIGHTED_TEX] = "btn_hl.png";
+		sec.font_files[STANDARD_FONT] = "DejaVuSansMono.ttf";
+	}
 }
 
 ResourceManager::~ResourceManager()
@@ -34,16 +43,16 @@ void ResourceManager::loadSection(ResourceSection name)
 	if(sec.loaded)
 		return;
 	//Load all fonts
-	for(auto &it : sec.fonts)
+	for(unsigned int i = 0 ; i < sec.fonts.size(); i++)
 	{
-		it.second = new sf::Font;
-		it.second->loadFromFile(FONT_PATH + it.first);
+		sec.fonts[i] = new sf::Font;
+		sec.fonts[i]->loadFromFile(FONT_PATH + sec.font_files[i]);
 	}
 	//Load all textures
-	for(auto &it : sec.textures)
+	for(unsigned int i = 0 ; i < sec.textures.size(); i++)
 	{
-		it.second = new sf::Texture;
-		it.second->loadFromFile(TEXTURE_PATH + it.first);
+		sec.textures[i] = new sf::Texture;
+		sec.textures[i]->loadFromFile(TEXTURE_PATH + sec.tex_files[i]);
 	}
 	sec.loaded = true;
 }
@@ -54,16 +63,16 @@ void ResourceManager::unloadSection(ResourceSection name)
 	if(!sec.loaded)
 		return;
 	//Unload all fonts
-	for(auto &it : sec.fonts)
+	for(sf::Font *&font : sec.fonts)
 	{
-		delete it.second;
-		it.second = nullptr;
+		delete font;
+		font = nullptr;
 	}
 	//Unload all textures
-	for(auto &it : sec.textures)
+	for(sf::Texture *&tex : sec.textures)
 	{
-		delete it.second;
-		it.second = nullptr;
+		delete tex;
+		tex = nullptr;
 	}
 	sec.loaded = false;
 }
@@ -75,16 +84,16 @@ void ResourceManager::unloadAllSections()
 		if(!sec.loaded)
 			continue;
 		//Unload all fonts
-		for(auto &it : sec.fonts)
+		for(sf::Font *&font : sec.fonts)
 		{
-			delete it.second;
-			it.second = nullptr;
+			delete font;
+			font = nullptr;
 		}
 		//Unload all textures
-		for(auto &it : sec.textures)
+		for(sf::Texture *&tex : sec.textures)
 		{
-			delete it.second;
-			it.second = nullptr;
+			delete tex;
+			tex = nullptr;
 		}
 		sec.loaded = false;
 	}
@@ -95,7 +104,7 @@ bool ResourceManager::isSectionLoaded(ResourceSection name) const
 	return m_sections[(int)name].loaded;
 }
 
-const sf::Texture &ResourceManager::getTexture(ResourceSection section, const std::string &name) const
+const sf::Texture &ResourceManager::getTexture(ResourceSection section, unsigned int name) const
 {
 	const Section &sec = m_sections[(int)section];
 	//Is the section loaded ?
@@ -104,19 +113,10 @@ const sf::Texture &ResourceManager::getTexture(ResourceSection section, const st
 		std::cerr << "Error : Texture " << TEXTURE_PATH << name << " has to be loaded before it can be used." << std::endl;
 		return m_defaulttex;
 	}
-	//Return the resource
-	try
-	{
-		return *sec.textures.at(name);
-	}
-	catch(const std::out_of_range &)
-	{
-		std::cerr << "Error : Texture " << TEXTURE_PATH << name << " does not exist in this section." << std::endl;
-		return m_defaulttex;
-	}
+	return *sec.textures[name];
 }
 
-const sf::Font &ResourceManager::getFont(ResourceSection section, const std::string &name) const
+const sf::Font &ResourceManager::getFont(ResourceSection section, unsigned int name) const
 {
 	const Section &sec = m_sections[(int)section];
 	//Is the section loaded ?
@@ -125,14 +125,5 @@ const sf::Font &ResourceManager::getFont(ResourceSection section, const std::str
 		std::cerr << "Error : Font " << FONT_PATH << name << " has to be loaded before it can be used." << std::endl;
 		return m_defaultfont;
 	}
-	//Return the resource
-	try
-	{
-		return *m_sections[(int)section].fonts.at(name);
-	}
-	catch(const std::out_of_range &)
-	{
-		std::cerr << "Error : Font " << FONT_PATH << name << " does not exist in this section." << std::endl;
-		return m_defaultfont;
-	}
+	return *sec.fonts[name];
 }
