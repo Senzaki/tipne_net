@@ -2,30 +2,40 @@
 #include "ResourceManager.hpp"
 
 
-CheckBox::CheckBox(Widget *parent , std::function<void()> callbackcheck , std::function<void()> callbackuncheck):
+CheckBox::CheckBox(Widget *parent , std::function<void()> callbackcheck, std::function<void()> callbackuncheck):
 	Widget(parent),
-	m_isChecked(false),
-	m_funcCheck(callbackcheck),
-	m_funcUncheck(callbackuncheck)
+	m_checked(false),
+	m_funccheck(callbackcheck),
+	m_funcuncheck(callbackuncheck)
 {
-	//set texture standard
-	m_background.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Base , Resource::CHECKBOX_UNCHECKED_TEX));
-	setSize(sf::Vector2f(m_background.getGlobalBounds().width , m_background.getGlobalBounds().height));
+	//set standard texture
+	m_background.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::CHECKBOX_UNCHECKED_TEX));
+	setSize(sf::Vector2f(m_background.getLocalBounds().width, m_background.getLocalBounds().height));
 }
 
-void CheckBox::setCallbackCheck(std::function<void()> callback)
+void CheckBox::setCheckCallback(std::function<void()> callback)
 {
-	m_funcCheck = callback;
+	m_funccheck = callback;
 }
 
-void CheckBox::setCallbackUncheck(std::function<void()> callback)
+void CheckBox::setUncheckCallback(std::function<void()> callback)
 {
-	m_funcUncheck = callback;
+	m_funcuncheck = callback;
 }
 
-const bool &CheckBox::isChecked()
+void CheckBox::setChecked(bool checked)
 {
-	return m_isChecked;
+	m_checked = checked;
+	//set the appropriate texture
+	if(m_checked)
+		m_background.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::CHECKBOX_CHECKED_TEX));
+	else
+		m_background.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::CHECKBOX_UNCHECKED_TEX));
+}
+
+bool CheckBox::isChecked() const
+{
+	return m_checked;
 }
 
 void CheckBox::draw(sf::RenderWindow &window)
@@ -38,22 +48,28 @@ void CheckBox::onPositionChanged()
 	m_background.setPosition(getAbsolutePosition());
 }
 
+bool CheckBox::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
+{
+	Widget::onMouseButtonPressed(evt);
+
+	return true;
+}
+
 bool CheckBox::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
 {
 	Widget::onMouseButtonReleased(evt);
-	if(m_background.getGlobalBounds().contains(evt.x , evt.y))
-	{
-		m_isChecked = !m_isChecked;
-		//call the appropriate function
-		if(m_isChecked && m_funcCheck)
-			m_funcCheck();
-		else if(!m_isChecked && m_funcUncheck)
-			m_funcUncheck();
-		//set the appropriate texture
-		if(m_isChecked)
-			m_background.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Base , Resource::CHECKBOX_CHECKED_TEX));
-		else
-			m_background.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Base , Resource::CHECKBOX_UNCHECKED_TEX));
-	}
+
+	m_checked = !m_checked;
+	//call the appropriate function
+	if(m_checked && m_funccheck)
+		m_funccheck();
+	else if(!m_checked && m_funcuncheck)
+		m_funcuncheck();
+	//set the appropriate texture
+	if(m_checked)
+		m_background.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::CHECKBOX_CHECKED_TEX));
+	else
+		m_background.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::CHECKBOX_UNCHECKED_TEX));
+
 	return true;
 }

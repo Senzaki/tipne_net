@@ -28,6 +28,8 @@ ResourceManager::ResourceManager()
 		sec.tex_files[BUTTON_STANDARD_TEX] = "btn_bg.png";
 		sec.tex_files[BUTTON_CLICKED_TEX] = "btn_cl.png";
 		sec.tex_files[BUTTON_HIGHLIGHTED_TEX] = "btn_hl.png";
+		sec.tex_files[CHECKBOX_CHECKED_TEX] = "cb_cck.png";
+		sec.tex_files[CHECKBOX_UNCHECKED_TEX] = "cb_unc.png";
 		sec.font_files[STANDARD_FONT] = "DejaVuSansMono.ttf";
 	}
 }
