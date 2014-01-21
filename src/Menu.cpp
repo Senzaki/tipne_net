@@ -3,6 +3,7 @@
 #include "ResourceManager.hpp"
 #include "Translator.hpp"
 #include "Button.hpp"
+#include "DecoratedLineEdit.hpp"
 
 Menu::Menu(sf::RenderWindow &window, float vratio, float xyratio):
 	m_window(window),
@@ -73,6 +74,7 @@ void Menu::onKeyPressed(const sf::Event::KeyEvent &evt)
 		default:
 			break;
 	}
+	m_guimgr.onKeyPressed(evt);
 }
 
 void Menu::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
@@ -85,6 +87,11 @@ void Menu::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
 {
 	m_guimgr.onMouseButtonReleased(evt);
 	sf::Vector2f camcoords(evt.x / m_vratio, evt.y / m_vratio);
+}
+
+void Menu::onTextEntered(const sf::Event::TextEvent &evt)
+{
+	m_guimgr.onTextEntered(evt);
 }
 
 void Menu::onMouseMoved(const sf::Event::MouseMoveEvent &evt)

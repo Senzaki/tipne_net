@@ -21,6 +21,7 @@ class Menu : public ApplicationState
 	virtual void onKeyPressed(const sf::Event::KeyEvent &evt);
 	virtual void onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt);
 	virtual void onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt);
+	virtual void onTextEntered(const sf::Event::TextEvent &evt);
 	virtual void onMouseMoved(const sf::Event::MouseMoveEvent &evt);
 
 	private:
