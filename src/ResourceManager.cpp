@@ -30,6 +30,7 @@ ResourceManager::ResourceManager()
 		sec.tex_files[BUTTON_HIGHLIGHTED_TEX] = "btn_hl.png";
 		sec.tex_files[CHECKBOX_CHECKED_TEX] = "cb_cck.png";
 		sec.tex_files[CHECKBOX_UNCHECKED_TEX] = "cb_unc.png";
+		sec.tex_files[LINEEDIT_STANDARD_TEX] = "line_def.png";
 		sec.font_files[STANDARD_FONT] = "DejaVuSansMono.ttf";
 	}
 }
