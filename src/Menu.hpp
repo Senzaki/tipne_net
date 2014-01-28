@@ -25,6 +25,7 @@ class Menu : public ApplicationState
 	virtual void onMouseMoved(const sf::Event::MouseMoveEvent &evt);
 
 	private:
+	void loadOptions();
 	sf::RenderWindow &m_window;
 	GUIManager m_guimgr;
 	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)
