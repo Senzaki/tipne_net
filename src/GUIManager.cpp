@@ -1,5 +1,6 @@
 #include "GUIManager.hpp"
 #include <GL/gl.h>
+#include <iostream>
 
 GUIManager::GUIManager(sf::RenderWindow &window):
 	m_window(window),
@@ -18,6 +19,11 @@ GUIManager::~GUIManager()
 
 void GUIManager::update(float etime)
 {
+	//Delete widgets to be removed
+	for(Widget *del : m_todelete)
+		delete del;
+	m_todelete.clear();
+
 	updateWidget(m_topwidget, etime);
 }
 
@@ -37,9 +43,17 @@ void GUIManager::draw()
 	glDisable(GL_SCISSOR_TEST);
 }
 
+void GUIManager::deleteLater(Widget *widget)
+{
+	std::cout << "The parent is set to NULL on purpose. You can safely ignore next warning." << std::endl;
+	widget->setParent(nullptr);
+	m_todelete.push_back(widget);
+}
+
 void GUIManager::clear()
 {
-	delete m_topwidget;
+	if(m_topwidget)
+		deleteLater(m_topwidget);
 	m_topwidget = new Widget(nullptr);
 	m_topwidget->setSize(m_window.getSize().x, m_window.getSize().y);
 }

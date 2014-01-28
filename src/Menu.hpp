@@ -21,11 +21,13 @@ class Menu : public ApplicationState
 	virtual void onKeyPressed(const sf::Event::KeyEvent &evt);
 	virtual void onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt);
 	virtual void onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt);
-	virtual void onTextEntered(const sf::Event::TextEvent &evt);
 	virtual void onMouseMoved(const sf::Event::MouseMoveEvent &evt);
+	virtual void onTextEntered(const sf::Event::TextEvent &evt);
 
 	private:
-	void loadOptions();
+	void showMainMenu();
+	void showOptions();
+
 	sf::RenderWindow &m_window;
 	GUIManager m_guimgr;
 	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)

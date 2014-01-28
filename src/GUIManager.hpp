@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include "Widget.hpp"
 #include <stack>
+#include <list>
 
 class GUIManager
 {
@@ -17,7 +18,8 @@ class GUIManager
 	void update(float etime);
 	void draw();
 
-	void clear();//deletes all widgets
+	void deleteLater(Widget *widget);
+	void clear();//Removes the widgets and deletes them (later)
 
 	void setModalWidget(Widget *widget); //widget = nullptr means no modal widget
 	Widget *getModalWidget();
@@ -45,6 +47,7 @@ class GUIManager
 
 	Widget *m_topwidget;
 	Widget *m_modalwidget;
+	std::list<Widget *> m_todelete;
 
 	float m_winheight;
 };

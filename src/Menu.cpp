@@ -3,10 +3,9 @@
 #include "ResourceManager.hpp"
 #include "Translator.hpp"
 #include "Button.hpp"
-#include "Checkbox.hpp"
-#include "Config.hpp"
+#include "CheckBox.hpp"
 #include "DecoratedLineEdit.hpp"
-#include <iostream>
+#include "Config.hpp"
 
 Menu::Menu(sf::RenderWindow &window, float vratio, float xyratio):
 	m_window(window),
@@ -15,32 +14,23 @@ Menu::Menu(sf::RenderWindow &window, float vratio, float xyratio):
 	m_vratio(vratio),
 	m_xyratio(xyratio)
 {
-	Translator::getInstance().loadPackage("menu");
-	//Load all textures & fonts
-	ResourceManager &rsmgr = ResourceManager::getInstance();
-	m_cursor.setTexture(rsmgr.getTexture(ResourceSection::Base, Resource::CURSOR_TEX));
+
 }
 
 Menu::~Menu()
 {
+
 }
 
 void Menu::load()
 {
-	//Create buttons
-	m_guimgr.clear();
-	Widget *topwidget = m_guimgr.getTopWidget();
+	Translator::getInstance().loadPackage("menu");
 
-	constexpr const int BUTTONS_COUNT = 4;
-	Widget *buttons[BUTTONS_COUNT];//Array only used for loop
-	buttons[0] = new Button(topwidget, tr("play"));
-	buttons[1] = new Button(topwidget, tr("options"), std::bind(&Menu::loadOptions, this));
-	buttons[2] = new Button(topwidget, tr("credits"));
-	buttons[3] = new Button(topwidget, tr("quit"), std::bind(&Application::setNextAppState, &Application::getInstance(), nullptr, true));
-	//Set the appropriate position
-	float interval = (m_window.getSize().y - 100.f) / BUTTONS_COUNT;
-	for(unsigned int i = 0; i < BUTTONS_COUNT; i++)
-		buttons[i]->setPosition((m_window.getSize().x - buttons[i]->getSize().x) / 2.f, 100.f + i * interval);
+	//Load all textures & fonts
+	ResourceManager &rsmgr = ResourceManager::getInstance();
+	m_cursor.setTexture(rsmgr.getTexture(ResourceSection::Base, Resource::CURSOR_TEX));
+
+	showMainMenu();
 }
 
 void Menu::update(float etime)
@@ -78,7 +68,6 @@ void Menu::onKeyPressed(const sf::Event::KeyEvent &evt)
 		default:
 			break;
 	}
-	m_guimgr.onKeyPressed(evt);
 }
 
 void Menu::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
@@ -93,11 +82,6 @@ void Menu::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
 	sf::Vector2f camcoords(evt.x / m_vratio, evt.y / m_vratio);
 }
 
-void Menu::onTextEntered(const sf::Event::TextEvent &evt)
-{
-	m_guimgr.onTextEntered(evt);
-}
-
 void Menu::onMouseMoved(const sf::Event::MouseMoveEvent &evt)
 {
 	m_guimgr.onMouseMoved(evt);
@@ -106,9 +90,33 @@ void Menu::onMouseMoved(const sf::Event::MouseMoveEvent &evt)
 	m_cursor.setPosition(camcoords);
 }
 
-void Menu::loadOptions()
+void Menu::onTextEntered(const sf::Event::TextEvent &evt)
+{
+	m_guimgr.onTextEntered(evt);
+}
+
+void Menu::showMainMenu()
 {
 	m_guimgr.clear();
+
+	//Create buttons
+	Widget *topwidget = m_guimgr.getTopWidget();
+	constexpr const int BUTTONS_COUNT = 4;
+	Widget *buttons[BUTTONS_COUNT];//Array only used for loop
+	buttons[0] = new Button(topwidget, tr("play"));
+	buttons[1] = new Button(topwidget, tr("options"), std::bind(&Menu::showOptions, this));
+	buttons[2] = new Button(topwidget, tr("credits"));
+	buttons[3] = new Button(topwidget, tr("quit"), std::bind(&Application::setNextAppState, &Application::getInstance(), nullptr, true));
+	//Set the appropriate position
+	float interval = (m_window.getSize().y - 100.f) / BUTTONS_COUNT;
+	for(unsigned int i = 0; i < BUTTONS_COUNT; i++)
+		buttons[i]->setPosition((m_window.getSize().x - buttons[i]->getSize().x) / 2.f, 100.f + i * interval);
+}
+
+void Menu::showOptions()
+{
+	m_guimgr.clear();
+
 	//Widgets to add
 	Widget *topwidget = m_guimgr.getTopWidget();
 	DecoratedLineEdit *lineedit;
@@ -116,14 +124,14 @@ void Menu::loadOptions()
 	CheckBox *checkboxes[CHECKBOX_COUNT];
 	Button *button[2];
 
-	lineedit = new DecoratedLineEdit(topwidget, 150, 0, [](std::string name){Config::getInstance().name = name;});
+	lineedit = new DecoratedLineEdit(topwidget, 150, 0);
 
-	button[0] = new Button(topwidget, tr("save"), std::bind(&Config::save, &Config::getInstance()));
-	button[1] = new Button(topwidget, tr("menu"), std::bind(&Menu::load, this));
+	button[0] = new Button(topwidget, tr("save"));
+	button[1] = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
 
-	checkboxes[0] = new CheckBox(topwidget, [](){Config::getInstance().fullscreen = 1;}, [](){Config::getInstance().fullscreen = 0;});
-	checkboxes[1] = new CheckBox(topwidget, [](){Config::getInstance().vsync = 1;}, [](){Config::getInstance().vsync = 0;});
-	checkboxes[2] = new CheckBox(topwidget, [](){Config::getInstance().dispfreq = 1;}, [](){Config::getInstance().dispfreq = 0;});
+	checkboxes[0] = new CheckBox(topwidget);
+	checkboxes[1] = new CheckBox(topwidget);
+	checkboxes[2] = new CheckBox(topwidget);
 
 	lineedit->setString(Config::getInstance().name);
 	lineedit->setPosition(50, 200);
