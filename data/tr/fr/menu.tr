@@ -6,3 +6,7 @@
 .Générique
 #quit
 .Quitter
+#save
+.Enregistrer
+#cancel
+.Annuler

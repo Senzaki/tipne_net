@@ -5,5 +5,8 @@
 #credits
 .Credits
 #quit
-.Quitter
-
+.Quit
+#save
+.Save
+#cancel
+.Cancel
