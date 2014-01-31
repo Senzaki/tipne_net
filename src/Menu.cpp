@@ -59,14 +59,17 @@ void Menu::onWindowClosed()
 
 void Menu::onKeyPressed(const sf::Event::KeyEvent &evt)
 {
-	switch(evt.code)
+	if(!m_guimgr.onKeyPressed(evt))
 	{
-		case sf::Keyboard::Escape:
-			Application::getInstance().setNextAppState(nullptr);
-			break;
+		switch(evt.code)
+		{
+			case sf::Keyboard::Escape:
+				Application::getInstance().setNextAppState(nullptr);
+				break;
 
-		default:
-			break;
+			default:
+				break;
+		}
 	}
 }
 
