@@ -14,6 +14,11 @@ GUIManager::GUIManager(sf::RenderWindow &window):
 
 GUIManager::~GUIManager()
 {
+	//Delete widgets to be removed
+	for(Widget *del : m_todelete)
+		delete del;
+	m_todelete.clear();
+
 	delete m_topwidget;
 }
 
