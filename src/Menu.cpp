@@ -101,7 +101,7 @@ void Menu::showMainMenu()
 
 	//Create buttons
 	Widget *topwidget = m_guimgr.getTopWidget();
-	constexpr const int BUTTONS_COUNT = 4;
+	const int BUTTONS_COUNT = 4;
 	Widget *buttons[BUTTONS_COUNT];//Array only used for loop
 	buttons[0] = new Button(topwidget, tr("play"));
 	buttons[1] = new Button(topwidget, tr("options"), std::bind(&Menu::showOptions, this));
@@ -119,30 +119,8 @@ void Menu::showOptions()
 
 	//Widgets to add
 	Widget *topwidget = m_guimgr.getTopWidget();
-	DecoratedLineEdit *lineedit;
-	constexpr const int CHECKBOX_COUNT = 3;
-	CheckBox *checkboxes[CHECKBOX_COUNT];
-	Button *button[2];
 
-	lineedit = new DecoratedLineEdit(topwidget, 150, 0);
-
-	button[0] = new Button(topwidget, tr("save"));
-	button[1] = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
-
-	checkboxes[0] = new CheckBox(topwidget);
-	checkboxes[1] = new CheckBox(topwidget);
-	checkboxes[2] = new CheckBox(topwidget);
-
-	lineedit->setString(Config::getInstance().name);
-	lineedit->setPosition(50, 200);
-
-	button[0]->setPosition(450, 500);
-	button[1]->setPosition(380, 500);
-
-	checkboxes[0]->setChecked(Config::getInstance().fullscreen);
-	checkboxes[1]->setChecked(Config::getInstance().vsync);
-	checkboxes[2]->setChecked(Config::getInstance().dispfreq);
-	float interval = (m_window.getSize().y - 100.f) / CHECKBOX_COUNT;
-	for(int i = 0 ; i < CHECKBOX_COUNT ; i++)
-		checkboxes[i]->setPosition((m_window.getSize().x - checkboxes[i]->getSize().x) / 2.f, 100.f + i * interval);
+	Button *button = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
+	button->setPosition(450, 500);
+	new DecoratedLineEdit(topwidget, 150, 0);
 }
