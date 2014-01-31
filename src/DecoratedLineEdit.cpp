@@ -1,6 +1,5 @@
 #include "DecoratedLineEdit.hpp"
 #include "ResourceManager.hpp"
-#include <iostream>
 
 static constexpr const unsigned int LINEEDIT_LEFT_BORDER_WIDTH = 5;
 static constexpr const unsigned int LINEEDIT_RIGHT_BORDER_WIDTH = 5;

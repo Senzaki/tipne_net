@@ -2,6 +2,7 @@
 #include "Config.hpp"
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 Translator &Translator::getInstance()
 {

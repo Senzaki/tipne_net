@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <SFML/Window.hpp>
+#include <stdexcept>
 
 static constexpr const char *FILENAME = "data/conf";
 

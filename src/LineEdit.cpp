@@ -1,7 +1,5 @@
 #include "LineEdit.hpp"
 #include "ResourceManager.hpp"
-#include <GL/gl.h>
-#include <iostream>
 
 static constexpr const unsigned int LINEEDIT_FONT_SIZE = 12;
 

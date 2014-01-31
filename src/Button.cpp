@@ -1,7 +1,5 @@
 #include "Button.hpp"
 #include "ResourceManager.hpp"
-#include <iostream>
-#include <GL/gl.h>
 
 static constexpr const unsigned int BUTTON_FONT_SIZE = 12;
 static constexpr const unsigned int BUTTON_LEFT_BORDER_WIDTH = 5;
