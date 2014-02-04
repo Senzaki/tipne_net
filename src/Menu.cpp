@@ -104,7 +104,7 @@ void Menu::showMainMenu()
 
 	//Create buttons
 	Widget *topwidget = m_guimgr.getTopWidget();
-	const int BUTTONS_COUNT = 4;
+	const unsigned int BUTTONS_COUNT = 4;
 	Widget *buttons[BUTTONS_COUNT];//Array only used for loop
 	buttons[0] = new Button(topwidget, tr("play"));
 	buttons[1] = new Button(topwidget, tr("options"), std::bind(&Menu::showOptions, this));
