@@ -92,6 +92,7 @@ void IDCreator<IDType>::releaseID(IDType id)
 		{
 			it->second++;
 			it++;
+			//Merge two ranges if required
 			if(it != m_freeids.end())
 			{
 				if(it->first == id + 1)

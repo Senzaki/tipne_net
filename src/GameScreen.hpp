@@ -1,17 +1,18 @@
-#ifndef MENU_HPP_INCLUDED
-#define MENU_HPP_INCLUDED
+#ifndef GAMESCREEN_HPP_INCLUDED
+#define GAMESCREEN_HPP_INCLUDED
 
 #include "ApplicationState.hpp"
+#include "GameSimulator.hpp"
 #include "GUIManager.hpp"
 
-class Menu : public ApplicationState
+class GameScreen : public ApplicationState
 {
 	public:
-	Menu(sf::RenderWindow &window, float vratio, float xyratio);
-	virtual ~Menu();
+	GameScreen(sf::RenderWindow &window, float vratio, float xyratio, GameSimulator *m_simulator);//The simulator will automatically be freed
+	virtual ~GameScreen();
 
-	Menu(const Menu &) = delete;
-	Menu &operator=(const Menu &) = delete;
+	GameScreen(const GameScreen &) = delete;
+	GameScreen &operator=(const GameScreen &) = delete;
 
 	virtual void load();
 	virtual void update(float etime);
@@ -25,11 +26,8 @@ class Menu : public ApplicationState
 	virtual void onTextEntered(const sf::Event::TextEvent &evt);
 
 	private:
-	void showMainMenu();
-	void showOptions();
-	void TEMPtestPlay();
-
 	sf::RenderWindow &m_window;
+	GameSimulator *m_simulator;
 	GUIManager m_guimgr;
 	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)
 	float m_vratio;
@@ -37,4 +35,4 @@ class Menu : public ApplicationState
 	sf::Sprite m_cursor;
 };
 
-#endif // MENU_HPP_INCLUDED
+#endif // GAMESCREEN_HPP_INCLUDED

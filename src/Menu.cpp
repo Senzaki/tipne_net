@@ -6,6 +6,11 @@
 #include "CheckBox.hpp"
 #include "DecoratedLineEdit.hpp"
 #include "Config.hpp"
+#include "GameScreen.hpp"
+#include "ClientSimulator.hpp"
+#include "ServerSimulator.hpp"
+#include "NetworkCodes.hpp"
+#include <iostream>
 
 Menu::Menu(sf::RenderWindow &window, float vratio, float xyratio):
 	m_window(window),
@@ -106,7 +111,7 @@ void Menu::showMainMenu()
 	Widget *topwidget = m_guimgr.getTopWidget();
 	const unsigned int BUTTONS_COUNT = 4;
 	Widget *buttons[BUTTONS_COUNT];//Array only used for loop
-	buttons[0] = new Button(topwidget, tr("play"));
+	buttons[0] = new Button(topwidget, tr("play"), std::bind(&Menu::TEMPtestPlay, this));
 	buttons[1] = new Button(topwidget, tr("options"), std::bind(&Menu::showOptions, this));
 	buttons[2] = new Button(topwidget, tr("credits"));
 	buttons[3] = new Button(topwidget, tr("quit"), std::bind(&Application::setNextAppState, &Application::getInstance(), nullptr, true));
@@ -126,4 +131,43 @@ void Menu::showOptions()
 	Button *button = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
 	button->setPosition(450, 500);
 	new DecoratedLineEdit(topwidget, 150, 0);
+}
+
+void Menu::TEMPtestPlay()
+{
+	GameSimulator *simulator = new ClientSimulator();
+	int status;
+	std::cout << "Trying as client..." << std::endl;
+	if((status = static_cast<ClientSimulator *>(simulator)->startNetThread(sf::IpAddress("127.0.0.1"), 5252, Config::getInstance().name)) != (int)ConnectionStatus::Accepted)
+	{
+		delete simulator;
+		if(status == (int)ConnectionStatus::GameIsFull)
+		{
+			std::cout << "[Game is full]" << std::endl;
+			simulator = nullptr;
+		}
+		else
+		{
+			std::cout << "[Client failed]" << std::endl;
+			std::cout << "Trying as server... " << std::endl;
+			simulator = new ServerSimulator();
+			if(!static_cast<ServerSimulator *>(simulator)->startNetThread(5252, 2))
+			{
+				std::cout << "[Server failed]" << std::endl;
+				delete simulator;
+				simulator = nullptr;
+			}
+			else
+				std::cout << "[Server ok]" << std::endl;
+		}
+	}
+	else
+		std::cout << "[Client ok]" << std::endl;
+	if(simulator)
+	{
+		GameScreen *next = new GameScreen(m_window, m_vratio, m_xyratio, simulator);
+		Application::getInstance().setNextAppState(next);
+	}
+	else
+		Application::getInstance().setNextAppState(nullptr);
 }
