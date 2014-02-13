@@ -18,6 +18,19 @@ ClientSimulator::~ClientSimulator()
 	stopNetThread();
 }
 
+void ClientSimulator::update(float etime)
+{
+	//Treat packets
+	{//Lock m_receivemutex
+		std::lock_guard<std::mutex> lock(m_receivemutex);
+		for(sf::Packet &packet : m_receivedpackets)
+		{
+
+		}
+		m_receivedpackets.clear();
+	}
+}
+
 int ClientSimulator::startNetThread(const sf::IpAddress &serveraddr, unsigned short port, const std::string &name)
 {
 	//If the thread already exists, don't start a new one
@@ -41,7 +54,7 @@ int ClientSimulator::startNetThread(const sf::IpAddress &serveraddr, unsigned sh
 	//Receive connection reply
 	m_server.setBlocking(false);
 	sf::SocketSelector selector;
-	selector.add(m_server);
+	m_server.addTo(selector);
 	sf::Clock clock;//Used to avoid false positive by the selector (happens sometime)
 	while(clock.getElapsedTime() <= CONNECTION_INFO_MAX_TIME)
 	{
@@ -118,6 +131,7 @@ void ClientSimulator::stopNetThread()
 
 		//Delete the thread object
 		delete m_thread;
+		m_thread = nullptr;
 	}
 }
 
@@ -141,16 +155,38 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 void ClientSimulator::netThread()
 {
 	sf::SocketSelector selector;
-	selector.add(m_server);
+	m_server.addTo(selector);
 
 	while(m_thrrunning)
 	{
 		//Wait until new new data or timeout
 		if(selector.wait(SELECTOR_WAIT_TIME))
 		{
-
+			m_thrrunning = receivePackets();
 		}
 	}
 
 	m_server.disconnect();
+}
+
+bool ClientSimulator::receivePackets()
+{
+	sf::Socket::Status status;
+	//Receive the packets
+	{//Lock m_receivemutex
+		std::lock_guard<std::mutex> lock(m_receivemutex);
+		do
+		{
+			m_receivedpackets.emplace_back();
+		}
+		while((status = m_server.receive(m_receivedpackets.back())) == sf::Socket::Done);
+		//Remove the last packet, because it was not used
+		m_receivedpackets.pop_back();
+	}
+	//Error, or just no packets left ?
+	if(status == sf::Socket::NotReady)
+		return true;
+	else if(status == sf::Socket::Error)
+		std::cerr << "Unexpected network error." << std::endl;
+	return false;
 }

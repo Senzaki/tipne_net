@@ -26,10 +26,10 @@ class GameSimulator
 	void removePlayer(sf::Uint8 id);
 	const Player &getPlayer(sf::Uint8 id) const;//May throw std::out_of_range if no player corresponds to this id.
 	Player &getPlayer(sf::Uint8 id);//May throw std::out_of_range if no player corresponds to this id.
-	const std::unordered_map<sf::Uint8, Player *> &getPlayers() const;
+	const std::unordered_map<sf::Uint8, Player> &getPlayers() const;
 
 	private:
-	std::unordered_map<sf::Uint8, Player *> m_players;
+	std::unordered_map<sf::Uint8, Player> m_players;
 	SimulatorStateListener *m_statelistener;
 };
 

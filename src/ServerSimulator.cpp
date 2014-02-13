@@ -7,7 +7,8 @@ static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 
 ServerSimulator::ServerSimulator():
 	m_thread(nullptr),
-	m_thrrunning(false)
+	m_thrrunning(false),
+	m_playerscount(0)
 {
 	m_playersids.reserveID(NEUTRAL_PLAYER);
 }
@@ -15,6 +16,42 @@ ServerSimulator::ServerSimulator():
 ServerSimulator::~ServerSimulator()
 {
 	stopNetThread();
+	for(std::pair<sf::TcpSocket *, Player> &newplayers : m_acceptedplayers)
+		delete newplayers.first;
+}
+
+void ServerSimulator::update(float etime)
+{
+	//Examine network info
+	//First, connections
+	{//Lock m_acceptmutex & m_playerslistmutex
+		std::lock_guard<std::mutex> lock(m_acceptmutex);
+		std::lock_guard<std::mutex> lock2(m_playerslistmutex);
+		for(std::pair<sf::TcpSocket *, Player> &accepted : m_acceptedplayers)
+			addPlayer(std::move(accepted.second));
+		m_acceptedplayers.clear();
+	}
+	//Then packets
+	{//Lock m_receivemutex
+		std::lock_guard<std::mutex> lock(m_receivemutex);
+		for(std::pair<sf::Uint8, sf::Packet> &packet : m_receivedpackets)
+		{
+
+		}
+		m_receivedpackets.clear();
+	}
+	//Then disconnections
+	{//Lock m_disconnectmutex & m_playerslistmutex
+		std::lock_guard<std::mutex> lock(m_disconnectmutex);
+		std::lock_guard<std::mutex> lock2(m_playerslistmutex);
+		for(sf::Uint8 id : m_disconnectedplayers)
+		{
+			removePlayer(id);
+			m_playerscount--;
+			m_clientstoremove.emplace_back(id);
+		}
+		m_disconnectedplayers.clear();
+	}
 }
 
 bool ServerSimulator::startNetThread(unsigned short port, sf::Uint8 maxplayers)
@@ -70,6 +107,7 @@ void ServerSimulator::stopNetThread()
 
 		//Delete the thread object
 		delete m_thread;
+		m_thread = nullptr;
 	}
 }
 
@@ -82,6 +120,17 @@ void ServerSimulator::netThread()
 
 	while(m_thrrunning)
 	{
+		//Remove clients to be removed
+		{//Lock m_remclientmutex
+			std::lock_guard<std::mutex> lock(m_remclientmutex);
+			for(sf::Uint8 torem : m_clientstoremove)
+			{
+				m_clients[torem].removeFrom(selector);
+				m_clients.erase(torem);
+				m_playersids.releaseID(torem);
+			}
+			m_clientstoremove.clear();
+		}
 		//Wait until new connection, new data or timeout
 		if(selector.wait(SELECTOR_WAIT_TIME))
 		{
@@ -95,18 +144,17 @@ void ServerSimulator::netThread()
 				auto it = m_clients.begin();
 				while(it != m_clients.end())
 				{
-					if(selector.isReady(*it->second))
+					if(it->second.isReady(selector))
 					{
-						if(!receiveNewPacket(it->second))
-						{//Lock net
+						if(!receiveNewPackets(it->first, it->second))
+						{
 							//Error or disconnection, kick the client
-							std::lock_guard<std::mutex> netlock(m_netmutex);
-							selector.remove(*it->second);
-							it->second->disconnect();
-							delete it->second;
-							removePlayer(it->first);
-							m_playersids.releaseID(it->first);
-							it = m_clients.erase(it);
+							it->second.removeFrom(selector);
+							it->second.disconnect();
+							{//Lock m_disconnectmutex
+								std::lock_guard<std::mutex> lock(m_disconnectmutex);
+								m_disconnectedplayers.push_back(it->first);
+							}
 							continue;
 						}
 					}
@@ -132,7 +180,7 @@ void ServerSimulator::netThread()
 		}
 	}
 
-	//Delete all the new clients
+	//Delete all the new clients that haven't been accepted yet
 	for(sf::TcpSocket *socket : newclients)
 	{
 		socket->disconnect();
@@ -188,7 +236,8 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 		else if(status == sf::Socket::Error)
 			std::cerr << "An unexpected error happened while receiving connection information." << std::endl;
 		else if(status == sf::Socket::NotReady)
-			return false;
+			return false; //No data to be received, don't do anything
+		//On error, remove the new client
 		selector.remove(*socket);
 		socket->disconnect();
 		delete socket;
@@ -199,6 +248,7 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 	player.ai = false;
 	if(!(packet >> player.name))
 	{
+		//On error, remove the new client
 		std::cerr << "Invalid connection data received from client." << std::endl;
 		selector.remove(*socket);
 		socket->disconnect();
@@ -207,12 +257,12 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 	}
 	//Find a new id if the game isn't full
 	sf::Uint8 id;
-	if(getPlayers().size() < m_maxplayers)
+	if(m_playerscount < m_maxplayers)
 		id = player.id = m_playersids.getNewID();
 	else
 	{
-		//Game is full, tell it to the client
-		std::cerr << "Room is full. Disconnecting the new client." << std::endl;
+		//Game is full, tell it to the client & remove it
+		std::cerr << "Game is full. Disconnecting the new client." << std::endl;
 		packet.clear();
 		packet << (sf::Uint8)ConnectionStatus::GameIsFull;
 		socket->send(packet);
@@ -234,64 +284,65 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 	{
 		m_names[player.name] = 1;
 	}
-	//Add the player
-	addPlayer(std::move(player));
+	{//Lock m_acceptmutex
+		std::lock_guard<std::mutex> lock(m_acceptmutex);
+		//Add the player
+		m_acceptedplayers.emplace_back(std::make_pair(socket, std::move(player)));
+		m_clients.emplace(id, socket);
+		m_playerscount++;
 
-	//Send the current state (list of players)
-	packet.clear();
-	auto &players = getPlayers();
-	packet << (sf::Uint8)ConnectionStatus::Accepted << (sf::Uint8)players.size() << id;
-	for(auto it = players.begin(); it != players.end(); it++)
-	{
-		packet << *it->second;
-	}
-	if((status = socket->send(packet)) != sf::Socket::Done)
-	{
-		if(status == sf::Socket::Disconnected)
-			std::cerr << "A new client disconnected before connection data could be sent." << std::endl;
-		else if(status == sf::Socket::Error)
-			std::cerr << "Unexpected error while sending connection data to a new client." << std::endl;
-		else if(status == sf::Socket::NotReady)
-			std::cerr << "Cannot accept client : socket buffer is full." << std::endl;//Impossible, right ?
-		removePlayer(id);
-		selector.remove(*socket);
-		socket->disconnect();
-		delete socket;
-		return true;
-	}
-	{//Lock net
-		std::lock_guard<std::mutex> lock(m_netmutex);
-		m_clients[id] = socket;
-	}
-	return true;
-}
-
-bool ServerSimulator::receiveNewPacket(sf::TcpSocket *socket)
-{
-	sf::Packet packet;
-	sf::Socket::Status status;
-	//Receive the packet
-	if((status = socket->receive(packet)) != sf::Socket::Done)
-	{
-		if(status == sf::Socket::Error)
-			std::cerr << "Unexpected network error." << std::endl;
-		else if(status == sf::Socket::NotReady)
+		//Put the current state (list of players) into a packet
+		packet.clear();
+		{//Lock m_playerslistmutex
+			std::lock_guard<std::mutex> lock(m_playerslistmutex);
+			const std::unordered_map<sf::Uint8, Player> &players = getPlayers();
+			packet << (sf::Uint8)ConnectionStatus::Accepted << (sf::Uint8)m_playerscount << id;
+			//List of players = all players + newly (totally) accepted players
+			for(auto it = players.cbegin(); it != players.cend(); it++)
+				packet << it->second;
+		}
+		for(const std::pair<sf::TcpSocket *, Player> &toadd : m_acceptedplayers)
+			packet << toadd.second;
+		if((status = socket->send(packet)) != sf::Socket::Done)
+		{
+			if(status == sf::Socket::Disconnected)
+				std::cerr << "A new client disconnected before connection data could be sent." << std::endl;
+			else if(status == sf::Socket::Error)
+				std::cerr << "Unexpected error while sending connection data to a new client." << std::endl;
+			else if(status == sf::Socket::NotReady)
+				std::cerr << "Cannot accept client : socket buffer is full." << std::endl;//Impossible, right ?
+			//On error, remove the new client
+			m_acceptedplayers.pop_back();
+			m_clients.erase(id);
+			m_playerscount--;
+			selector.remove(*socket);
+			socket->disconnect();
+			delete socket;
 			return true;
-		return false;
+		}
 	}
 	return true;
 }
 
-void ServerSimulator::sendPacket(sf::Uint8 dest, sf::Packet &packet)
+bool ServerSimulator::receiveNewPackets(sf::Uint8 id, SafeSocket &socket)
 {
-	std::lock_guard<std::mutex> lock(m_netmutex);
-	try
-	{
-		sf::TcpSocket *socket = m_clients.at(dest);
-		socket->send(packet);
+	sf::Socket::Status status;
+	//Receive the packets
+	{//Lock m_receivemutex
+		std::lock_guard<std::mutex> lock(m_receivemutex);
+		do
+		{
+			m_receivedpackets.emplace_back();
+			m_receivedpackets.back().first = id;
+		}
+		while((status = socket.receive(m_receivedpackets.back().second)) == sf::Socket::Done);
+		//Remove the last packet, because it was not used
+		m_receivedpackets.pop_back();
 	}
-	catch(const std::out_of_range &)
-	{
-
-	}
+	//Error, or just no packets left ?
+	if(status == sf::Socket::NotReady)
+		return true;
+	else if(status == sf::Socket::Error)
+		std::cerr << "Unexpected network error." << std::endl;
+	return false;
 }

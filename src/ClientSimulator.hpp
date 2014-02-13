@@ -2,15 +2,17 @@
 #define CLIENTSIMULATOR_HPP_INCLUDED
 
 #include "GameSimulator.hpp"
-#include <SFML/Network.hpp>
 #include <thread>
-#include <mutex>
+#include "SafeSocket.hpp"
+#include <list>
 
 class ClientSimulator : public GameSimulator
 {
 	public:
 	ClientSimulator();
 	virtual ~ClientSimulator();
+
+	virtual void update(float etime);
 
 	int startNetThread(const sf::IpAddress &serveraddr, unsigned short port, const std::string &name); //Returns -1 in case of error, and the connection status otherwise
 	void stopNetThread();
@@ -19,12 +21,14 @@ class ClientSimulator : public GameSimulator
 	bool parseConnectionData(sf::Packet &packet);
 
 	void netThread();
+	bool receivePackets();
 
 	std::thread *m_thread;
-	std::mutex m_mutex;
 	bool m_thrrunning;
 
-	sf::TcpSocket m_server;
+	SafeSocket m_server;
+	std::list<sf::Packet> m_receivedpackets;//Write : child. Read : main.
+	std::mutex m_receivemutex;
 
 	sf::Uint8 m_id;
 };
