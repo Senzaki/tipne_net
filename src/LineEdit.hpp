@@ -6,7 +6,7 @@
 class LineEdit : public Widget
 {
 	public:
-	LineEdit(Widget *parent = nullptr, float width = 50, unsigned int maxchar = 0, std::function<void(std::string)> callback = std::function<void(std::string)>());
+	LineEdit(Widget *parent = nullptr, float width = 0, std::function<void(std::string)> callback = std::function<void(std::string)>());
 
 	void setMaxChar(unsigned int maxchar);
 	void setWidth(float width);
@@ -24,7 +24,6 @@ class LineEdit : public Widget
 
 	private:
 	void updateCursor();
-
 	bool m_inputison;
 	unsigned int m_maxchar; //0 if not needed
 	unsigned int m_positioncursor;

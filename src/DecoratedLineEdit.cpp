@@ -4,7 +4,9 @@
 static constexpr const unsigned int LINEEDIT_LEFT_BORDER_WIDTH = 5;
 static constexpr const unsigned int LINEEDIT_RIGHT_BORDER_WIDTH = 5;
 
-DecoratedLineEdit::DecoratedLineEdit(Widget *parent, float width, unsigned int maxchar, std::function<void(std::string)> callback):
+static constexpr const unsigned int MINWIDTH_LINEEDIT = LINEEDIT_LEFT_BORDER_WIDTH + LINEEDIT_RIGHT_BORDER_WIDTH + 1;
+
+DecoratedLineEdit::DecoratedLineEdit(Widget *parent, float width, std::function<void(std::string)> callback):
 	Widget(parent),
 	m_width(width),
 	m_background(sf::TrianglesStrip, 8)
@@ -22,15 +24,36 @@ DecoratedLineEdit::DecoratedLineEdit(Widget *parent, float width, unsigned int m
 	m_background[6].texCoords = sf::Vector2f(LINEEDIT_LEFT_BORDER_WIDTH + 1 + LINEEDIT_RIGHT_BORDER_WIDTH, texheight);
 	m_background[7].texCoords = sf::Vector2f(LINEEDIT_LEFT_BORDER_WIDTH + 1 + LINEEDIT_RIGHT_BORDER_WIDTH, 0.f);
 
+	if(m_width < MINWIDTH_LINEEDIT)
+	{
+		m_width = MINWIDTH_LINEEDIT;
+	}
+
 	updateSize();
 
-	m_lineedit = new LineEdit(this, width - LINEEDIT_RIGHT_BORDER_WIDTH, maxchar, callback);
+	m_lineedit = new LineEdit(this, width, callback);
 }
 
 DecoratedLineEdit::~DecoratedLineEdit()
 {
 	m_lineedit = nullptr;
 	delete m_lineedit;
+}
+
+void DecoratedLineEdit::setMaxChar(unsigned int maxchar)
+{
+	m_lineedit->setMaxChar(maxchar);
+}
+
+void DecoratedLineEdit::setWidth(float width)
+{
+	m_lineedit->setWidth(width);
+	updateSize();
+}
+
+void DecoratedLineEdit::setCallback(std::function<void(std::string)> callback)
+{
+	m_lineedit->setCallback(callback);
 }
 
 void DecoratedLineEdit::setString(std::string string)
@@ -67,6 +90,6 @@ void DecoratedLineEdit::updateSize()
 
 	onPositionChanged();
 
-	setSize(width + LINEEDIT_RIGHT_BORDER_WIDTH, texheight);
+	setSize(m_width, texheight);
 }
 

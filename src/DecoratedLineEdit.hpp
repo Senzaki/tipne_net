@@ -4,12 +4,16 @@
 #include "Widget.hpp"
 #include "LineEdit.hpp"
 
+
 class DecoratedLineEdit : public Widget
 {
 	public:
-	DecoratedLineEdit(Widget *parent = nullptr, float width = 50, unsigned int maxchar = 0, std::function<void(std::string)> callback = std::function<void(std::string)>());
+	DecoratedLineEdit(Widget *parent = nullptr, float width = 0, std::function<void(std::string)> callback = std::function<void(std::string)>());
 	virtual ~DecoratedLineEdit();
 
+	void setMaxChar(unsigned int maxchar);
+	void setWidth(float width);
+	void setCallback(std::function<void(std::string)> callback);
 	void setString(std::string string);
 	std::string getString() const;
 

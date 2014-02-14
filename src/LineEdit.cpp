@@ -1,12 +1,17 @@
 #include "LineEdit.hpp"
 #include "ResourceManager.hpp"
+#include <GL/gl.h>
+
+#include <iostream>
 
 static constexpr const unsigned int LINEEDIT_FONT_SIZE = 12;
+static constexpr const unsigned int LINEEDIT_LEFT_BORDER_WIDTH = 5;
+static constexpr const unsigned int LINEEDIT_RIGHT_BORDER_WIDTH = 5;
 
-LineEdit::LineEdit(Widget *parent, float width, unsigned int maxchar, std::function<void(std::string)> callback):
+LineEdit::LineEdit(Widget *parent, float width, std::function<void(std::string)> callback):
 	Widget(parent),
 	m_inputison(false),
-	m_maxchar(maxchar),
+	m_maxchar(0),
 	m_positioncursor(0),
 	m_width(width),
 	m_func(callback)
@@ -16,10 +21,11 @@ LineEdit::LineEdit(Widget *parent, float width, unsigned int maxchar, std::funct
 	m_text.setColor(sf::Color::White);
 	m_string = "";
 	m_text.setString("T");
-	setSize(m_width, getParent()->getSize().y);
+	setSize(m_width - LINEEDIT_LEFT_BORDER_WIDTH * 2, getParent()->getSize().y);
 	m_cursor.setSize(sf::Vector2f(2, std::round(m_text.getLocalBounds().height + 3)));
 	m_cursor.setFillColor(sf::Color::White);
 	m_text.setString(m_string);
+	setPosition(getAbsolutePosition().x + LINEEDIT_LEFT_BORDER_WIDTH, getAbsolutePosition().y);
 
 	onPositionChanged();
 
@@ -34,6 +40,7 @@ void LineEdit::setMaxChar(unsigned int maxchar)
 void LineEdit::setWidth(float width)
 {
 	m_width = width;
+	setSize(m_width - 5, getParent()->getSize().y);
 }
 
 void LineEdit::setCallback(std::function<void(std::string)> callback)
@@ -71,7 +78,7 @@ void LineEdit::onPositionChanged()
 	sf::FloatRect textrect = m_text.getLocalBounds();
 	m_text.setString(m_string);
 
-	m_text.setPosition(std::round(pos.x + 5), std::round(pos.y + (size.y - textrect.height) / 2.f));
+	m_text.setPosition(std::round(pos.x), std::round(pos.y + (size.y - textrect.height) / 2.f));
 
 	updateCursor();
 }
@@ -152,8 +159,28 @@ bool LineEdit::onKeyPressed(const sf::Event::KeyEvent &evt)
 
 void LineEdit::updateCursor()
 {
-	if(m_positioncursor == 0)
-		m_cursor.setPosition(std::round(getAbsolutePosition().x) + 5, std::round(m_text.getPosition().y));
-	else
-		m_cursor.setPosition(std::round(m_text.findCharacterPos(m_positioncursor).x), std::round(m_text.getPosition().y));
+	//Put the cursor after the adequate character
+	sf::Vector2f cursorpos(std::round(m_text.findCharacterPos(m_positioncursor).x), std::round(m_text.getPosition().y));
+	m_cursor.setPosition(cursorpos);
+
+	//If the cursor is outside of the widget, replace the text
+	if(cursorpos.x <= getAbsolutePosition().x || cursorpos.x >= getAbsolutePosition().x + getSize().x - m_cursor.getLocalBounds().width)
+	{
+		sf::Vector2f pos = m_text.getPosition();
+		sf::Vector2f size = getSize();
+		sf::Vector2f newpos;
+		//Determine the x of the new pos of the text
+		if(cursorpos.x <= getAbsolutePosition().x)
+		{
+			newpos.x = pos.x + LINEEDIT_LEFT_BORDER_WIDTH;
+		}
+		if(cursorpos.x - size.x + m_cursor.getLocalBounds().width >= getAbsolutePosition().x)
+		{
+			newpos.x = pos.x - LINEEDIT_RIGHT_BORDER_WIDTH;
+		}
+		newpos.y = m_text.getPosition().y;
+		m_text.setPosition(newpos);
+		//reupdate cursor
+		updateCursor();
+	}
 }
