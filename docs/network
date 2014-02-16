@@ -1,0 +1,32 @@
+Connection :
+Client --Connection------> Server
+Client --Connection info-> Server
+Client <-State info------- Server
+
+Connection info :
+name (UTF8 string)
+
+State info :
+Connection status (u8)
+Players count (u8)
+Client Id (u8)
+Connected players (for each : id (u8), name (UTF8 string), ai (bool))
+
+-----------------------------------------------------------------
+
+New player notif :
+Client <-New player info-- Server
+
+New player info :
+Packet type : NewPlayer (u8)
+Player (id (u8), name (UTF8 string), ai (bool))
+
+-----------------------------------------------------------------
+
+Player disconnection :
+Client <-Disconnection info--Server
+
+Disconnection info :
+Packet type : Disconnection (u8)
+id (u8)
+reason (u8)

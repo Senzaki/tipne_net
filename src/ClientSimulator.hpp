@@ -19,6 +19,8 @@ class ClientSimulator : public GameSimulator
 
 	private:
 	bool parseConnectionData(sf::Packet &packet);
+	bool onNewPlayerPacket(sf::Packet &packet);
+	bool onDisconnectionPacket(sf::Packet &packet);
 
 	void netThread();
 	bool receivePackets();
@@ -29,8 +31,6 @@ class ClientSimulator : public GameSimulator
 	SafeSocket m_server;
 	std::list<sf::Packet> m_receivedpackets;//Write : child. Read : main.
 	std::mutex m_receivemutex;
-
-	sf::Uint8 m_id;
 };
 
 #endif // CLIENTSIMULATOR_HPP_INCLUDED

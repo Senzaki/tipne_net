@@ -10,7 +10,7 @@
 class ServerSimulator : public GameSimulator
 {
 	public:
-	ServerSimulator();
+	ServerSimulator(bool pure);
 	virtual ~ServerSimulator();
 
 	virtual void update(float etime);
@@ -22,13 +22,15 @@ class ServerSimulator : public GameSimulator
 	void netThread();
 	void acceptNewConnections(std::list<sf::TcpSocket *> &newclients, sf::SocketSelector &selector);
 	bool receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::SocketSelector &selector); //Returns false if no information was received (true if some data was received or if the client disconnected).
-	bool receiveNewPackets(sf::Uint8 id, SafeSocket &socket);
+	int receiveNewPackets(sf::Uint8 id, SafeSocket &socket);//Returns -1 if no error, and a DisconnectionReason otherwise
+
+	bool playerNameExists(const std::string &name) const;
 
 	std::thread *m_thread;
 	bool m_thrrunning;
 
-	IDCreator<sf::Uint8> m_playersids;//Not locked
-	std::unordered_map<std::string, int> m_names;//Not locked
+	IDCreator<sf::Uint8> m_playersids;
+	std::mutex m_pidsmutex;
 	sf::Uint8 m_maxplayers;//Not locked
 	sf::Uint8 m_playerscount;
 
@@ -42,7 +44,7 @@ class ServerSimulator : public GameSimulator
 	std::mutex m_acceptmutex;
 	std::list<std::pair<sf::Uint8, sf::Packet>> m_receivedpackets;//Write : child. Read : main.
 	std::mutex m_receivemutex;
-	std::list<sf::Uint8> m_disconnectedplayers;//Write : child. Read : main.
+	std::list<std::pair<sf::Uint8, sf::Uint8>> m_disconnectedplayers;//Write : child. Read : main.
 	std::mutex m_disconnectmutex;
 
 	std::list<sf::Uint8> m_clientstoremove;//Write : main. Read : child.

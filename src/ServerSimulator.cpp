@@ -2,15 +2,23 @@
 #include <iostream>
 #include <sstream>
 #include "NetworkCodes.hpp"
+#include "Config.hpp"
 
 static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 
-ServerSimulator::ServerSimulator():
+ServerSimulator::ServerSimulator(bool pure):
 	m_thread(nullptr),
 	m_thrrunning(false),
 	m_playerscount(0)
 {
 	m_playersids.reserveID(NEUTRAL_PLAYER);
+	//If it's not a pure server, add a player (this player)
+	if(!pure)
+	{
+		m_ownid = m_playersids.getNewID();
+		addPlayer(m_ownid, Config::getInstance().name);
+		m_playerscount++;
+	}
 }
 
 ServerSimulator::~ServerSimulator()
@@ -28,7 +36,16 @@ void ServerSimulator::update(float etime)
 		std::lock_guard<std::mutex> lock(m_acceptmutex);
 		std::lock_guard<std::mutex> lock2(m_playerslistmutex);
 		for(std::pair<sf::TcpSocket *, Player> &accepted : m_acceptedplayers)
+		{
+			//Tell all the other players a new player connected
+			sf::Packet packet;
+			packet << (sf::Uint8)PacketType::NewPlayer << accepted.second;
+			const std::unordered_map<sf::Uint8, Player> &players = getPlayers();
+			for(auto it = players.cbegin(); it != players.cend(); it++)
+				m_clients[it->first].send(packet);
+			//Add the player
 			addPlayer(std::move(accepted.second));
+		}
 		m_acceptedplayers.clear();
 	}
 	//Then packets
@@ -44,11 +61,22 @@ void ServerSimulator::update(float etime)
 	{//Lock m_disconnectmutex & m_playerslistmutex
 		std::lock_guard<std::mutex> lock(m_disconnectmutex);
 		std::lock_guard<std::mutex> lock2(m_playerslistmutex);
-		for(sf::Uint8 id : m_disconnectedplayers)
+		//Lock m_pidsmutex until players ids are sent !
+		std::lock_guard<std::mutex> lock3(m_pidsmutex);
+		for(std::pair<sf::Uint8, sf::Uint8> &discoinfo : m_disconnectedplayers)
 		{
-			removePlayer(id);
+			//Remove the player
+			removePlayer(discoinfo.first, discoinfo.second);
+			m_playersids.releaseID(discoinfo.first);
 			m_playerscount--;
-			m_clientstoremove.emplace_back(id);
+			//Tell all the other players
+			sf::Packet packet;
+			packet << (sf::Uint8)PacketType::Disconnection << discoinfo.first << discoinfo.second;
+			const std::unordered_map<sf::Uint8, Player> &players = getPlayers();
+			for(auto it = players.cbegin(); it != players.cend(); it++)
+				m_clients[it->first].send(packet);
+			//Tell the child thread to remove the client
+			m_clientstoremove.emplace_back(discoinfo.first);
 		}
 		m_disconnectedplayers.clear();
 	}
@@ -127,7 +155,6 @@ void ServerSimulator::netThread()
 			{
 				m_clients[torem].removeFrom(selector);
 				m_clients.erase(torem);
-				m_playersids.releaseID(torem);
 			}
 			m_clientstoremove.clear();
 		}
@@ -146,14 +173,15 @@ void ServerSimulator::netThread()
 				{
 					if(it->second.isReady(selector))
 					{
-						if(!receiveNewPackets(it->first, it->second))
+						int discoreason;
+						if((discoreason = receiveNewPackets(it->first, it->second)) >= 0)
 						{
 							//Error or disconnection, kick the client
 							it->second.removeFrom(selector);
 							it->second.disconnect();
 							{//Lock m_disconnectmutex
 								std::lock_guard<std::mutex> lock(m_disconnectmutex);
-								m_disconnectedplayers.push_back(it->first);
+								m_disconnectedplayers.push_back(std::make_pair(it->first, (sf::Uint8)discoreason));
 							}
 							continue;
 						}
@@ -191,7 +219,6 @@ void ServerSimulator::netThread()
 void ServerSimulator::acceptNewConnections(std::list<sf::TcpSocket *> &newclients, sf::SocketSelector &selector)
 {
 	std::list<sf::TcpSocket *> accepted;
-	std::cout << "New connection !" << std::endl;
 	sf::Socket::Status status;
 	//A new client tries to connect
 	do
@@ -224,7 +251,6 @@ void ServerSimulator::acceptNewConnections(std::list<sf::TcpSocket *> &newclient
 
 bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::SocketSelector &selector)
 {
-	std::cout << "Player connection info !" << std::endl;
 	sf::Socket::Status status;
 	sf::Packet packet;
 
@@ -256,6 +282,8 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 		return true;
 	}
 	//Find a new id if the game isn't full
+	//Lock m_pidsmutex until player id is sent !
+	std::lock_guard<std::mutex> lock(m_pidsmutex);
 	sf::Uint8 id;
 	if(m_playerscount < m_maxplayers)
 		id = player.id = m_playersids.getNewID();
@@ -271,19 +299,17 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 		delete socket;
 		return true;
 	}
-	//Add a number after the name if someone already has this name
-	try
+	//Add a number after the name if someone already has this name (not very optimized :p)
+	int suffixnbr = 1;
+	std::string newname = player.name;
+	while(playerNameExists(newname))
 	{
-		int &namecount = m_names.at(player.name);
-		namecount++;
-		std::ostringstream strm(player.name + '(');
-		strm << namecount << ')';
-		player.name = strm.str();
+		suffixnbr++;
+		std::ostringstream strm(player.name + " (", std::ostringstream::ate);
+		strm << suffixnbr << ')';
+		newname = strm.str();
 	}
-	catch(const std::out_of_range &)
-	{
-		m_names[player.name] = 1;
-	}
+	player.name = std::move(newname);
 	{//Lock m_acceptmutex
 		std::lock_guard<std::mutex> lock(m_acceptmutex);
 		//Add the player
@@ -324,7 +350,7 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 	return true;
 }
 
-bool ServerSimulator::receiveNewPackets(sf::Uint8 id, SafeSocket &socket)
+int ServerSimulator::receiveNewPackets(sf::Uint8 id, SafeSocket &socket)
 {
 	sf::Socket::Status status;
 	//Receive the packets
@@ -341,8 +367,22 @@ bool ServerSimulator::receiveNewPackets(sf::Uint8 id, SafeSocket &socket)
 	}
 	//Error, or just no packets left ?
 	if(status == sf::Socket::NotReady)
-		return true;
+		return -1;
 	else if(status == sf::Socket::Error)
+	{
 		std::cerr << "Unexpected network error." << std::endl;
+		return (int)DisconnectionReason::Error;
+	}
+	return (int)DisconnectionReason::Left;
+}
+
+bool ServerSimulator::playerNameExists(const std::string &name) const
+{
+	//Simply iterate through the whole player list to find the corresponding name
+	for(auto it = getPlayers().cbegin(); it != getPlayers().cend(); it++)
+	{
+		if(it->second.name == name)
+			return true;
+	}
 	return false;
 }

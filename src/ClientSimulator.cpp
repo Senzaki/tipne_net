@@ -23,9 +23,27 @@ void ClientSimulator::update(float etime)
 	//Treat packets
 	{//Lock m_receivemutex
 		std::lock_guard<std::mutex> lock(m_receivemutex);
+		sf::Uint8 type;
 		for(sf::Packet &packet : m_receivedpackets)
 		{
+			if(!(packet >> type))
+				std::cerr << "Error in packet : Invalid packet type." << std::endl;
+			else
+			{
+				bool success = false;
+				switch(type)
+				{
+					case (sf::Uint8)PacketType::NewPlayer:
+						success = onNewPlayerPacket(packet);
+						break;
 
+					case (sf::Uint8)PacketType::Disconnection:
+						success = onDisconnectionPacket(packet);
+						break;
+				}
+				if(!success)
+					std::cerr << "Error in packet : Invalid packet of type " << (int)type << "." << std::endl;
+			}
 		}
 		m_receivedpackets.clear();
 	}
@@ -77,7 +95,7 @@ int ClientSimulator::startNetThread(const sf::IpAddress &serveraddr, unsigned sh
 	sf::Uint8 connectionstatus;
 	if(!(packet >> connectionstatus))
 	{
-		std::cerr << "Invalid connection data(1)." << std::endl;
+		std::cerr << "Invalid connection data." << std::endl;
 		m_server.disconnect();
 		return -1;
 	}
@@ -89,7 +107,7 @@ int ClientSimulator::startNetThread(const sf::IpAddress &serveraddr, unsigned sh
 	//Connection accepted, parse the connection data
 	if(!parseConnectionData(packet))
 	{
-		std::cerr << "Invalid connection data(2)." << std::endl;
+		std::cerr << "Invalid connection data." << std::endl;
 		m_server.disconnect();
 		return -1;
 	}
@@ -138,7 +156,7 @@ void ClientSimulator::stopNetThread()
 bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 {
 	sf::Uint8 players;
-	if(!(packet >> players >> m_id))
+	if(!(packet >> players >> m_ownid))
 		return false;
 
 	//Add all the players
@@ -149,6 +167,33 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 			return false;
 		addPlayer(std::move(player));
 	}
+	return true;
+}
+
+bool ClientSimulator::onNewPlayerPacket(sf::Packet &packet)
+{
+	//Get the newly connected player
+	Player player;
+	if(!(packet >> player))
+		return false;
+	//Add it to the game
+	addPlayer(std::move(player));
+	return true;
+}
+
+bool ClientSimulator::onDisconnectionPacket(sf::Packet &packet)
+{
+	//Which player ? For what reason ?
+	sf::Uint8 id;
+	if(!(packet >> id))
+		return false;
+	if(id == NEUTRAL_PLAYER)
+	{
+		std::cerr << "Error : the neutral player cannot disconnect." << std::endl;
+		return false;
+	}
+	//Remove it from the game
+	removePlayer(id);
 	return true;
 }
 
@@ -178,8 +223,7 @@ bool ClientSimulator::receivePackets()
 		do
 		{
 			m_receivedpackets.emplace_back();
-		}
-		while((status = m_server.receive(m_receivedpackets.back())) == sf::Socket::Done);
+		} while((status = m_server.receive(m_receivedpackets.back())) == sf::Socket::Done);
 		//Remove the last packet, because it was not used
 		m_receivedpackets.pop_back();
 	}

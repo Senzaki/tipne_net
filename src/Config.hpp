@@ -4,8 +4,10 @@
 #include <string>
 #include <functional>
 #include <unordered_map>
+#include <SFML/System.hpp>
 
 constexpr const char *DEFAULT_LANGUAGE = "en";
+const unsigned short DEFAULT_PORT = 57575;
 
 struct Config
 {
@@ -24,20 +26,25 @@ struct Config
 	bool vsync;
 	unsigned int dispfreq;
 	std::string lang;
+	std::string connectto_ip;
+	unsigned short connectto_port;
+	unsigned short server_port;
+	sf::Uint8 max_players;
 
 	private:
 	Config();
 
-	std::unordered_map<std::string, std::function<bool(const char *)>> m_parsers;
+	std::unordered_map<std::string, std::function<bool(const char *, const char *)>> m_parsers;
 
 	void writeError(const char *command);
 
-	bool parseName(const char *args);
-	bool parseVideoMode(const char *args);
-	bool parseFullscreen(const char *args);
-	bool parseVSync(const char *args);
-	bool parseDispFreq(const char *args);
-	bool parseLanguage(const char *args);
+	bool parseVideoMode(const char *paramname, const char *args);
+	bool parseBool(const char *paramname, const char *args, bool &param);
+	bool parseDispFreq(const char *paramname, const char *args);
+	bool parseString(const char *paramname, const char *args, std::string &param);
+	bool parseIpAddress(const char *paramname, const char *args, std::string &param);
+	bool parsePort(const char *paramname, const char *args, unsigned short &param);
+	bool parseMaxPlayers(const char *paramname, const char *args);
 };
 
 #endif // CONFIG_HPP_INCLUDED

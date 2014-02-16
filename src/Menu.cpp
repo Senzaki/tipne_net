@@ -135,10 +135,11 @@ void Menu::showOptions()
 
 void Menu::TEMPtestPlay()
 {
+	Config &config = Config::getInstance();
 	GameSimulator *simulator = new ClientSimulator();
 	int status;
 	std::cout << "Trying as client..." << std::endl;
-	if((status = static_cast<ClientSimulator *>(simulator)->startNetThread(sf::IpAddress("127.0.0.1"), 5252, Config::getInstance().name)) != (int)ConnectionStatus::Accepted)
+	if((status = static_cast<ClientSimulator *>(simulator)->startNetThread(sf::IpAddress(config.connectto_ip), config.connectto_port, config.name)) != (int)ConnectionStatus::Accepted)
 	{
 		delete simulator;
 		if(status == (int)ConnectionStatus::GameIsFull)
@@ -150,8 +151,8 @@ void Menu::TEMPtestPlay()
 		{
 			std::cout << "[Client failed]" << std::endl;
 			std::cout << "Trying as server... " << std::endl;
-			simulator = new ServerSimulator();
-			if(!static_cast<ServerSimulator *>(simulator)->startNetThread(5252, 2))
+			simulator = new ServerSimulator(false);
+			if(!static_cast<ServerSimulator *>(simulator)->startNetThread(config.server_port, config.max_players))
 			{
 				std::cout << "[Server failed]" << std::endl;
 				delete simulator;

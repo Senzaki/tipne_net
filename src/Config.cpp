@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <SFML/Window.hpp>
+#include <SFML/Network.hpp>
 #include <stdexcept>
 
 static constexpr const char *FILENAME = "data/conf";
@@ -20,16 +21,24 @@ Config::Config():
 	fullscreen(true),
 	vsync(true),
 	dispfreq(0),
-	lang(DEFAULT_LANGUAGE)
+	lang(DEFAULT_LANGUAGE),
+	connectto_ip("127.0.0.1"),
+	connectto_port(DEFAULT_PORT),
+	server_port(DEFAULT_PORT),
+	max_players(16)
 {
 	using namespace std::placeholders;
 	//Setup parsing functions table (1 command = 1 function)
-	m_parsers["name"] = std::bind(&Config::parseName, this, _1);
-	m_parsers["videomode"] = std::bind(&Config::parseVideoMode, this, _1);
-	m_parsers["fullscreen"] = std::bind(&Config::parseFullscreen, this, _1);
-	m_parsers["vsync"] = std::bind(&Config::parseVSync, this, _1);
-	m_parsers["dispfreq"] = std::bind(&Config::parseDispFreq, this, _1);
-	m_parsers["lang"] = std::bind(&Config::parseLanguage, this, _1);
+	m_parsers["name"] = std::bind(&Config::parseString, this, _1, _2, std::ref(name));
+	m_parsers["videomode"] = std::bind(&Config::parseVideoMode, this, _1, _2);
+	m_parsers["fullscreen"] = std::bind(&Config::parseBool, this, _1, _2, std::ref(fullscreen));
+	m_parsers["vsync"] = std::bind(&Config::parseBool, this, _1, _2, std::ref(vsync));
+	m_parsers["dispfreq"] = std::bind(&Config::parseDispFreq, this, _1, _2);
+	m_parsers["lang"] = std::bind(&Config::parseString, this, _1, _2, std::ref(lang));
+	m_parsers["connectto_ip"] = std::bind(&Config::parseIpAddress, this, _1, _2, std::ref(connectto_ip));
+	m_parsers["connectto_port"] = std::bind(&Config::parsePort, this, _1, _2, std::ref(connectto_port));
+	m_parsers["server_port"] = std::bind(&Config::parsePort, this, _1, _2, std::ref(server_port));
+	m_parsers["max_players"] = std::bind(&Config::parseMaxPlayers, this, _1, _2);
 
 	load();
 }
@@ -72,7 +81,7 @@ bool Config::load()
 			try
 			{
 				//Call the appropriate parsing func
-				m_parsers.at(command)(args);
+				m_parsers.at(command)(command.c_str(), args);
 			}
 			catch(const std::out_of_range &)
 			{
@@ -104,7 +113,11 @@ bool Config::save() const
 		 << "\nfullscreen " << (int)fullscreen
 		 << "\nvsync " << (int)vsync
 		 << "\ndispfreq " << (int)dispfreq
-		 << "\nlang " << lang;
+		 << "\nlang " << lang
+		 << "\nconnectto_ip " << connectto_ip
+		 << "\nconnectto_port " << (int)connectto_port
+		 << "\nserver_port " << (int)server_port
+		 << "\nmax_players " << (int)max_players;
 
 	file.close();
 
@@ -116,27 +129,14 @@ void Config::writeError(const char *command)
 	std::cerr << "Error while parsing configuration file : invalid value for \"" << command << "\" parameter." << std::endl;
 }
 
-bool Config::parseName(const char *args)
-{
-	//Check that the name is correct (not empty)
-	if(args[0] == '\0')
-	{
-		writeError("name");
-		return false;
-	}
-
-	name = std::move(args);
-	return true;
-}
-
-bool Config::parseVideoMode(const char *args)
+bool Config::parseVideoMode(const char *paramname, const char *args)
 {
 	unsigned int tempw, temph;
 	std::istringstream strm(args);//Parse args : wwww hhhh
 	strm >> tempw >> temph;
 	if(!strm || tempw < 800 || temph < 600)
 	{
-		writeError("videomode");
+		writeError(paramname);
 		return false;
 	}
 
@@ -145,44 +145,29 @@ bool Config::parseVideoMode(const char *args)
 	return true;
 }
 
-bool Config::parseFullscreen(const char *args)
+bool Config::parseBool(const char *paramname, const char *args, bool &param)
 {
 	int temp;
 	std::istringstream strm(args);
 	strm >> temp;
 	if(!strm)
 	{
-		writeError("fullscreen");
+		writeError(paramname);
 		return false;
 	}
 
-	fullscreen = temp;
+	param = temp;
 	return true;
 }
 
-bool Config::parseVSync(const char *args)
-{
-	int temp;
-	std::istringstream strm(args);
-	strm >> temp;
-	if(!strm)
-	{
-		writeError("vsync");
-		return false;
-	}
-
-	vsync = temp;
-	return true;
-}
-
-bool Config::parseDispFreq(const char *args)
+bool Config::parseDispFreq(const char *paramname, const char *args)
 {
 	unsigned int temp;
 	std::istringstream strm(args);
 	strm >> temp;
 	if(!strm)
 	{
-		writeError("dispfreq");
+		writeError(paramname);
 		return false;
 	}
 
@@ -190,15 +175,61 @@ bool Config::parseDispFreq(const char *args)
 	return true;
 }
 
-bool Config::parseLanguage(const char *args)
+bool Config::parseString(const char *paramname, const char *args, std::string &param)
 {
-	//Check that the language is correct (not empty)
+	//Check that the string is correct (not empty)
 	if(args[0] == '\0')
 	{
-		writeError("lang");
+		writeError(paramname);
 		return false;
 	}
 
-	lang = std::move(args);
+	param = std::move(args);
+	return true;
+}
+
+bool Config::parseIpAddress(const char *paramname, const char *args, std::string &param)
+{
+	std::string newval;
+	if(!parseString(paramname, args, newval))
+		return false;
+	//Check that this is a valid address
+	sf::IpAddress addr(newval);
+	if(addr == sf::IpAddress::None)
+	{
+		writeError(paramname);
+		return false;
+	}
+	param = newval;
+	return true;
+}
+
+bool Config::parsePort(const char *paramname, const char *args, unsigned short &param)
+{
+	unsigned int temp;
+	std::istringstream strm(args);
+	strm >> temp;
+	if(!strm || temp > 65535)
+	{
+		writeError(paramname);
+		return false;
+	}
+
+	param = temp;
+	return true;
+}
+
+bool Config::parseMaxPlayers(const char *paramname, const char *args)
+{
+	unsigned int temp;
+	std::istringstream strm(args);
+	strm >> temp;
+	if(!strm || temp > 254 || temp < 1)
+	{
+		writeError(paramname);
+		return false;
+	}
+
+	max_players = temp;
 	return true;
 }

@@ -7,4 +7,17 @@ enum class ConnectionStatus : sf::Uint8
 	GameIsFull
 };
 
+enum class PacketType : sf::Uint8
+{
+	NewPlayer = 0,
+	Disconnection
+};
+
+enum class DisconnectionReason : sf::Uint8
+{
+	Left = 0,
+	Error,
+	Kicked
+};
+
 #endif // NETWORKCODES_HPP_INCLUDED
