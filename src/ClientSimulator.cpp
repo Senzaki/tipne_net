@@ -28,36 +28,8 @@ bool ClientSimulator::update(float etime)
 	bool success = true;
 	m_receivedpackets.foreach([this, &success](sf::Packet *&packet)
 	{
-		if(!success)
-		{
-			delete packet;
-			return;//Since it's not really a loop (it's a lambda closure), return means "continue"
-		}
-		sf::Uint8 type;
-		if(!(*packet >> type))
-		{
-			std::cerr << "Error in packet : Invalid packet type. Disconnecting." << std::endl;
-			success = false;
-		}
-		else
-		{
-			switch(type)
-			{
-				case (sf::Uint8)PacketType::NewPlayer:
-					success = onNewPlayerPacket(*packet);
-					break;
-
-				case (sf::Uint8)PacketType::Disconnection:
-					success = onDisconnectionPacket(*packet);
-					break;
-
-				case (sf::Uint8)PacketType::Map:
-					success = onMapPacket(*packet);
-					break;
-			}
-			if(!success)
-				std::cerr << "Error in packet : Invalid packet of type " << (int)type << ". Disconnecting." << std::endl;
-		}
+		if(success)
+			success = parseReceivedPacket(*packet);
 		delete packet;
 	});
 	m_receivedpackets.clear();
@@ -205,6 +177,41 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 		return false;
 
 	return true;
+}
+
+bool ClientSimulator::parseReceivedPacket(sf::Packet &packet)
+{
+	sf::Uint8 type;
+	if(!(packet >> type))
+	{
+		std::cerr << "Error in packet : Invalid packet type. Disconnecting." << std::endl;
+		return false;
+	}
+
+	//Each packet type is handled differently
+	bool success = false;
+	switch(type)
+	{
+		case (sf::Uint8)PacketType::NewPlayer:
+			success = onNewPlayerPacket(packet);
+			break;
+
+		case (sf::Uint8)PacketType::Disconnection:
+			success = onDisconnectionPacket(packet);
+			break;
+
+		case (sf::Uint8)PacketType::Map:
+			success = onMapPacket(packet);
+			break;
+
+		default:
+			std::cout << "Unknown packet type." << std::endl;
+			break;
+	}
+	if(!success)
+		std::cerr << "Error in packet : Invalid packet of type " << (int)type << ". Disconnecting." << std::endl;
+
+	return success;
 }
 
 bool ClientSimulator::onNewPlayerPacket(sf::Packet &packet)

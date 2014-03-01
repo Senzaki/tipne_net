@@ -21,6 +21,7 @@ class ClientSimulator : public GameSimulator
 
 	private:
 	bool parseConnectionData(sf::Packet &packet);
+	bool parseReceivedPacket(sf::Packet &packet);
 	bool onNewPlayerPacket(sf::Packet &packet);
 	bool onDisconnectionPacket(sf::Packet &packet);
 	bool onMapPacket(sf::Packet &packet);
