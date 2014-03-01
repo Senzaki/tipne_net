@@ -7,6 +7,7 @@ class CheckBox : public Widget
 {
 	public:
 	CheckBox(Widget *parent = nullptr, std::function<void()> callbackcheck = std::function<void()>(), std::function<void()> callbackuncheck = std::function<void()>());
+	virtual ~CheckBox();
 
 	void setCheckCallback(std::function<void()> callback);
 	void setUncheckCallback(std::function<void()> callback);

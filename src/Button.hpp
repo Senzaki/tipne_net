@@ -8,6 +8,7 @@ class Button: public Widget
 	public:
 	Button(Widget *parent = nullptr, std::function<void()> callback = std::function<void()>());
 	Button(Widget *parent, const std::string &text, std::function<void()> callback = std::function<void()>());
+	virtual ~Button();
 
 	void setText(const std::string &text);
 	void setCallback(std::function<void()> callback);

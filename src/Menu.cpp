@@ -152,7 +152,13 @@ void Menu::TEMPtestPlay()
 			std::cout << "[Client failed]" << std::endl;
 			std::cout << "Trying as server... " << std::endl;
 			simulator = new ServerSimulator(false);
-			if(!static_cast<ServerSimulator *>(simulator)->startNetThread(config.server_port, config.max_players))
+			if(!static_cast<ServerSimulator *>(simulator)->loadMap((sf::Uint8)MapId::Default))
+			{
+				std::cout << "[Server failed]" << std::endl;
+				delete simulator;
+				simulator = nullptr;
+			}
+			else if(!static_cast<ServerSimulator *>(simulator)->startNetThread(config.server_port, config.max_players))
 			{
 				std::cout << "[Server failed]" << std::endl;
 				delete simulator;

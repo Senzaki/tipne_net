@@ -18,35 +18,53 @@ ClientSimulator::~ClientSimulator()
 	stopNetThread();
 }
 
-void ClientSimulator::update(float etime)
+bool ClientSimulator::update(float etime)
 {
-	//Treat packets
-	{//Lock m_receivemutex
-		std::lock_guard<std::mutex> lock(m_receivemutex);
-		sf::Uint8 type;
-		for(sf::Packet &packet : m_receivedpackets)
-		{
-			if(!(packet >> type))
-				std::cerr << "Error in packet : Invalid packet type." << std::endl;
-			else
-			{
-				bool success = false;
-				switch(type)
-				{
-					case (sf::Uint8)PacketType::NewPlayer:
-						success = onNewPlayerPacket(packet);
-						break;
+	//If we're not connected anymore, simulation is over
+	if(!isConnected())
+		return false;
 
-					case (sf::Uint8)PacketType::Disconnection:
-						success = onDisconnectionPacket(packet);
-						break;
-				}
-				if(!success)
-					std::cerr << "Error in packet : Invalid packet of type " << (int)type << "." << std::endl;
-			}
+	//Treat packets
+	bool success = true;
+	m_receivedpackets.foreach([this, &success](sf::Packet *&packet)
+	{
+		if(!success)
+		{
+			delete packet;
+			return;//Since it's not really a loop (it's a lambda closure), return means "continue"
 		}
-		m_receivedpackets.clear();
-	}
+		sf::Uint8 type;
+		if(!(*packet >> type))
+		{
+			std::cerr << "Error in packet : Invalid packet type. Disconnecting." << std::endl;
+			success = false;
+		}
+		else
+		{
+			switch(type)
+			{
+				case (sf::Uint8)PacketType::NewPlayer:
+					success = onNewPlayerPacket(*packet);
+					break;
+
+				case (sf::Uint8)PacketType::Disconnection:
+					success = onDisconnectionPacket(*packet);
+					break;
+
+				case (sf::Uint8)PacketType::Map:
+					success = onMapPacket(*packet);
+					break;
+			}
+			if(!success)
+				std::cerr << "Error in packet : Invalid packet of type " << (int)type << ". Disconnecting." << std::endl;
+		}
+		delete packet;
+	});
+	m_receivedpackets.clear();
+
+	if(!success)
+		return false;
+	return GameSimulator::update(etime);
 }
 
 int ClientSimulator::startNetThread(const sf::IpAddress &serveraddr, unsigned short port, const std::string &name)
@@ -150,7 +168,18 @@ void ClientSimulator::stopNetThread()
 		//Delete the thread object
 		delete m_thread;
 		m_thread = nullptr;
+
+		//Delete the remaining packets
+		m_receivedpackets.foreach([](sf::Packet *&packet)
+		{
+			delete packet;
+		});
 	}
+}
+
+bool ClientSimulator::isConnected() const
+{
+	return m_thrrunning;
 }
 
 bool ClientSimulator::parseConnectionData(sf::Packet &packet)
@@ -165,8 +194,16 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 	{
 		if(!(packet >> player))
 			return false;
-		addPlayer(std::move(player));
+		if(!addPlayer(std::move(player)))
+			return false;
 	}
+	//Get the map
+	sf::Uint8 mapid;
+	if(!(packet >> mapid))
+		return false;
+	if(!m_map.load(mapid))
+		return false;
+
 	return true;
 }
 
@@ -177,7 +214,8 @@ bool ClientSimulator::onNewPlayerPacket(sf::Packet &packet)
 	if(!(packet >> player))
 		return false;
 	//Add it to the game
-	addPlayer(std::move(player));
+	if(!addPlayer(std::move(player)))
+		return false;
 	return true;
 }
 
@@ -193,7 +231,19 @@ bool ClientSimulator::onDisconnectionPacket(sf::Packet &packet)
 		return false;
 	}
 	//Remove it from the game
-	removePlayer(id);
+	if(!removePlayer(id))
+		return false;
+	return true;
+}
+
+bool ClientSimulator::onMapPacket(sf::Packet &packet)
+{
+	//Map id ?
+	sf::Uint8 id;
+	if(!(packet >> id))
+		return false;
+	if(!m_map.load(id))
+		return false;
 	return true;
 }
 
@@ -206,9 +256,7 @@ void ClientSimulator::netThread()
 	{
 		//Wait until new new data or timeout
 		if(selector.wait(SELECTOR_WAIT_TIME))
-		{
 			m_thrrunning = receivePackets();
-		}
 	}
 
 	m_server.disconnect();
@@ -217,16 +265,15 @@ void ClientSimulator::netThread()
 bool ClientSimulator::receivePackets()
 {
 	sf::Socket::Status status;
-	//Receive the packets
-	{//Lock m_receivemutex
-		std::lock_guard<std::mutex> lock(m_receivemutex);
-		do
-		{
-			m_receivedpackets.emplace_back();
-		} while((status = m_server.receive(m_receivedpackets.back())) == sf::Socket::Done);
-		//Remove the last packet, because it was not used
-		m_receivedpackets.pop_back();
+	sf::Packet *packet = new sf::Packet;
+	//Receive all the packets
+	while((status = m_server.receive(*packet)) == sf::Socket::Done)
+	{
+		m_receivedpackets.emplaceBack(packet);
+		packet = new sf::Packet;
 	}
+	//Delete the last (unused) packet
+	delete packet;
 	//Error, or just no packets left ?
 	if(status == sf::Socket::NotReady)
 		return true;

@@ -39,6 +39,11 @@ Button::Button(Widget *parent, const std::string &text, std::function<void()> ca
 	setText(text);
 }
 
+Button::~Button()
+{
+
+}
+
 void Button::onPositionChanged()
 {
 	sf::Vector2f pos = getAbsolutePosition();

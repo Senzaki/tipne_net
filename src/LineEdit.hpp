@@ -7,6 +7,7 @@ class LineEdit : public Widget
 {
 	public:
 	LineEdit(Widget *parent = nullptr, float width = 0, std::function<void(std::string)> callback = std::function<void(std::string)>());
+	virtual ~LineEdit();
 
 	void setMaxChar(unsigned int maxchar);
 	void setWidth(float width);

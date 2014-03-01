@@ -7,6 +7,7 @@
 #include "Player.hpp"
 #include "NetworkCodes.hpp"
 #include "SimulatorStateListener.hpp"
+#include "Map.hpp"
 
 class GameSimulator
 {
@@ -17,22 +18,24 @@ class GameSimulator
 	GameSimulator(const GameSimulator &) = delete;
 	GameSimulator &operator=(const GameSimulator &) = delete;
 
-	virtual void update(float etime);
+	virtual bool update(float etime);
 
 	void setStateListener(SimulatorStateListener *listener);//nullptr to remove the current simulator
 
 	const Player &getPlayer(sf::Uint8 id) const;//May throw std::out_of_range if no player corresponds to this id.
 	Player &getPlayer(sf::Uint8 id);//May throw std::out_of_range if no player corresponds to this id.
+	bool playerExists(sf::Uint8 id) const;
 
 	sf::Uint8 getOwnId() const;//Will return NEUTRAL_PLAYER if no id
 
 	protected:
-	void addPlayer(sf::Uint8 id, const std::string &name, bool ai = false);
-	void addPlayer(Player &&player);
-	void removePlayer(sf::Uint8 id, sf::Uint8 reason = (sf::Uint8)DisconnectionReason::Left);
+	bool addPlayer(sf::Uint8 id, const std::string &name, bool ai = false);
+	bool addPlayer(Player &&player);
+	bool removePlayer(sf::Uint8 id, sf::Uint8 reason = (sf::Uint8)DisconnectionReason::Left);
 	const std::unordered_map<sf::Uint8, Player> &getPlayers() const;
 
 	sf::Uint8 m_ownid;
+	Map m_map;
 
 	private:
 	std::unordered_map<sf::Uint8, Player> m_players;

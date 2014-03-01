@@ -3,8 +3,9 @@
 
 #include "GameSimulator.hpp"
 #include <thread>
+#include <atomic>
 #include "SafeSocket.hpp"
-#include <list>
+#include "SafeList.hpp"
 
 class ClientSimulator : public GameSimulator
 {
@@ -12,25 +13,26 @@ class ClientSimulator : public GameSimulator
 	ClientSimulator();
 	virtual ~ClientSimulator();
 
-	virtual void update(float etime);
+	virtual bool update(float etime);
 
 	int startNetThread(const sf::IpAddress &serveraddr, unsigned short port, const std::string &name); //Returns -1 in case of error, and the connection status otherwise
 	void stopNetThread();
+	bool isConnected() const;
 
 	private:
 	bool parseConnectionData(sf::Packet &packet);
 	bool onNewPlayerPacket(sf::Packet &packet);
 	bool onDisconnectionPacket(sf::Packet &packet);
+	bool onMapPacket(sf::Packet &packet);
 
 	void netThread();
 	bool receivePackets();
 
 	std::thread *m_thread;
-	bool m_thrrunning;
+	std::atomic<bool> m_thrrunning;
 
 	SafeSocket m_server;
-	std::list<sf::Packet> m_receivedpackets;//Write : child. Read : main.
-	std::mutex m_receivemutex;
+	SafeList<sf::Packet *> m_receivedpackets;//Write : child. Read : main.
 };
 
 #endif // CLIENTSIMULATOR_HPP_INCLUDED

@@ -13,6 +13,11 @@ CheckBox::CheckBox(Widget *parent , std::function<void()> callbackcheck, std::fu
 	setSize(sf::Vector2f(m_background.getLocalBounds().width, m_background.getLocalBounds().height));
 }
 
+CheckBox::~CheckBox()
+{
+
+}
+
 void CheckBox::setCheckCallback(std::function<void()> callback)
 {
 	m_funccheck = callback;

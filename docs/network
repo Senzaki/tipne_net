@@ -11,6 +11,7 @@ Connection status (u8)
 Players count (u8)
 Client Id (u8)
 Connected players (for each : id (u8), name (UTF8 string), ai (bool))
+Map id (u8)
 
 -----------------------------------------------------------------
 
@@ -30,3 +31,12 @@ Disconnection info :
 Packet type : Disconnection (u8)
 id (u8)
 reason (u8)
+
+-----------------------------------------------------------------
+
+Map changed :
+Client <-Map info-- Server
+
+Map info :
+Packet type : Map (u8)
+Map id (u8)

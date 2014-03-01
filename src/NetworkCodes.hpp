@@ -10,7 +10,8 @@ enum class ConnectionStatus : sf::Uint8
 enum class PacketType : sf::Uint8
 {
 	NewPlayer = 0,
-	Disconnection
+	Disconnection,
+	Map
 };
 
 enum class DisconnectionReason : sf::Uint8

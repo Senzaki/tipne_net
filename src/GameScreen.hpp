@@ -26,6 +26,8 @@ class GameScreen : public ApplicationState
 	virtual void onTextEntered(const sf::Event::TextEvent &evt);
 
 	private:
+	void quit();
+
 	sf::RenderWindow &m_window;
 	GameSimulator *m_simulator;
 	GUIManager m_guimgr;

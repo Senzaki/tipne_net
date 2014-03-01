@@ -32,6 +32,11 @@ LineEdit::LineEdit(Widget *parent, float width, std::function<void(std::string)>
 	updateCursor();
 }
 
+LineEdit::~LineEdit()
+{
+
+}
+
 void LineEdit::setMaxChar(unsigned int maxchar)
 {
 	m_maxchar = maxchar;

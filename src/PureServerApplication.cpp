@@ -32,7 +32,17 @@ int PureServerApplication::execute(int argc, char **argv)
 	//Setup the simulator
 	m_simulator = new ServerSimulator(true);
 	m_simulator->setStateListener(this);
-	m_simulator->startNetThread(Config::getInstance().server_port, Config::getInstance().max_players);
+
+	//TEMP
+	if(!m_simulator->loadMap((sf::Uint8)MapId::Default))
+		return 1;
+	//////
+
+	if(!m_simulator->startNetThread(Config::getInstance().server_port, Config::getInstance().max_players))
+	{
+		std::cerr << "Cannot start server." << std::endl;
+		return 1;
+	}
 
 	m_running = true;
 	sf::Clock clock;

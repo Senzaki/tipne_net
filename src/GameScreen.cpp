@@ -3,6 +3,7 @@
 #include "ResourceManager.hpp"
 #include "Translator.hpp"
 #include "Config.hpp"
+#include "Menu.hpp"
 
 GameScreen::GameScreen(sf::RenderWindow &window, float vratio, float xyratio, GameSimulator *simulator):
 	m_window(window),
@@ -32,7 +33,8 @@ void GameScreen::load()
 void GameScreen::update(float etime)
 {
 	m_guimgr.update(etime);
-	m_simulator->update(etime);
+	if(!m_simulator->update(etime))
+		quit();
 }
 
 void GameScreen::draw()
@@ -92,4 +94,10 @@ void GameScreen::onMouseMoved(const sf::Event::MouseMoveEvent &evt)
 void GameScreen::onTextEntered(const sf::Event::TextEvent &evt)
 {
 	m_guimgr.onTextEntered(evt);
+}
+
+void GameScreen::quit()
+{
+	Menu *menu = new Menu(m_window, m_vratio, m_xyratio);
+	Application::getInstance().setNextAppState(menu);
 }
