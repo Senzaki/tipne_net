@@ -109,7 +109,7 @@ const sf::Vector2u &Map::getSize() const
 	return m_size;
 }
 
-Map::operator bool()
+Map::operator bool() const
 {
 	return !m_tiles.empty();
 }

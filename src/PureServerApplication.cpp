@@ -96,3 +96,8 @@ void PureServerApplication::onPlayerLeft(Player &player, sf::Uint8 reason)
 			break;
 	}
 }
+
+void PureServerApplication::onMapLoaded(const Map &map)
+{
+	std::cout << "New map loaded." << std::endl;
+}

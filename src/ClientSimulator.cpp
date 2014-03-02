@@ -173,7 +173,7 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 	sf::Uint8 mapid;
 	if(!(packet >> mapid))
 		return false;
-	if(!m_map.load(mapid))
+	if(!loadMap(mapid))
 		return false;
 
 	return true;
@@ -249,7 +249,7 @@ bool ClientSimulator::onMapPacket(sf::Packet &packet)
 	sf::Uint8 id;
 	if(!(packet >> id))
 		return false;
-	if(!m_map.load(id))
+	if(!loadMap(id))
 		return false;
 	return true;
 }

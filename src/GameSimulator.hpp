@@ -28,18 +28,22 @@ class GameSimulator
 
 	sf::Uint8 getOwnId() const;//Will return NEUTRAL_PLAYER if no id
 
+	const Map &getMap() const;
+
 	protected:
 	bool addPlayer(sf::Uint8 id, const std::string &name, bool ai = false);
 	bool addPlayer(Player &&player);
 	bool removePlayer(sf::Uint8 id, sf::Uint8 reason = (sf::Uint8)DisconnectionReason::Left);
 	const std::unordered_map<sf::Uint8, Player> &getPlayers() const;
 
+	virtual bool loadMap(sf::Uint8 mapid);
+
 	sf::Uint8 m_ownid;
-	Map m_map;
 
 	private:
 	std::unordered_map<sf::Uint8, Player> m_players;
 	SimulatorStateListener *m_statelistener;
+	Map m_map;
 };
 
 #endif // GAMESIMULATOR_HPP_INCLUDED

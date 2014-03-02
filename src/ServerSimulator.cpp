@@ -52,7 +52,7 @@ bool ServerSimulator::update(float etime)
 bool ServerSimulator::loadMap(sf::Uint8 mapid)
 {
 	//Try to load the map
-	if(!m_map.load(mapid))
+	if(!GameSimulator::loadMap(mapid))
 		return false;
 	//Tell the players the map has changed
 	sf::Packet packet;
@@ -68,7 +68,7 @@ bool ServerSimulator::startNetThread(unsigned short port, sf::Uint8 maxplayers)
 		return false;
 
 	//If no map is loaded, we won't be able to accept clients
-	if(!m_map)
+	if(!getMap())
 	{
 		std::cerr << "Cannot start server : no loaded map." << std::endl;
 		return false;
@@ -351,7 +351,7 @@ void ServerSimulator::acceptNewPlayer(Player &toaccept)
 		packet << player.second;
 	packet << toaccept;
 	//Map Id
-	packet << (sf::Uint8)m_map.getID();
+	packet << (sf::Uint8)getMap().getID();
 	//Try to send it
 	sf::Socket::Status status;
 	if((status = sendToPlayer(toaccept.id, packet)) != sf::Socket::Done)

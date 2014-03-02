@@ -23,6 +23,11 @@ sf::Uint8 GameSimulator::getOwnId() const
 	return m_ownid;
 }
 
+const Map &GameSimulator::getMap() const
+{
+	return m_map;
+}
+
 bool GameSimulator::addPlayer(Player &&player)
 {
 	sf::Uint8 id = player.id;
@@ -109,4 +114,15 @@ void GameSimulator::setStateListener(SimulatorStateListener *listener)
 const std::unordered_map<sf::Uint8, Player> &GameSimulator::getPlayers() const
 {
 	return m_players;
+}
+
+bool GameSimulator::loadMap(sf::Uint8 mapid)
+{
+	if(m_map.load(mapid))
+	{
+		if(m_statelistener)
+			m_statelistener->onMapLoaded(m_map);
+		return true;
+	}
+	return false;
 }

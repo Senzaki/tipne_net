@@ -29,7 +29,7 @@ class Map
 	Tile &getTile(unsigned int x, unsigned int y);
 	const sf::Vector2u &getSize() const;
 
-	operator bool();
+	operator bool() const;
 
 	private:
 	sf::Uint8 m_id;

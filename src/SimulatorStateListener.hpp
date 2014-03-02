@@ -1,7 +1,7 @@
 #ifndef SIMULATORSTATELISTENER_HPP_INCLUDED
 #define SIMULATORSTATELISTENER_HPP_INCLUDED
 
-#include <SFML/System.hpp>
+#include "Map.hpp"
 
 class SimulatorStateListener
 {
@@ -9,6 +9,7 @@ class SimulatorStateListener
 	virtual ~SimulatorStateListener() { }
 	virtual void onNewPlayer(Player &player) { }
 	virtual void onPlayerLeft(Player &player, sf::Uint8 reason) { }
+	virtual void onMapLoaded(const Map &map) { }
 };
 
 #endif // SIMULATORSTATELISTENER_HPP_INCLUDED
