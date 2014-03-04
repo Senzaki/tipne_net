@@ -6,7 +6,7 @@
 #include "CheckBox.hpp"
 #include "DecoratedLineEdit.hpp"
 #include "Config.hpp"
-#include "GameScreen.hpp"
+#include "GameAppState.hpp"
 #include "ClientSimulator.hpp"
 #include "ServerSimulator.hpp"
 #include "NetworkCodes.hpp"
@@ -172,7 +172,7 @@ void Menu::TEMPtestPlay()
 		std::cout << "[Client ok]" << std::endl;
 	if(simulator)
 	{
-		GameScreen *next = new GameScreen(m_window, m_vratio, m_xyratio, simulator);
+		GameAppState *next = new GameAppState(m_window, m_vratio, m_xyratio, simulator);
 		Application::getInstance().setNextAppState(next);
 	}
 	else

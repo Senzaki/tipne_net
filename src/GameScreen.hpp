@@ -1,40 +1,36 @@
 #ifndef GAMESCREEN_HPP_INCLUDED
 #define GAMESCREEN_HPP_INCLUDED
 
-#include "ApplicationState.hpp"
 #include "GameSimulator.hpp"
-#include "GUIManager.hpp"
+#include "DrawableMap.hpp"
 
-class GameScreen : public ApplicationState
+class GameScreen : public SimulatorStateListener
 {
 	public:
-	GameScreen(sf::RenderWindow &window, float vratio, float xyratio, GameSimulator *m_simulator);//The simulator will automatically be freed
+	GameScreen(float vratio, float xyratio, GameSimulator *simulator = nullptr);
 	virtual ~GameScreen();
 
 	GameScreen(const GameScreen &) = delete;
 	GameScreen &operator=(const GameScreen &) = delete;
 
-	virtual void load();
-	virtual void update(float etime);
-	virtual void draw();
+	void setSimulator(GameSimulator *simulator);
 
-	virtual void onWindowClosed();
-	virtual void onKeyPressed(const sf::Event::KeyEvent &evt);
-	virtual void onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt);
-	virtual void onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt);
-	virtual void onMouseMoved(const sf::Event::MouseMoveEvent &evt);
-	virtual void onTextEntered(const sf::Event::TextEvent &evt);
+	bool update(float etime);
+	void draw(sf::RenderWindow &window);
+
+	//Simulator events
+	virtual void onNewPlayer(Player &player);
+	virtual void onPlayerLeft(Player &player, sf::Uint8 reason);
+	virtual void onMapLoaded(const Map &map);
 
 	private:
-	void quit();
-
-	sf::RenderWindow &m_window;
-	GameSimulator *m_simulator;
-	GUIManager m_guimgr;
 	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)
+	sf::FloatRect m_seen;
 	float m_vratio;
 	float m_xyratio;
-	sf::Sprite m_cursor;
+
+	GameSimulator *m_simulator;
+	DrawableMap m_map;
 };
 
 #endif // GAMESCREEN_HPP_INCLUDED

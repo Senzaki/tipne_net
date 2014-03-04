@@ -1,103 +1,58 @@
 #include "GameScreen.hpp"
 #include "Application.hpp"
-#include "ResourceManager.hpp"
-#include "Translator.hpp"
-#include "Config.hpp"
-#include "Menu.hpp"
 
-GameScreen::GameScreen(sf::RenderWindow &window, float vratio, float xyratio, GameSimulator *simulator):
-	m_window(window),
-	m_simulator(simulator),
-	m_guimgr(window),
+GameScreen::GameScreen(float vratio, float xyratio, GameSimulator *simulator):
 	m_camera(sf::FloatRect(0.f, 0.f, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
+	m_seen(sf::FloatRect(0.f, 0.f, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
 	m_vratio(vratio),
 	m_xyratio(xyratio)
 {
-
+	setSimulator(simulator);
 }
 
 GameScreen::~GameScreen()
 {
-	delete m_simulator;
+
 }
 
-void GameScreen::load()
+void GameScreen::setSimulator(GameSimulator *simulator)
 {
-	Translator::getInstance().loadPackage("game");
-
-	//Load all textures & fonts
-	ResourceManager &rsmgr = ResourceManager::getInstance();
-	m_cursor.setTexture(rsmgr.getTexture(ResourceSection::Base, Resource::CURSOR_TEX));
-}
-
-void GameScreen::update(float etime)
-{
-	m_guimgr.update(etime);
-	if(!m_simulator->update(etime))
-		quit();
-}
-
-void GameScreen::draw()
-{
-	m_window.clear();
-	//Draw GUI
-	m_guimgr.draw();
-	//Apply the scaling view
-	m_window.setView(m_camera);
-	//Draw every scaled thing
-	m_window.draw(m_cursor);
-	//Back to default view
-	m_window.setView(m_window.getDefaultView());
-}
-
-void GameScreen::onWindowClosed()
-{
-	Application::getInstance().setNextAppState(nullptr);
-}
-
-void GameScreen::onKeyPressed(const sf::Event::KeyEvent &evt)
-{
-	if(!m_guimgr.onKeyPressed(evt))
+	m_simulator = simulator;
+	if(simulator)
 	{
-		switch(evt.code)
-		{
-			case sf::Keyboard::Escape:
-				Application::getInstance().setNextAppState(nullptr);
-				break;
-
-			default:
-				break;
-		}
+		simulator->setStateListener(this);
+		//Update the map if there's one
+		if(simulator->getMap())
+			m_map.setMap(simulator->getMap());
 	}
 }
 
-void GameScreen::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
+bool GameScreen::update(float etime)
 {
-	m_guimgr.onMouseButtonPressed(evt);
-	sf::Vector2f camcoords(evt.x / m_vratio, evt.y / m_vratio);
+	bool toreturn = true;
+	//Update the simulator (and return false if the simulation is over)
+	if(m_simulator)
+		toreturn = m_simulator->update(etime);
+	m_map.update(etime, m_seen);
+	return toreturn;
 }
 
-void GameScreen::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
+void GameScreen::draw(sf::RenderWindow &window)
 {
-	m_guimgr.onMouseButtonReleased(evt);
-	sf::Vector2f camcoords(evt.x / m_vratio, evt.y / m_vratio);
+	m_map.draw(window, m_seen);
 }
 
-void GameScreen::onMouseMoved(const sf::Event::MouseMoveEvent &evt)
+void GameScreen::onNewPlayer(Player &player)
 {
-	m_guimgr.onMouseMoved(evt);
-	sf::Vector2f camcoords(evt.x / m_vratio, evt.y / m_vratio);
-	//Cursor is displayed in camera coords, but mouse coordinates are given in window coordinates
-	m_cursor.setPosition(camcoords);
+
 }
 
-void GameScreen::onTextEntered(const sf::Event::TextEvent &evt)
+void GameScreen::onPlayerLeft(Player &player, sf::Uint8 reason)
 {
-	m_guimgr.onTextEntered(evt);
+
 }
 
-void GameScreen::quit()
+void GameScreen::onMapLoaded(const Map &map)
 {
-	Menu *menu = new Menu(m_window, m_vratio, m_xyratio);
-	Application::getInstance().setNextAppState(menu);
+	m_map.setMap(map);
 }

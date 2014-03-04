@@ -26,7 +26,7 @@ class Map
 	bool load(sf::Uint8 mapid);
 	sf::Uint8 getID() const;
 
-	Tile &getTile(unsigned int x, unsigned int y);
+	const Tile &getTile(unsigned int x, unsigned int y) const;
 	const sf::Vector2u &getSize() const;
 
 	operator bool() const;
