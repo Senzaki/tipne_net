@@ -46,14 +46,14 @@ void GameAppState::update(float etime)
 void GameAppState::draw()
 {
 	m_window.clear();
+	//Draw the game screen
+	m_gscr.draw(m_window);
 	//Draw GUI
 	m_guimgr.draw();
 	//Apply the scaling view
 	m_window.setView(m_camera);
 	//Draw every scaled thing
 	m_window.draw(m_cursor);
-	//Draw the game screen
-	m_gscr.draw(m_window);
 	//Back to default view
 	m_window.setView(m_window.getDefaultView());
 }

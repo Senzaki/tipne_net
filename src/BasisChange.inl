@@ -23,27 +23,12 @@ inline float BasisChange::gridToPixelY(float x, float y)
 	return GRID_HEIGHT * (y - x);
 }
 
-inline float BasisChange::gridToPixelX(unsigned int x, unsigned int y)
-{
-	return GRID_WIDTH * static_cast<float>(x + y);
-}
-
-inline float BasisChange::gridToPixelY(unsigned int x, unsigned int y)
-{
-	return GRID_HEIGHT * static_cast<float>(y - x);
-}
-
 inline sf::Vector2f BasisChange::pixelToGrid(float x, float y)
 {
 	return sf::Vector2f(pixelToGridX(x, y), pixelToGridY(x, y));
 }
 
 inline sf::Vector2f BasisChange::gridToPixel(float x, float y)
-{
-	return sf::Vector2f(gridToPixelX(x, y), gridToPixelY(x, y));
-}
-
-inline sf::Vector2f BasisChange::gridToPixel(unsigned int x, unsigned int y)
 {
 	return sf::Vector2f(gridToPixelX(x, y), gridToPixelY(x, y));
 }
@@ -70,12 +55,12 @@ inline float BasisChange::gridToPixelY(const sf::Vector2f &vec)
 
 inline float BasisChange::gridToPixelX(const sf::Vector2u &vec)
 {
-	return GRID_WIDTH * static_cast<float>(vec.x + vec.y);
+	return gridToPixelX(vec.x, vec.y);
 }
 
 inline float BasisChange::gridToPixelY(const sf::Vector2u &vec)
 {
-	return GRID_HEIGHT * static_cast<float>(vec.y - vec.x);
+	return gridToPixelY(vec.x, vec.y);
 }
 
 inline sf::Vector2f BasisChange::pixelToGrid(const sf::Vector2f &vec)

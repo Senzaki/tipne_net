@@ -2,8 +2,8 @@
 #include "Application.hpp"
 
 GameScreen::GameScreen(float vratio, float xyratio, GameSimulator *simulator):
-	m_camera(sf::FloatRect(0.f, 0.f, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
-	m_seen(sf::FloatRect(0.f, 0.f, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
+	m_camera(sf::FloatRect(0.f, -DEFAULT_SCREEN_HEIGHT / 2, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
+	m_seen(sf::FloatRect(0.f, -DEFAULT_SCREEN_HEIGHT / 2, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
 	m_vratio(vratio),
 	m_xyratio(xyratio)
 {
@@ -39,7 +39,10 @@ bool GameScreen::update(float etime)
 
 void GameScreen::draw(sf::RenderWindow &window)
 {
+	sf::View oldview = window.getView();
+	window.setView(m_camera);
 	m_map.draw(window, m_seen);
+	window.setView(oldview);
 }
 
 void GameScreen::onNewPlayer(Player &player)

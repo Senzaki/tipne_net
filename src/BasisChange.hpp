@@ -12,7 +12,6 @@ struct BasisChange
 
 	inline static sf::Vector2f pixelToGrid(float x, float y);
 	inline static sf::Vector2f gridToPixel(float x, float y);
-	inline static sf::Vector2f gridToPixel(unsigned int x, unsigned int y);
 
 	//Partial change
 	inline static float pixelToGridX(const sf::Vector2f &vec);
@@ -26,8 +25,6 @@ struct BasisChange
 	inline static float pixelToGridY(float x, float y);
 	inline static float gridToPixelX(float x, float y);
 	inline static float gridToPixelY(float x, float y);
-	inline static float gridToPixelX(unsigned int x, unsigned int y);
-	inline static float gridToPixelY(unsigned int x, unsigned int y);
 };
 
 #include "BasisChange.inl"

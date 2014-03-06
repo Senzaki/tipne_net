@@ -20,7 +20,7 @@ class DrawableTilesGroup
 		const sf::Texture *texture;
 		sf::VertexArray vertices;
 	};
-	std::vector<TileSet> m_statictiles;
+	std::vector<TileSet> m_tilesets;
 };
 
 #endif // DRAWABLETILESGROUP_HPP_INCLUDED
