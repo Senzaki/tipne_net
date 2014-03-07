@@ -27,9 +27,9 @@ void Widget::setPosition(float x, float y)
 	m_pos.x = x;
 	m_pos.y = y;
 
-	if(m_parent)
+	/*if(m_parent)
 		m_abspos = m_parent->m_abspos + m_pos;
-	else
+	else*/
 		m_abspos = m_pos;
 
 	//Notify event
@@ -155,12 +155,8 @@ bool Widget::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 	//Transmit to children if they contain the mouse position
 	for(Widget *child : m_children)
 	{
-		sf::FloatRect childrect(child->getAbsolutePosition(), child->getSize());
-		if(childrect.contains(evt.x, evt.y))
-		{
-			if(child->onMouseButtonPressed(evt))
-				return true;
-		}
+		if(child->onMouseButtonPressed(evt))
+			return true;
 	}
 
 	return false;
@@ -171,12 +167,8 @@ bool Widget::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
 	//Transmit to children if they contain the mouse position
 	for(Widget *child : m_children)
 	{
-		sf::FloatRect childrect(child->getAbsolutePosition(), child->getSize());
-		if(childrect.contains(evt.x, evt.y))
-		{
-			if(child->onMouseButtonReleased(evt))
-				return true;
-		}
+		if(child->onMouseButtonReleased(evt))
+			return true;
 	}
 
 	return false;

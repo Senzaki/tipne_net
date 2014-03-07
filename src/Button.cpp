@@ -83,26 +83,37 @@ void Button::draw(sf::RenderWindow &window)
 
 bool Button::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 {
-	Widget::onMouseButtonPressed(evt);
-	m_clicked = true;
-	//Set "clicked" appearance
-	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_CLICKED_TEX);
-	m_text.setColor(sf::Color::Black);
+	sf::FloatRect bounds(getAbsolutePosition(), getSize());
+	if(bounds.contains(evt.x, evt.y))
+	{
+		Widget::onMouseButtonPressed(evt);
+		m_clicked = true;
+		//Set "clicked" appearance
+		m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_CLICKED_TEX);
+		m_text.setColor(sf::Color::Black);
 
-	return true;
+		return true;
+	}
+
+	return false;
 }
 
 bool Button::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
 {
-	Widget::onMouseButtonReleased(evt);
-	if(m_clicked && m_func)
-		m_func();
-	m_clicked = false;
-	//Set "highlighted" appearance
-	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_HIGHLIGHTED_TEX);
-	m_text.setColor(sf::Color::Black);
+	sf::FloatRect bounds(getAbsolutePosition(), getSize());
+	if(bounds.contains(evt.x, evt.y))
+	{
+		Widget::onMouseButtonReleased(evt);
+		if(m_clicked && m_func)
+			m_func();
+		m_clicked = false;
+		//Set "highlighted" appearance
+		m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_HIGHLIGHTED_TEX);
+		m_text.setColor(sf::Color::Black);
 
-	return true;
+		return true;
+	}
+	return false;
 }
 
 void Button::onMouseEntered(const sf::Event::MouseMoveEvent &evt)
