@@ -26,15 +26,15 @@ GraphTileInfo TILE_INFO[TILE_INFO_SIZE] =
 {
 	//0
 	{Resource::BASE_TILES, 1, {
-		{0.f, 0.f, 100.f, 50.f, 50.f, 25.f}
+		{0.f, 0.f, 160.f, 80.f, 80.f, 40.f}
 	}},
 	//1
 	{Resource::BASE_TILES, 1, {
-		{0.f, 50.f, 100.f, 50.f, 50.f, 25.f}
+		{0.f, 80.f, 160.f, 80.f, 80.f, 40.f}
 	}},
 	//2
 	{Resource::GRASS_TEST, 1, {
-		{0.f, 0.f, 101.f, 51.f, 51.f, 26.f}
+		{0.f, 0.f, 162.f, 82.f, 81.f, 42.f}
 	}}
 };
 
@@ -53,9 +53,13 @@ DrawableTilesGroup::DrawableTilesGroup()
 
 static void sortFurtherTiles(std::vector<TileSortInfo> &tiles, unsigned int curdepth, unsigned int depths, unsigned int height, unsigned int width, unsigned int curset, unsigned int texture, std::vector<std::list<std::pair<GraphTileInfo *, sf::Vector2u>>> &tilesets)
 {
+	//Check this depth for tiles we can add. The requirements are :
+	//- The tile must use the same texture as the orther tiles of the tileset
+	//- The two tiles below it must have already been added to a tileset
 	const unsigned int xmin = (curdepth < height) ? 0 : curdepth - height + 1;
 	const unsigned int xmax = std::min(curdepth + 1, width);
-	bool neednext = false;
+	bool neednext = false;//Boolean used to check that we added at least one tile on this depth, because if we didn't, there's no need to go to the next line
+	//Iterate throuh the tiles of this depth
 	for(unsigned int x = xmin; x < xmax; x++)
 	{
 		const unsigned int y = x + height - 1 - curdepth;
@@ -63,6 +67,7 @@ static void sortFurtherTiles(std::vector<TileSortInfo> &tiles, unsigned int curd
 		if(sortinf.texture == texture)
 		{
 			bool add = true;
+			//Check the tiles below it
 			if(x > 0)
 			{
 				if(tiles[(x - 1) + y * width].tileset == 0)
@@ -81,6 +86,7 @@ static void sortFurtherTiles(std::vector<TileSortInfo> &tiles, unsigned int curd
 			}
 		}
 	}
+	//Go to the next depth if we added at least one line
 	if(neednext && curdepth + 1 < depths)
 		sortFurtherTiles(tiles, curdepth + 1, depths, height, width, curset, texture, tilesets);
 }
@@ -92,7 +98,7 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 	const unsigned int width = right - rect.left;
 	const unsigned int height = bottom - rect.top;
 	const unsigned int depths = width + height - 1;
-	//Fill an array with the tiles (+ two integers that will correspond to the tileset index and the texture)
+	//Fill an array with the tiles
 	std::vector<TileSortInfo> tiles;
 	tiles.reserve(width * height);
 	for(unsigned int y = rect.top; y < bottom; y++)
@@ -109,9 +115,9 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 		}
 	}
 
-	//Put the tiles into tilesets corresponding to their texture & depth
+	//Put the tiles into tilesets that correspond to their (reverse) drawing order (reserve an arbitrary size for the array, we can assume that the tilesets will contain at least two tiles on average)
 	std::vector<std::list<std::pair<GraphTileInfo *, sf::Vector2u>>> sortedtiles;
-	sortedtiles.reserve(width * height);
+	sortedtiles.reserve(width * height / 2);
 	//Iterate through the whole array to put the tiles into the hash table according to their texture (depth by depth)
 	unsigned int curset = 0;
 	for(unsigned int d = 0; d < depths; d++)
@@ -126,6 +132,7 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 			if(sortinf.tileset == 0)
 			{
 				curset++;
+				//Create a tileset and add this tile to the tileset
 				sortinf.tileset = curset;
 				sortedtiles.emplace_back();
 				sortedtiles.back().emplace_back(std::make_pair(&TILE_INFO[sortinf.tile->appearance], sortinf.pos));
@@ -150,15 +157,17 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 	m_tilesets.clear();
 	m_tilesets.resize(sortedtiles.size());
 
+	//Now, create a vertex array for each tileset
 	for(unsigned int i = 0; i < m_tilesets.size(); i++)
 	{
+		//Note : since the tilesets were added to the array from bottom to top, we need to reverse this order so that they are drawn by order of depth
 		//Set the texture
 		m_tilesets[i].texture = &ResourceManager::getInstance().getTexture(ResourceSection::Map, sortedtiles[m_tilesets.size() - i - 1].front().first->texture);
 		//Resize the vertex array
 		sf::VertexArray &va = m_tilesets[i].vertices;
 		va.setPrimitiveType(sf::Quads);
 		va.resize(sortedtiles[m_tilesets.size() - i - 1].size() * 4);
-		//Create info about the vertex
+		//Create info about the vertices
 		unsigned int j = 0;
 		for(const std::pair<GraphTileInfo *, sf::Vector2u> &tile : sortedtiles[m_tilesets.size() - i - 1])
 		{

@@ -2,7 +2,7 @@
 #include <cassert>
 #include "BasisChange.hpp"
 
-const unsigned int CHUNK_SIZE = 1;
+const unsigned int CHUNK_SIZE = 16;
 
 DrawableMap::DrawableMap()
 {
@@ -39,28 +39,31 @@ void DrawableMap::draw(sf::RenderWindow &window, sf::FloatRect seen)
 bool DrawableMap::setMap(const Map &map)
 {
 	assert(map);
+	//Compute the number of chunks
 	const unsigned int maxi = (map.getSize().x - 1) / CHUNK_SIZE + 1;
 	const unsigned int maxj = (map.getSize().y - 1) / CHUNK_SIZE + 1;
-
 	m_chunks.resize(maxi * maxj);
 
+	//Rect to tell each chunk its position & size
 	sf::Rect<unsigned int> rect(0, 0, CHUNK_SIZE, CHUNK_SIZE);
-
 	for(unsigned int i = 0; i < maxi; i++)
 	{
 		for(unsigned int j = 0; j < maxj; j++)
 		{
+			//Create a chunk from its associated groop of tiles (doesn't matter if the rect goes out of the map, the loadTiles function will ignore the tiles that don't exist)
 			if(!m_chunks[j * maxi + i].loadTiles(map, rect))
 			{
 				m_chunks.clear();
 				return false;
 			}
+			//Move the rect of the chunk (= go to the new chunk)
 			rect.top += CHUNK_SIZE;
 		}
 		rect.top = 0;
 		rect.left += CHUNK_SIZE;
 	}
 
+	//Set the size
 	m_chunkscount.x = maxi;
 	m_chunkscount.y = maxj;
 
