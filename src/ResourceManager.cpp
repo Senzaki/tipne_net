@@ -33,6 +33,16 @@ ResourceManager::ResourceManager()
 		sec.tex_files[LINEEDIT_STANDARD_TEX] = "line_def.png";
 		sec.font_files[STANDARD_FONT] = "DejaVuSansMono.ttf";
 	}
+
+	//Map
+	{
+		Section &sec = m_sections[(int)ResourceSection::Map];
+		sec.tex_files.resize(MAP_TEXTURES_COUNT);
+		sec.textures.resize(MAP_TEXTURES_COUNT, nullptr);
+
+		sec.tex_files[BASE_TILES] = "tiles/base.png";
+		sec.tex_files[GRASS_TEST] = "tiles/grass.png";
+	}
 }
 
 ResourceManager::~ResourceManager()
@@ -113,7 +123,7 @@ const sf::Texture &ResourceManager::getTexture(ResourceSection section, unsigned
 	//Is the section loaded ?
 	if(!sec.loaded)
 	{
-		std::cerr << "Error : Texture " << TEXTURE_PATH << name << " has to be loaded before it can be used." << std::endl;
+		std::cerr << "Error : Texture " << TEXTURE_PATH << sec.tex_files[name] << " has to be loaded before it can be used." << std::endl;
 		return m_defaulttex;
 	}
 	return *sec.textures[name];
@@ -125,7 +135,7 @@ const sf::Font &ResourceManager::getFont(ResourceSection section, unsigned int n
 	//Is the section loaded ?
 	if(!sec.loaded)
 	{
-		std::cerr << "Error : Font " << FONT_PATH << name << " has to be loaded before it can be used." << std::endl;
+		std::cerr << "Error : Font " << FONT_PATH << sec.font_files[name] << " has to be loaded before it can be used." << std::endl;
 		return m_defaultfont;
 	}
 	return *sec.fonts[name];

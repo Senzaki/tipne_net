@@ -65,7 +65,7 @@ bool Config::load()
 		std::string line;
 		std::string command;
 		const char *args;
-		size_t firstspace;
+		std::size_t firstspace;
 
 		//Parse each line
 		while(std::getline(file, line))

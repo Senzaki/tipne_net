@@ -8,6 +8,7 @@
 enum class ResourceSection : int
 {
 	Base = 0,
+	Map,
 	Count
 };
 
@@ -29,6 +30,13 @@ namespace Resource
 	{
 		STANDARD_FONT = 0,
 		BASE_FONTS_COUNT
+	};
+
+	enum MapTexture
+	{
+		BASE_TILES = 0,
+		GRASS_TEST,
+		MAP_TEXTURES_COUNT
 	};
 }
 

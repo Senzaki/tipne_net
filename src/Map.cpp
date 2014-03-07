@@ -99,7 +99,7 @@ sf::Uint8 Map::getID() const
 	return m_id;
 }
 
-Tile &Map::getTile(unsigned int x, unsigned int y)
+const Tile &Map::getTile(unsigned int x, unsigned int y) const
 {
 	return m_tiles[y * m_size.x + x];
 }
