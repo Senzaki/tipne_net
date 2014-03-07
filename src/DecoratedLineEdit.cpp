@@ -1,5 +1,6 @@
 #include "DecoratedLineEdit.hpp"
 #include "ResourceManager.hpp"
+#include <iostream>
 
 static constexpr const unsigned int LINEEDIT_LEFT_BORDER_WIDTH = 5;
 static constexpr const unsigned int LINEEDIT_RIGHT_BORDER_WIDTH = 5;
@@ -29,9 +30,9 @@ DecoratedLineEdit::DecoratedLineEdit(Widget *parent, float width, std::function<
 		m_width = MINWIDTH_LINEEDIT;
 	}
 
-	updateSize();
+	m_lineedit = new LineEdit(this, width - 2 * LINEEDIT_LEFT_BORDER_WIDTH, callback);
 
-	m_lineedit = new LineEdit(this, width, callback);
+	updateSize();
 }
 
 DecoratedLineEdit::~DecoratedLineEdit()
@@ -76,6 +77,8 @@ void DecoratedLineEdit::onPositionChanged()
 	//Top left corner
 	m_rdstates.transform = sf::Transform::Identity;
 	m_rdstates.transform.translate(getAbsolutePosition());
+	sf::Vector2f poslineedit = getPosition() + sf::Vector2f(LINEEDIT_LEFT_BORDER_WIDTH, 8);
+	m_lineedit->setPosition(poslineedit);
 }
 
 void DecoratedLineEdit::updateSize()
@@ -88,8 +91,8 @@ void DecoratedLineEdit::updateSize()
 	m_background[6].position = sf::Vector2f(width + LINEEDIT_RIGHT_BORDER_WIDTH, texheight);
 	m_background[7].position = sf::Vector2f(width + LINEEDIT_RIGHT_BORDER_WIDTH, 0.f);
 
-	onPositionChanged();
-
 	setSize(m_width, texheight);
+
+	onPositionChanged();
 }
 

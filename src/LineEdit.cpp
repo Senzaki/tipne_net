@@ -5,8 +5,8 @@
 #include <iostream>
 
 static constexpr const unsigned int LINEEDIT_FONT_SIZE = 12;
-static constexpr const unsigned int LINEEDIT_LEFT_BORDER_WIDTH = 5;
-static constexpr const unsigned int LINEEDIT_RIGHT_BORDER_WIDTH = 5;
+static constexpr const unsigned int LINEEDIT_REPOS = 5;
+static constexpr const unsigned int LINEEDIT_HEIGHT = 15;
 
 LineEdit::LineEdit(Widget *parent, float width, std::function<void(std::string)> callback):
 	Widget(parent),
@@ -19,23 +19,16 @@ LineEdit::LineEdit(Widget *parent, float width, std::function<void(std::string)>
 	m_text.setFont(ResourceManager::getInstance().getFont(ResourceSection::Base, Resource::STANDARD_FONT));
 	m_text.setCharacterSize(LINEEDIT_FONT_SIZE);
 	m_text.setColor(sf::Color::White);
-	m_string = "";
-	m_text.setString("T");
-	setSize(m_width - LINEEDIT_LEFT_BORDER_WIDTH * 2, getParent()->getSize().y);
-	m_cursor.setSize(sf::Vector2f(2, std::round(m_text.getLocalBounds().height + 3)));
+	setSize(m_width, LINEEDIT_HEIGHT);
+	m_cursor.setSize(sf::Vector2f(2, LINEEDIT_HEIGHT));
 	m_cursor.setFillColor(sf::Color::White);
-	m_text.setString(m_string);
-	setPosition(getAbsolutePosition().x + LINEEDIT_LEFT_BORDER_WIDTH, getAbsolutePosition().y);
 
 	onPositionChanged();
 
 	updateCursor();
 }
 
-LineEdit::~LineEdit()
-{
-
-}
+LineEdit::~LineEdit(){}
 
 void LineEdit::setMaxChar(unsigned int maxchar)
 {
@@ -45,7 +38,7 @@ void LineEdit::setMaxChar(unsigned int maxchar)
 void LineEdit::setWidth(float width)
 {
 	m_width = width;
-	setSize(m_width - 5, getParent()->getSize().y);
+	setSize(m_width, getParent()->getSize().y);
 }
 
 void LineEdit::setCallback(std::function<void(std::string)> callback)
@@ -75,16 +68,11 @@ void LineEdit::draw(sf::RenderWindow &window)
 
 void LineEdit::onPositionChanged()
 {
-	sf::Vector2f size = getSize();
-	sf::Vector2f pos = getParent()->getAbsolutePosition();
+	//sf::Vector2f size = getSize();
+	//sf::Vector2f pos = getPosition();
 	//Put the text right in the middle of the parent widget (coords are integer so that the text does not look blurred)
-	if(m_string == "")
-		m_text.setString("T"); //so the text has a height (temporary)
-	sf::FloatRect textrect = m_text.getLocalBounds();
-	m_text.setString(m_string);
-
-	m_text.setPosition(std::round(pos.x), std::round(pos.y + (size.y - textrect.height) / 2.f));
-
+	//sf::Vector2f pos2 = sf::Vector2f(std::round(pos.x), std::round(pos.y + (size.y - LINEEDIT_HEIGHT) / 2.f));
+	m_text.setPosition(getPosition());
 	updateCursor();
 }
 
@@ -121,40 +109,40 @@ bool LineEdit::onKeyPressed(const sf::Event::KeyEvent &evt)
 		switch(evt.code)
 		{
 			case sf::Keyboard::Return:
-			if(m_func)
-				m_func(getString());
-			m_inputison = false;
-			break;
+				if(m_func)
+					m_func(getString());
+				m_inputison = false;
+				break;
 
 			case sf::Keyboard::Left:
-			if(m_positioncursor > 0)
-				m_positioncursor--;
-			break;
+				if(m_positioncursor > 0)
+					m_positioncursor--;
+				break;
 
 			case sf::Keyboard::Right:
-			if(m_positioncursor < m_string.getSize())
-				m_positioncursor++;
-			break;
+				if(m_positioncursor < m_string.getSize())
+					m_positioncursor++;
+				break;
 
 			case sf::Keyboard::BackSpace:
-			//erase character
-			if(m_positioncursor > 0)
-			{
-				m_string.erase(m_positioncursor - 1, 1);
-				m_positioncursor--;
-			}
-			m_text.setString(m_string);
-			break;
+				//erase character
+				if(m_positioncursor > 0)
+				{
+					m_string.erase(m_positioncursor - 1, 1);
+					m_positioncursor--;
+				}
+				m_text.setString(m_string);
+				break;
 
 			case sf::Keyboard::Delete:
-			//erase character
-			if(m_positioncursor < m_string.getSize())
-				m_string.erase(m_positioncursor, 1);
-			m_text.setString(m_string);
-			break;
+				//erase character
+				if(m_positioncursor < m_string.getSize())
+					m_string.erase(m_positioncursor, 1);
+				m_text.setString(m_string);
+				break;
 
 			default:
-			break;
+				break;
 		}
 
 		updateCursor();
@@ -169,19 +157,19 @@ void LineEdit::updateCursor()
 	m_cursor.setPosition(cursorpos);
 
 	//If the cursor is outside of the widget, replace the text
-	if(cursorpos.x <= getAbsolutePosition().x || cursorpos.x >= getAbsolutePosition().x + getSize().x - m_cursor.getLocalBounds().width)
+	if(cursorpos.x <= getPosition().x || cursorpos.x >= getPosition().x + getSize().x - m_cursor.getLocalBounds().width)
 	{
 		sf::Vector2f pos = m_text.getPosition();
 		sf::Vector2f size = getSize();
 		sf::Vector2f newpos;
 		//Determine the x of the new pos of the text
-		if(cursorpos.x <= getAbsolutePosition().x)
+		if(cursorpos.x <= getPosition().x)
 		{
-			newpos.x = pos.x + LINEEDIT_LEFT_BORDER_WIDTH;
+			newpos.x = pos.x + LINEEDIT_REPOS;
 		}
-		if(cursorpos.x - size.x + m_cursor.getLocalBounds().width >= getAbsolutePosition().x)
+		if(cursorpos.x - size.x + m_cursor.getLocalBounds().width >= getPosition().x)
 		{
-			newpos.x = pos.x - LINEEDIT_RIGHT_BORDER_WIDTH;
+			newpos.x = pos.x - LINEEDIT_REPOS;
 		}
 		newpos.y = m_text.getPosition().y;
 		m_text.setPosition(newpos);
