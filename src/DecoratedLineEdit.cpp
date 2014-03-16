@@ -31,6 +31,7 @@ DecoratedLineEdit::DecoratedLineEdit(Widget *parent, float width, std::function<
 	}
 
 	m_lineedit = new LineEdit(this, width - 2 * LINEEDIT_LEFT_BORDER_WIDTH, callback);
+	m_lineedit->setPosition(LINEEDIT_LEFT_BORDER_WIDTH, 8);
 
 	updateSize();
 }
@@ -77,8 +78,6 @@ void DecoratedLineEdit::onPositionChanged()
 	//Top left corner
 	m_rdstates.transform = sf::Transform::Identity;
 	m_rdstates.transform.translate(getAbsolutePosition());
-	sf::Vector2f poslineedit = getPosition() + sf::Vector2f(LINEEDIT_LEFT_BORDER_WIDTH, 8);
-	m_lineedit->setPosition(poslineedit);
 }
 
 void DecoratedLineEdit::updateSize()
