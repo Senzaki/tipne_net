@@ -5,11 +5,13 @@
 #include "Button.hpp"
 #include "CheckBox.hpp"
 #include "DecoratedLineEdit.hpp"
+#include "Label.hpp"
 #include "Config.hpp"
 #include "GameAppState.hpp"
 #include "ClientSimulator.hpp"
 #include "ServerSimulator.hpp"
 #include "NetworkCodes.hpp"
+#include <sstream>
 #include <iostream>
 
 Menu::Menu(sf::RenderWindow &window, float vratio, float xyratio):
@@ -128,9 +130,78 @@ void Menu::showOptions()
 	//Widgets to add
 	Widget *topwidget = m_guimgr.getTopWidget();
 
-	Button *button = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
-	button->setPosition(450, 500);
-	new DecoratedLineEdit(topwidget, 150, 0);
+	Button *cancel = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
+	cancel->setPosition(450, 500);
+	Button *save = new Button(topwidget, tr("save"), std::bind(&Menu::saveOptions, this));
+	save->setPosition(300, 500);
+	//new DecoratedLineEdit(topwidget, 150, 0);
+
+	//Create the labels
+	constexpr const int LABEL_COUNT = 6;
+	Label *labels[LABEL_COUNT];
+	labels[0] = new Label(topwidget, tr("name"));
+	labels[1] = new Label(topwidget, tr("videomode"));
+	labels[2] = new Label(topwidget, tr("fullscreen"));
+	labels[3] = new Label(topwidget, tr("vsync"));
+	labels[4] = new Label(topwidget, tr("dispfreq"));
+	labels[5] = new Label(topwidget, tr("lang"));
+	//Set their position
+	float interval = (m_window.getSize().y - 200.f) / LABEL_COUNT;
+	for (int i = 0 ; i < LABEL_COUNT ; i++)
+		labels[i]->setPosition((m_window.getSize().x - labels[i]->getSize().x) / 2.f - m_window.getSize().x / 4.f, 100.f + i * interval);
+
+	//Create other widgets
+	DecoratedLineEdit *name = new DecoratedLineEdit(topwidget, 150);
+	Label *videomode = new Label(topwidget);
+	CheckBox *fullscreen = new CheckBox(topwidget);
+	CheckBox *vsync = new CheckBox(topwidget);
+	Label *dispfreq = new Label(topwidget);
+	Label *lang = new Label(topwidget);
+
+	Button *videomodebuttons[2];
+	std::string left = " < ";
+	std::string right = " > ";
+	videomodebuttons[0] = new Button(topwidget, left);
+	videomodebuttons[1] = new Button(topwidget, right);
+	Button *dispfreqbuttons[2];
+	dispfreqbuttons[0] = new Button(topwidget, left);
+	dispfreqbuttons[1] = new Button(topwidget, right);
+	Button *langbuttons[2];
+	langbuttons[0] = new Button(topwidget, left);
+	langbuttons[1] = new Button(topwidget, right);
+
+	//Set their default values
+	name->setString(Config::getInstance().name);
+	fullscreen->setChecked(Config::getInstance().fullscreen);
+	vsync->setChecked(Config::getInstance().vsync);
+
+	std::ostringstream oss;
+	oss << Config::getInstance().width << "x" << Config::getInstance().height;
+	videomode->setString(oss.str());
+	oss.str("");
+	oss << Config::getInstance().dispfreq;
+	dispfreq->setString(oss.str());
+	lang->setString(tr(Config::getInstance().lang));
+
+	//Set their positions
+	name->setPosition((m_window.getSize().x - name->getSize().x) / 2.f, labels[0]->getAbsolutePosition().y);
+	videomode->setPosition((m_window.getSize().x - videomode->getSize().x) / 2.f, labels[1]->getAbsolutePosition().y);
+	fullscreen->setPosition((m_window.getSize().x - fullscreen->getSize().x) / 2.f, labels[2]->getAbsolutePosition().y);
+	vsync->setPosition((m_window.getSize().x - vsync->getSize().x) / 2.f, labels[3]->getAbsolutePosition().y);
+	dispfreq->setPosition((m_window.getSize().x - dispfreq->getSize().x) / 2.f, labels[4]->getAbsolutePosition().y);
+	lang->setPosition((m_window.getSize().x - lang->getSize().x) / 2.f, labels[5]->getAbsolutePosition().y);
+
+	videomodebuttons[0]->setPosition(videomode->getAbsolutePosition().x - videomodebuttons[0]->getSize().x - 10.f, videomode->getAbsolutePosition().y - videomodebuttons[0]->getSize().y / 2.f);
+	dispfreqbuttons[0]->setPosition(dispfreq->getAbsolutePosition().x - dispfreqbuttons[0]->getSize().x - 10.f, dispfreq->getAbsolutePosition().y - dispfreqbuttons[0]->getSize().y / 2.f);
+	langbuttons[0]->setPosition(lang->getAbsolutePosition().x - langbuttons[0]->getSize().x - 10.f, lang->getAbsolutePosition().y - langbuttons[0]->getSize().y / 2.f);
+	videomodebuttons[1]->setPosition(videomode->getAbsolutePosition().x + videomode->getSize().x + 10.f, videomode->getAbsolutePosition().y - videomodebuttons[1]->getSize().y / 2.f);
+	dispfreqbuttons[1]->setPosition(dispfreq->getAbsolutePosition().x + dispfreq->getSize().x + 10.f, dispfreq->getAbsolutePosition().y - dispfreqbuttons[1]->getSize().y / 2.f);
+	langbuttons[1]->setPosition(lang->getAbsolutePosition().x + lang->getSize().x + 10.f, lang->getAbsolutePosition().y - langbuttons[1]->getSize().y / 2.f);
+}
+
+void Menu::saveOptions()
+{
+	showMainMenu();
 }
 
 void Menu::TEMPtestPlay()

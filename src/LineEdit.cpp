@@ -72,7 +72,7 @@ void LineEdit::onPositionChanged()
 	//sf::Vector2f pos = getPosition();
 	//Put the text right in the middle of the parent widget (coords are integer so that the text does not look blurred)
 	//sf::Vector2f pos2 = sf::Vector2f(std::round(pos.x), std::round(pos.y + (size.y - LINEEDIT_HEIGHT) / 2.f));
-	m_text.setPosition(getPosition());
+	m_text.setPosition(getAbsolutePosition());
 	updateCursor();
 }
 
@@ -157,17 +157,17 @@ void LineEdit::updateCursor()
 	m_cursor.setPosition(cursorpos);
 
 	//If the cursor is outside of the widget, replace the text
-	if(cursorpos.x <= getPosition().x || cursorpos.x >= getPosition().x + getSize().x - m_cursor.getLocalBounds().width)
+	if(cursorpos.x <= getAbsolutePosition().x || cursorpos.x >= getAbsolutePosition().x + getSize().x - m_cursor.getLocalBounds().width)
 	{
 		sf::Vector2f pos = m_text.getPosition();
 		sf::Vector2f size = getSize();
 		sf::Vector2f newpos;
 		//Determine the x of the new pos of the text
-		if(cursorpos.x <= getPosition().x)
+		if(cursorpos.x <= getAbsolutePosition().x)
 		{
 			newpos.x = pos.x + LINEEDIT_REPOS;
 		}
-		if(cursorpos.x - size.x + m_cursor.getLocalBounds().width >= getPosition().x)
+		if(cursorpos.x - size.x + m_cursor.getLocalBounds().width >= getAbsolutePosition().x)
 		{
 			newpos.x = pos.x - LINEEDIT_REPOS;
 		}

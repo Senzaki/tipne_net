@@ -10,3 +10,19 @@
 .Enregistrer
 #cancel
 .Annuler
+#name
+.Nom
+#videomode
+.Résolution
+#fullscreen
+.Plein écran
+#vsync
+.Synchronisation verticale
+#dispfreq
+.FPS
+#lang
+.Langue
+#en
+.English
+#fr
+.Français

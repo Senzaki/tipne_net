@@ -10,3 +10,19 @@
 .Save
 #cancel
 .Cancel
+#name
+.Name
+#videomode
+.Video mode
+#fullscreen
+.Full screen
+#vsync
+.Vertical synchronisation 
+#dispfreq
+.FPS
+#lang
+.Language
+#en
+.English
+#fr
+.Français
