@@ -27,9 +27,9 @@ void Widget::setPosition(float x, float y)
 	m_pos.x = x;
 	m_pos.y = y;
 
-	/*if(m_parent)
+	if(m_parent)
 		m_abspos = m_parent->m_abspos + m_pos;
-	else*/
+	else
 		m_abspos = m_pos;
 
 	//Notify event
