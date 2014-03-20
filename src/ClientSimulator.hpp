@@ -25,6 +25,8 @@ class ClientSimulator : public GameSimulator
 	bool onNewPlayerPacket(sf::Packet &packet);
 	bool onDisconnectionPacket(sf::Packet &packet);
 	bool onMapPacket(sf::Packet &packet);
+	bool onNewCharacterPacket(sf::Packet &packet);
+	bool onRemoveCharactersPacket(sf::Packet &packet);
 
 	void netThread();
 	bool receivePackets();

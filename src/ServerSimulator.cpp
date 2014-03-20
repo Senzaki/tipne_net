@@ -5,6 +5,8 @@
 #include "Config.hpp"
 #include <cassert>
 
+//TODO: Check each received value (e.g. Does the id exist ? Is it different of NO_CHARACTER_ID ?)
+
 static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 
 ServerSimulator::ServerSimulator(bool pure):
@@ -12,11 +14,14 @@ ServerSimulator::ServerSimulator(bool pure):
 	m_thrrunning(false)
 {
 	m_playersids.reserveID(NEUTRAL_PLAYER);
+	m_charactersids.reserveID(NO_CHARACTER_ID);
 	//If it's not a pure server, add a player (this player)
 	if(!pure)
 	{
 		m_ownid = m_playersids.getNewID();
 		addPlayer(m_ownid, Config::getInstance().name);
+		//Also add a character for this player
+		addCharacter(m_charactersids.getNewID(), true, 0.f, m_ownid);
 	}
 }
 
@@ -352,6 +357,15 @@ void ServerSimulator::acceptNewPlayer(Player &toaccept)
 	packet << toaccept;
 	//Map Id
 	packet << (sf::Uint8)getMap().getID();
+	//Add all characters
+	const std::unordered_map<sf::Uint16, Character> &characters = getCharacters();
+	packet << (sf::Uint16)(characters.size() + 1);
+	for(const std::pair<const sf::Uint16, Character> &character : characters)
+		character.second.writeToPacket(packet, true);
+	//Also add a character for this player (and tell the client this is his character)
+	Character newcharacter(m_charactersids.getNewID(), true, 0.f, toaccept.id);
+	newcharacter.writeToPacket(packet, false);
+	packet << (sf::Uint16)newcharacter.getId();
 	//Try to send it
 	sf::Socket::Status status;
 	if((status = sendToPlayer(toaccept.id, packet)) != sf::Socket::Done)
@@ -364,15 +378,23 @@ void ServerSimulator::acceptNewPlayer(Player &toaccept)
 			std::cerr << "Cannot accept client : socket buffer is full." << std::endl;//Impossible, right ?
 		//On error, remove the new client
 		m_clientstoremove.emplaceBack(toaccept.id);
+		//Release the id of the character
+		m_charactersids.releaseID(newcharacter.getId());
 		return;
 	}
+	//Tell all the other players about the new character
 	packet.clear();
+	packet << (sf::Uint8)PacketType::NewCharacter;
+	newcharacter.writeToPacket(packet, true);
+	sendToAllPlayers(packet);
 	//Tell all the other players a new player connected
+	packet.clear();
 	packet << (sf::Uint8)PacketType::NewPlayer << toaccept;
 	sendToAllPlayers(packet);
-	//Add the player to the simulation
+	//Add the player & the character to the simulation
 	assert(!playerExists(toaccept.id));
 	addPlayer(std::move(toaccept));
+	addCharacter(std::move(newcharacter));
 }
 
 void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &received)
@@ -406,8 +428,35 @@ void ServerSimulator::disconnectPlayer(sf::Uint8 id, sf::Uint8 reason)
 	//Remove the player. Note : he may not exists if the client disconnects before being accepted or removed (e.g. the game is full).
 	if(removePlayer(id, reason))
 	{
-		//Tell all the other players
 		sf::Packet packet;
+		//Remove the characters that need to be removed
+		packet << (sf::Uint8)PacketType::RemoveCharacters;
+		bool removed = false;
+		const std::unordered_map<sf::Uint16, Character> &characters = getCharacters();
+		auto it = characters.begin();
+		while(it != characters.end())
+		{
+			if(it->second.getOwner() == id)
+			{
+				//Save the id and increment the iterator (so that the iterator isn't invalid after removing the character)
+				sf::Uint16 remid = it->first;
+				it++;
+				removeCharacter(remid);
+				//Add the removed character id to the packet
+				packet << remid;
+				removed = true;
+			}
+			else
+				it++;
+		}
+		if(removed)
+		{
+			//Tell all the other players about the removed characters
+			packet << (sf::Uint16)NO_CHARACTER_ID;
+			sendToAllPlayers(packet);
+		}
+		//Tell all the other players about the disconnection
+		packet.clear();
 		packet << (sf::Uint8)PacketType::Disconnection << id << reason;
 		sendToAllPlayers(packet);
 	}
@@ -430,6 +479,16 @@ void ServerSimulator::sendToAllPlayers(sf::Packet &packet)
 	//Send to all
 	for(const std::pair<const sf::Uint8, Player> &player : players)
 		m_clients[player.first].send(packet);
+}
+
+bool ServerSimulator::removeCharacter(sf::Uint16 id)
+{
+	if(GameSimulator::removeCharacter(id))
+	{
+		m_charactersids.releaseID(id);
+		return true;
+	}
+	return false;
 }
 
 bool ServerSimulator::playerNameExists(const std::string &name) const

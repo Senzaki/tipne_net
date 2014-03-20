@@ -11,7 +11,9 @@ enum class PacketType : sf::Uint8
 {
 	NewPlayer = 0,
 	Disconnection,
-	Map
+	Map,
+	NewCharacter,
+	RemoveCharacters
 };
 
 enum class DisconnectionReason : sf::Uint8

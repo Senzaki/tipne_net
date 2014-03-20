@@ -1,8 +1,10 @@
 #include "GameSimulator.hpp"
 #include <iostream>
+#include <cassert>
 
 GameSimulator::GameSimulator():
 	m_ownid(NEUTRAL_PLAYER),
+	m_owncharacter(nullptr),
 	m_statelistener(nullptr)
 {
 
@@ -15,6 +17,8 @@ GameSimulator::~GameSimulator()
 
 bool GameSimulator::update(float etime)
 {
+	for(std::pair<const sf::Uint16, Character> &character : m_characters)
+		character.second.update(etime);
 	return true;
 }
 
@@ -31,6 +35,8 @@ const Map &GameSimulator::getMap() const
 bool GameSimulator::addPlayer(Player &&player)
 {
 	sf::Uint8 id = player.id;
+
+	assert(id != NEUTRAL_PLAYER);
 
 	if(!m_players.emplace(id, std::move(player)).second)
 	{
@@ -49,27 +55,10 @@ bool GameSimulator::addPlayer(Player &&player)
 	return true;
 }
 
-bool GameSimulator::addPlayer(sf::Uint8 id, const std::string &name, bool ai)
-{
-	if(!m_players.emplace(id, Player(id, name, ai)).second)
-	{
-		//Player id already exists
-#ifndef NDEBUG
-		std::cerr << "[DEBUG]Cannot create new player. Id " << (int)id << " already reserved." << std::endl;
-#endif
-		return false;
-	}
-	//Tell the listener if required
-	if(m_statelistener)
-		m_statelistener->onNewPlayer(m_players[id]);
-#ifndef NDEBUG
-	std::cout << "[DEBUG]New player. Id : " << (int)id << ". Name : " << m_players[id].name << ". AI : " << (int)m_players[id].ai << "." << std::endl;
-#endif
-	return true;
-}
-
 bool GameSimulator::removePlayer(sf::Uint8 id, sf::Uint8 reason)
 {
+	assert(id != NEUTRAL_PLAYER);
+
 	auto it = m_players.find(id);
 	if(it == m_players.end())
 	{
@@ -101,19 +90,127 @@ Player &GameSimulator::getPlayer(sf::Uint8 id)
 	return m_players.at(id);
 }
 
+const std::unordered_map<sf::Uint8, Player> &GameSimulator::getPlayers() const
+{
+	return m_players;
+}
+
 bool GameSimulator::playerExists(sf::Uint8 id) const
 {
 	return m_players.count(id) != 0;
 }
 
+bool GameSimulator::addCharacter(Character &&character)
+{
+	sf::Uint16 id = character.getId();
+
+	assert(id != NO_CHARACTER_ID);
+
+	if(!m_characters.emplace(id, std::move(character)).second)
+	{
+		//Player id already exists
+#ifndef NDEBUG
+		std::cerr << "[DEBUG]Cannot create new character. Id " << (int)id << " already reserved." << std::endl;
+#endif
+		return false;
+	}
+	//Tell the listener if required
+	if(m_statelistener)
+		m_statelistener->onNewCharacter(m_characters[id]);
+#ifndef NDEBUG
+	std::cout << "[DEBUG]New character. Id : " << (int)id << "." << std::endl;
+#endif
+	return true;
+}
+
+bool GameSimulator::removeCharacter(sf::Uint16 id)
+{
+	assert(id != NO_CHARACTER_ID);
+
+	auto it = m_characters.find(id);
+	if(it == m_characters.end())
+	{
+#ifndef NDEBUG
+	std::cout << "[DEBUG]Cannot remove character. Character with id " << (int)id << " does not exist." << std::endl;
+#endif
+		return false;
+	}
+
+#ifndef NDEBUG
+	std::cout << "[DEBUG]Removing character. Id : " << (int)id << "." << std::endl;
+#endif
+
+	//Tell the listener if required
+	if(m_statelistener)
+		m_statelistener->onCharacterRemoved(it->second);
+	//Remove the character from the table
+	m_characters.erase(it);
+	return true;
+}
+
+const Character &GameSimulator::getCharacter(sf::Uint16 id) const
+{
+	return m_characters.at(id);
+}
+
+Character &GameSimulator::getCharacter(sf::Uint16 id)
+{
+	return m_characters.at(id);
+}
+
+const std::unordered_map<sf::Uint16, Character> &GameSimulator::getCharacters() const
+{
+	return m_characters;
+}
+
+bool GameSimulator::characterExists(sf::Uint16 id)
+{
+	return m_characters.count(id) != 0;
+}
+
+Character *GameSimulator::getOwnCharacter()
+{
+	return m_owncharacter;
+}
+
+const Character *GameSimulator::getOwnCharacter() const
+{
+	return m_owncharacter;
+}
+
+bool GameSimulator::setOwnCharacter(sf::Uint16 id)
+{
+	if(id == NO_CHARACTER_ID)
+		m_owncharacter = nullptr;
+	else
+	{
+		//Try to get the character, or return false if this id does not exist
+		try
+		{
+			m_owncharacter = &m_characters.at(id);
+		}
+		catch(const std::out_of_range &)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 void GameSimulator::setStateListener(SimulatorStateListener *listener)
 {
 	m_statelistener = listener;
-}
 
-const std::unordered_map<sf::Uint8, Player> &GameSimulator::getPlayers() const
-{
-	return m_players;
+	if(listener)
+	{
+		//Tell the listener everything about the current state
+		if(m_map)
+			listener->onMapLoaded(m_map);
+		for(std::pair<const sf::Uint8, Player> &player : m_players)
+			listener->onNewPlayer(player.second);
+		for(std::pair<const sf::Uint16, Character> &character : m_characters)
+			listener->onNewCharacter(character.second);
+	}
 }
 
 bool GameSimulator::loadMap(sf::Uint8 mapid)

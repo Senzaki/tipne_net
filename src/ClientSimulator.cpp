@@ -6,6 +6,8 @@ static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 static const sf::Time CONNECTION_MAX_TIME = sf::seconds(15.f);
 static const sf::Time CONNECTION_INFO_MAX_TIME = sf::seconds(10.f);
 
+//TODO: Check each received value (e.g. Does the id exist ? Is it different of NO_CHARACTER_ID ?)
+
 ClientSimulator::ClientSimulator():
 	m_thread(nullptr),
 	m_thrrunning(false)
@@ -156,26 +158,46 @@ bool ClientSimulator::isConnected() const
 
 bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 {
-	sf::Uint8 players;
-	if(!(packet >> players >> m_ownid))
+	sf::Uint8 playerscount;
+	if(!(packet >> playerscount >> m_ownid))
 		return false;
 
 	//Add all the players
 	Player player;
-	for(sf::Uint8 i = 0; i < players; i++)
+	for(sf::Uint8 i = 0; i < playerscount; i++)
 	{
 		if(!(packet >> player))
 			return false;
 		if(!addPlayer(std::move(player)))
 			return false;
 	}
+	if(!playerExists(m_ownid))
+		return false;
 	//Get the map
 	sf::Uint8 mapid;
 	if(!(packet >> mapid))
 		return false;
 	if(!loadMap(mapid))
 		return false;
-
+	//Get the characters
+	sf::Uint16 characterscount;
+	if(!(packet >> characterscount))
+		return false;
+	Character character;
+	for(sf::Uint16 i = 0; i < characterscount; i++)
+	{
+		if(!character.loadFromPacket(packet))
+			return false;
+		if(!addCharacter(std::move(character)))
+			return false;
+	}
+	sf::Uint16 charid;
+	packet >> charid;
+	if(charid != NO_CHARACTER_ID)
+	{
+		if(!setOwnCharacter(charid))
+			return false;
+	}
 	return true;
 }
 
@@ -202,6 +224,14 @@ bool ClientSimulator::parseReceivedPacket(sf::Packet &packet)
 
 		case (sf::Uint8)PacketType::Map:
 			success = onMapPacket(packet);
+			break;
+
+		case (sf::Uint8)PacketType::NewCharacter:
+			success = onNewCharacterPacket(packet);
+			break;
+
+		case (sf::Uint8)PacketType::RemoveCharacters:
+			success = onRemoveCharactersPacket(packet);
 			break;
 
 		default:
@@ -252,6 +282,31 @@ bool ClientSimulator::onMapPacket(sf::Packet &packet)
 	if(!loadMap(id))
 		return false;
 	return true;
+}
+
+bool ClientSimulator::onNewCharacterPacket(sf::Packet &packet)
+{
+	//Extract new player data
+	Character character;
+	if(!character.loadFromPacket(packet))
+		return false;
+	addCharacter(std::move(character));
+	return true;
+}
+
+bool ClientSimulator::onRemoveCharactersPacket(sf::Packet &packet)
+{
+	//Treat all the characters until NO_CHARACTER_ID is received
+	sf::Uint16 charid;
+	while((packet >> charid))
+	{
+		if(charid == NO_CHARACTER_ID)
+			return true;
+		if(!removeCharacter(charid))
+			return false;
+	}
+	//Error in packet, NO_CHARACTER_ID not reached
+	return false;
 }
 
 void ClientSimulator::netThread()

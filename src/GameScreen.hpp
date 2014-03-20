@@ -3,6 +3,7 @@
 
 #include "GameSimulator.hpp"
 #include "DrawableMap.hpp"
+#include "DrawableCharacter.hpp"
 
 class GameScreen : public SimulatorStateListener
 {
@@ -21,6 +22,8 @@ class GameScreen : public SimulatorStateListener
 	//Simulator events
 	virtual void onNewPlayer(Player &player);
 	virtual void onPlayerLeft(Player &player, sf::Uint8 reason);
+	virtual void onNewCharacter(Character &character);
+	virtual void onCharacterRemoved(Character &character);
 	virtual void onMapLoaded(const Map &map);
 
 	private:
@@ -31,6 +34,8 @@ class GameScreen : public SimulatorStateListener
 
 	GameSimulator *m_simulator;
 	DrawableMap m_map;
+
+	std::unordered_map<sf::Uint16, DrawableCharacter> m_characters;
 };
 
 #endif // GAMESCREEN_HPP_INCLUDED

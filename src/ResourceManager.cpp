@@ -40,8 +40,17 @@ ResourceManager::ResourceManager()
 		sec.tex_files.resize(MAP_TEXTURES_COUNT);
 		sec.textures.resize(MAP_TEXTURES_COUNT, nullptr);
 
-		sec.tex_files[BASE_TILES] = "tiles/base.png";
-		sec.tex_files[GRASS_TEST] = "tiles/grass.png";
+		sec.tex_files[BASE_TILES_TEX] = "tiles/base.png";
+		sec.tex_files[GRASS_TEST_TEX] = "tiles/grass.png";
+	}
+
+	//Characters
+	{
+		Section &sec = m_sections[(int)ResourceSection::Characters];
+		sec.tex_files.resize(CHARACTERS_TEXTURES_COUNT);
+		sec.textures.resize(CHARACTERS_TEXTURES_COUNT, nullptr);
+
+		sec.tex_files[GHOST_TEX] = "ghost.png";
 	}
 }
 

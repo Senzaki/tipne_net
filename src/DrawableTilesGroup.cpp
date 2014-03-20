@@ -25,15 +25,15 @@ const unsigned int TILE_INFO_SIZE = 3;
 GraphTileInfo TILE_INFO[TILE_INFO_SIZE] =
 {
 	//0
-	{Resource::BASE_TILES, 1, {
+	{Resource::BASE_TILES_TEX, 1, {
 		{0.f, 0.f, 160.f, 80.f, 80.f, 40.f}
 	}},
 	//1
-	{Resource::BASE_TILES, 1, {
+	{Resource::BASE_TILES_TEX, 1, {
 		{0.f, 80.f, 160.f, 80.f, 80.f, 40.f}
 	}},
 	//2
-	{Resource::GRASS_TEST, 1, {
+	{Resource::GRASS_TEST_TEX, 1, {
 		{0.f, 0.f, 162.f, 82.f, 81.f, 42.f}
 	}}
 };

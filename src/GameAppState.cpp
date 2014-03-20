@@ -19,7 +19,9 @@ GameAppState::GameAppState(sf::RenderWindow &window, float vratio, float xyratio
 
 GameAppState::~GameAppState()
 {
-	ResourceManager::getInstance().unloadSection(ResourceSection::Map);
+	ResourceManager &rsmgr = ResourceManager::getInstance();
+	rsmgr.unloadSection(ResourceSection::Map);
+	rsmgr.unloadSection(ResourceSection::Characters);
 	delete m_simulator;
 }
 
@@ -30,6 +32,7 @@ void GameAppState::load()
 	//Load all textures & fonts
 	ResourceManager &rsmgr = ResourceManager::getInstance();
 	rsmgr.loadSection(ResourceSection::Map);
+	rsmgr.loadSection(ResourceSection::Characters);
 	m_cursor.setTexture(rsmgr.getTexture(ResourceSection::Base, Resource::CURSOR_TEX));
 
 	//We can now attach the GameScreen to the GameSimulator

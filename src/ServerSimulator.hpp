@@ -33,6 +33,8 @@ class ServerSimulator : public GameSimulator
 	sf::Socket::Status sendToPlayer(sf::Uint8 id, sf::Packet &packet);
 	void sendToAllPlayers(sf::Packet &packet);
 
+	virtual bool removeCharacter(sf::Uint16 id);
+
 	bool playerNameExists(const std::string &name) const;
 
 	std::thread *m_thread;
@@ -40,6 +42,7 @@ class ServerSimulator : public GameSimulator
 
 	IDCreator<sf::Uint8> m_playersids;//Don't use it in main thread
 	sf::Uint8 m_maxplayers;
+	IDCreator<sf::Uint16> m_charactersids;//Don't use it in child thread
 
 	sf::TcpListener m_listener;//Not locked
 	std::unordered_map<sf::Uint8, SafeSocket> m_clients;//Don't write to the container in main thread
