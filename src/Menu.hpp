@@ -27,7 +27,6 @@ class Menu : public ApplicationState
 	private:
 	void showMainMenu();
 	void showOptions();
-	void saveOptions();
 	void TEMPtestPlay();
 
 	sf::RenderWindow &m_window;
