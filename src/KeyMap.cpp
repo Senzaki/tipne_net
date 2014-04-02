@@ -36,6 +36,7 @@ void KeyMap::load()
 	std::ifstream file(KEYS_FILENAME);
 	std::string line;
 	unsigned int linenum = 0;
+	//Parse all lines
 	while(std::getline(file, line))
 	{
 		linenum++;
@@ -43,23 +44,27 @@ void KeyMap::load()
 			continue;
 		if(line[0] == '#')
 			continue;
+		//Is it a key or a scancode
 		if(line.substr(0, 4) == "key ")
 		{
 			std::istringstream strm(line.substr(4));
 			std::string keyname;
 			std::string actionname;
+			//Get action name
 			if(!(strm >> actionname))
 			{
 				std::cerr << "Wrong line format in file " << KEYS_FILENAME << " at line " << linenum << "." << std::endl;
 				continue;
 			}
-			strm.get();
+			strm.get();//Skip the space
+			//Get key name
 			if(!extractEnd(strm, keyname))
 			{
 				std::cerr << "Wrong line format in file " << KEYS_FILENAME << " at line " << linenum << "." << std::endl;
 				continue;
 			}
 
+			//Convert the names to a key/action pair
 			sf::Keyboard::Key key = internalStringToKey(keyname);
 			if(key == sf::Keyboard::Unknown)
 			{
@@ -72,10 +77,12 @@ void KeyMap::load()
 				std::cerr << "Error in file " << KEYS_FILENAME << " at line " << linenum << " : unknown action name." << std::endl;
 				continue;
 			}
+			//Put it it the keymap
 			m_keymap[key] = action;
 		}
 		else if(line.substr(0, 5) == "scan ")
 		{
+			//See above
 			std::istringstream strm(line.substr(5));
 			std::string scanname;
 			std::string actionname;
@@ -113,12 +120,14 @@ void KeyMap::load()
 
 void KeyMap::save() const
 {
+	//Open file for reading (or create it)
 	std::ofstream file(KEYS_FILENAME);
 	if(!file)
 	{
 		std::cerr << "Cannot create/write to file " << KEYS_FILENAME << ". Key mapping will not be saved." << std::endl;
 		return;
 	}
+	//Save eack key/action pair (except if no action is defined for a specific key of course)
 	for(unsigned int i = 0; i < sf::Keyboard::KeyCount; i++)
 	{
 		if(m_keymap[i] != KeyAction::None)
@@ -134,6 +143,7 @@ void KeyMap::save() const
 
 void KeyMap::clear()
 {
+	//Remove any set action
 	for(unsigned int i = 0; i < sf::Keyboard::KeyCount; i++)
 		m_keymap[i] = KeyAction::None;
 	for(unsigned int i = 0; i < sf::Keyboard::ScanCount; i++)
@@ -142,6 +152,7 @@ void KeyMap::clear()
 
 void KeyMap::setActionForKey(const sf::Event::KeyEvent &event, KeyAction action)
 {
+	//Invalid action
 	if(action == KeyAction::Count)
 		return;
 	if(event.code != sf::Keyboard::Unknown && event.code < sf::Keyboard::KeyCount)
