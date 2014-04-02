@@ -1,8 +1,8 @@
 #ifndef BASISCHANGE_HPP_INCLUDED
 #define BASISCHANGE_HPP_INCLUDED
 
-constexpr const float GRID_WIDTH = 80.f;
-constexpr const float GRID_HEIGHT = 40.f;
+constexpr const float GRID_WIDTH = 60.f;
+constexpr const float GRID_HEIGHT = 30.f;
 
 struct BasisChange
 {
