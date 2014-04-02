@@ -3,6 +3,7 @@
 #include "Menu.hpp"
 #include "Translator.hpp"
 #include "ResourceManager.hpp"
+#include "KeyMap.hpp"
 
 Application::Application():
 	m_curstate(nullptr),
@@ -21,6 +22,8 @@ Application &Application::getInstance()
 int Application::execute(int argc, char **argv)
 {
 	const Config &conf = Config::getInstance();
+	//Preload the key mapping
+	KeyMap::getInstance();
 
 	//Load base language package (for window title)
 	Translator::getInstance().loadPackage("base");
