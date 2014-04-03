@@ -19,9 +19,7 @@ ServerSimulator::ServerSimulator(bool pure):
 	if(!pure)
 	{
 		m_ownid = m_playersids.getNewID();
-		addPlayer(m_ownid, Config::getInstance().name);
-		//Also add a character for this player
-		addCharacter(m_charactersids.getNewID(), true, 0.f, m_ownid);
+		m_playerschars[addPlayer(m_ownid, Config::getInstance().name)->id] = addCharacter(m_charactersids.getNewID(), true, 0.f, m_ownid);
 	}
 }
 
@@ -393,8 +391,7 @@ void ServerSimulator::acceptNewPlayer(Player &toaccept)
 	sendToAllPlayers(packet);
 	//Add the player & the character to the simulation
 	assert(!playerExists(toaccept.id));
-	addPlayer(std::move(toaccept));
-	addCharacter(std::move(newcharacter));
+	m_playerschars[addPlayer(std::move(toaccept))->id] = addCharacter(std::move(newcharacter));
 }
 
 void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &received)
@@ -485,6 +482,15 @@ bool ServerSimulator::removeCharacter(sf::Uint16 id)
 {
 	if(GameSimulator::removeCharacter(id))
 	{
+		//If the character is played by a player, also remove the reference to it
+		auto it = m_playerschars.begin();
+		while(it != m_playerschars.end())
+		{
+			if(it->second->getId() == id)
+				it = m_playerschars.erase(it);
+			else
+				it++;
+		}
 		m_charactersids.releaseID(id);
 		return true;
 	}

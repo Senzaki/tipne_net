@@ -32,27 +32,29 @@ const Map &GameSimulator::getMap() const
 	return m_map;
 }
 
-bool GameSimulator::addPlayer(Player &&player)
+Player *GameSimulator::addPlayer(Player &&player)
 {
 	sf::Uint8 id = player.id;
 
 	assert(id != NEUTRAL_PLAYER);
 
-	if(!m_players.emplace(id, std::move(player)).second)
+	auto added = m_players.emplace(id, std::move(player));
+
+	if(!added.second)
 	{
 		//Player id already exists
 #ifndef NDEBUG
 		std::cerr << "[DEBUG]Cannot create new player. Id " << (int)id << " already reserved." << std::endl;
 #endif
-		return false;
+		return nullptr;
 	}
 	//Tell the listener if required
 	if(m_statelistener)
-		m_statelistener->onNewPlayer(m_players[id]);
+		m_statelistener->onNewPlayer(added.first->second);
 #ifndef NDEBUG
 	std::cout << "[DEBUG]New player. Id : " << (int)id << ". Name : " << m_players[id].name << ". AI : " << (int)m_players[id].ai << "." << std::endl;
 #endif
-	return true;
+	return &added.first->second;
 }
 
 bool GameSimulator::removePlayer(sf::Uint8 id, sf::Uint8 reason)
@@ -100,19 +102,21 @@ bool GameSimulator::playerExists(sf::Uint8 id) const
 	return m_players.count(id) != 0;
 }
 
-bool GameSimulator::addCharacter(Character &&character)
+Character *GameSimulator::addCharacter(Character &&character)
 {
 	sf::Uint16 id = character.getId();
 
 	assert(id != NO_CHARACTER_ID);
 
-	if(!m_characters.emplace(id, std::move(character)).second)
+	auto added = m_characters.emplace(id, std::move(character));
+
+	if(!added.second)
 	{
 		//Player id already exists
 #ifndef NDEBUG
 		std::cerr << "[DEBUG]Cannot create new character. Id " << (int)id << " already reserved." << std::endl;
 #endif
-		return false;
+		return nullptr;
 	}
 	//Tell the listener if required
 	if(m_statelistener)
@@ -120,7 +124,7 @@ bool GameSimulator::addCharacter(Character &&character)
 #ifndef NDEBUG
 	std::cout << "[DEBUG]New character. Id : " << (int)id << "." << std::endl;
 #endif
-	return true;
+	return &added.first->second;
 }
 
 bool GameSimulator::removeCharacter(sf::Uint16 id)

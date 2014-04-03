@@ -43,6 +43,7 @@ class ServerSimulator : public GameSimulator
 	IDCreator<sf::Uint8> m_playersids;//Don't use it in main thread
 	sf::Uint8 m_maxplayers;
 	IDCreator<sf::Uint16> m_charactersids;//Don't use it in child thread
+	std::unordered_map<sf::Uint8, Character *> m_playerschars;
 
 	sf::TcpListener m_listener;//Not locked
 	std::unordered_map<sf::Uint8, SafeSocket> m_clients;//Don't write to the container in main thread

@@ -38,14 +38,14 @@ class GameSimulator
 
 	protected:
 	template<typename... Args>
-	inline bool addPlayer(Args &&...args);
-	bool addPlayer(Player &&player);
+	inline Player *addPlayer(Args &&...args);
+	Player *addPlayer(Player &&player);
 	virtual bool removePlayer(sf::Uint8 id, sf::Uint8 reason = (sf::Uint8)DisconnectionReason::Left);
 	const std::unordered_map<sf::Uint8, Player> &getPlayers() const;
 
 	template<typename... Args>
-	inline bool addCharacter(Args &&...args);
-	bool addCharacter(Character &&character);
+	inline Character *addCharacter(Args &&...args);
+	Character *addCharacter(Character &&character);
 	virtual bool removeCharacter(sf::Uint16 id);
 	const std::unordered_map<sf::Uint16, Character> &getCharacters() const;
 	Character *getOwnCharacter();
