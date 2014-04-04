@@ -156,6 +156,14 @@ bool ClientSimulator::isConnected() const
 	return m_thrrunning;
 }
 
+void ClientSimulator::selfSetDirection(const sf::Vector2f &direction)
+{
+	//Only tell the server we want to move, don't start to move until the server replies
+	sf::Packet packet;
+	packet << (sf::Uint8)PacketType::SetDirection << direction.x << direction.y;
+	m_server.send(packet);
+}
+
 bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 {
 	sf::Uint8 playerscount;
@@ -188,6 +196,8 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 	{
 		if(!character.loadFromPacket(packet))
 			return false;
+		//character.setFullySimulated(false);
+		character.setInterpolationTime(DEFAULT_INTERPOLATION_TIME);
 		if(!addCharacter(std::move(character)))
 			return false;
 	}
@@ -234,8 +244,12 @@ bool ClientSimulator::parseReceivedPacket(sf::Packet &packet)
 			success = onRemoveCharactersPacket(packet);
 			break;
 
+		case (sf::Uint8)PacketType::SetDirection:
+			success = onSetDirectionPacket(packet);
+			break;
+
 		default:
-			std::cout << "Unknown packet type." << std::endl;
+			std::cerr << "Unknown packet type." << std::endl;
 			break;
 	}
 	if(!success)
@@ -307,6 +321,26 @@ bool ClientSimulator::onRemoveCharactersPacket(sf::Packet &packet)
 	}
 	//Error in packet, NO_CHARACTER_ID not reached
 	return false;
+}
+
+bool ClientSimulator::onSetDirectionPacket(sf::Packet &packet)
+{
+	sf::Uint16 charid;
+	sf::Vector2f direction;
+	//Which character ? What direction ?
+	if(!(packet >> charid >> direction.x >> direction.y))
+		return false;
+	try
+	{
+		getCharacter(charid).setDirection(direction);
+	}
+	catch(const std::out_of_range &)
+	{
+		//The character does not exist.
+		std::cerr << "No character corresponds to id " << (int)charid << "." << std::endl;
+		return false;
+	}
+	return true;
 }
 
 void ClientSimulator::netThread()

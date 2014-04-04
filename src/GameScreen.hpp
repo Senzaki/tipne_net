@@ -19,6 +19,12 @@ class GameScreen : public SimulatorStateListener
 	bool update(float etime);
 	void draw(sf::RenderWindow &window);
 
+	void onKeyPressed(const sf::Event::KeyEvent &evt);
+	void onKeyReleased(const sf::Event::KeyEvent &evt);
+	void onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt);
+	void onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt);
+	void onMouseMoved(const sf::Event::MouseMoveEvent &evt);
+
 	//Simulator events
 	virtual void onNewPlayer(Player &player);
 	virtual void onPlayerLeft(Player &player, sf::Uint8 reason);
@@ -27,10 +33,15 @@ class GameScreen : public SimulatorStateListener
 	virtual void onMapLoaded(const Map &map);
 
 	private:
+	void updateDirection();
+
 	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)
 	sf::FloatRect m_seen;
 	float m_vratio;
 	float m_xyratio;
+
+	sf::Vector2f m_direction;
+	sf::Vector2<bool> m_otherdirpressed;
 
 	GameSimulator *m_simulator;
 	DrawableMap m_map;

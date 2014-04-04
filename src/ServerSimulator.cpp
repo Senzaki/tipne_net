@@ -5,7 +5,7 @@
 #include "Config.hpp"
 #include <cassert>
 
-//TODO: Check each received value (e.g. Does the id exist ? Is it different of NO_CHARACTER_ID ?)
+//TODO: Check each received value (e.g. Does the id exist ? Is it different from NO_CHARACTER_ID ?)
 
 static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 
@@ -19,7 +19,9 @@ ServerSimulator::ServerSimulator(bool pure):
 	if(!pure)
 	{
 		m_ownid = m_playersids.getNewID();
-		m_playerschars[addPlayer(m_ownid, Config::getInstance().name)->id] = addCharacter(m_charactersids.getNewID(), true, 0.f, m_ownid);
+		Character *self = addCharacter(m_charactersids.getNewID(), true, 0.f, m_ownid);
+		m_playerschars[addPlayer(m_ownid, Config::getInstance().name)->id] = self;
+		setOwnCharacter(self->getId());
 	}
 }
 
@@ -133,6 +135,14 @@ void ServerSimulator::stopNetThread()
 			delete std::get<1>(received);
 		});
 	}
+}
+
+void ServerSimulator::onCharacterSpeedChanged(Character &character, const sf::Vector2f &speed)
+{
+	//The "moving state" has changed, tell all the clients.
+	sf::Packet packet;
+	packet << (sf::Uint8)PacketType::SetDirection << (sf::Uint16)character.getId() << (float)speed.x << (float)speed.y;
+	sendToAllPlayers(packet);
 }
 
 void ServerSimulator::netThread()
@@ -411,12 +421,23 @@ void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &receiv
 		disconnectPlayer(std::get<0>(received), (sf::Uint8)DisconnectionReason::Error);
 		return;
 	}
+
+	bool success = false;
 	switch(type)
 	{
+		case (sf::Uint8)PacketType::SetDirection:
+			success = onSetDirectionPacketReceived(std::get<0>(received), *std::get<1>(received));
+			break;
+
 		default:
-			std::cerr << "Invalid packet type. Disconnecting client." << std::endl;
-			disconnectPlayer(std::get<0>(received), (sf::Uint8)DisconnectionReason::Error);
-			return;
+			std::cerr << "Invalid packet type." << std::endl;
+			break;
+	}
+	if(!success)
+	{
+		std::cerr << "Invalid packet data. Disconnecting client." << std::endl;
+		disconnectPlayer(std::get<0>(received), (sf::Uint8)DisconnectionReason::Error);
+		return;
 	}
 }
 
@@ -476,6 +497,23 @@ void ServerSimulator::sendToAllPlayers(sf::Packet &packet)
 	//Send to all
 	for(const std::pair<const sf::Uint8, Player> &player : players)
 		m_clients[player.first].send(packet);
+}
+
+bool ServerSimulator::onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet &packet)
+{
+	sf::Vector2f direction;
+	packet >> direction.x >> direction.y;
+	try
+	{
+		m_playerschars.at(sender)->setDirection(direction);
+	}
+	catch(const std::out_of_range &)
+	{
+		//No character for player
+		std::cerr << "No character associated to player " << (int)sender << ". Discarding packet." << std::endl;
+		return true;//It is not because of the packet, do not disconnect the client
+	}
+	return true;
 }
 
 bool ServerSimulator::removeCharacter(sf::Uint16 id)

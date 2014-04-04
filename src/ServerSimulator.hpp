@@ -21,6 +21,8 @@ class ServerSimulator : public GameSimulator
 	bool startNetThread(unsigned short port, sf::Uint8 maxplayers);
 	void stopNetThread();
 
+	virtual void onCharacterSpeedChanged(Character &character, const sf::Vector2f &speed);
+
 	private:
 	void netThread();
 	void acceptNewConnections(std::list<sf::TcpSocket *> &newclients, sf::SocketSelector &selector);
@@ -32,6 +34,8 @@ class ServerSimulator : public GameSimulator
 	void disconnectPlayer(sf::Uint8 id, sf::Uint8 reason);
 	sf::Socket::Status sendToPlayer(sf::Uint8 id, sf::Packet &packet);
 	void sendToAllPlayers(sf::Packet &packet);
+
+	bool onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet &packet);
 
 	virtual bool removeCharacter(sf::Uint16 id);
 

@@ -15,6 +15,7 @@ class PositionManager
 	void forcePosition(float x, float y);//This one will force the position (no interpolation possible)
 	void forcePosition(const sf::Vector2f &position);
 	sf::Vector2f getPosition() const;
+	sf::Vector2f getDesiredPosition() const;
 
 	void setInterpolationTime(float interpolationtime);
 	float getInterpolationTime() const;
@@ -27,8 +28,10 @@ class PositionManager
 	sf::Vector2f m_start;
 	sf::Vector2f m_direction;
 	sf::Vector2f m_position;
+	sf::Vector2f m_desired;
 	float m_maxtime;
 	float m_time;
+	bool m_justset;
 };
 
 #endif // POSITIONMANAGER_HPP_INCLUDED

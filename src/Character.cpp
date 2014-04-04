@@ -1,5 +1,10 @@
 #include "Character.hpp"
 #include "CharacterStateListener.hpp"
+#include "GameSimulator.hpp"
+#include <cmath>
+
+static const float SQRT_2 = 1.41421356237309504880168872420969807f;
+static const float DEFAULT_SPEED = 3.f;
 
 Character::Character(sf::Uint16 id, bool fullysimulated, float interpolationtime, sf::Uint8 owner, sf::Vector2f position, State state):
 	m_state(state),
@@ -7,7 +12,8 @@ Character::Character(sf::Uint16 id, bool fullysimulated, float interpolationtime
 	m_id(id),
 	m_owner(owner),
 	m_fullysimulated(fullysimulated),
-	m_listener(nullptr)
+	m_listener(nullptr),
+	m_simulator(nullptr)
 {
 
 }
@@ -64,6 +70,11 @@ void Character::setCharacterStateListener(CharacterStateListener *listener)
 	}
 }
 
+void Character::setSimulator(GameSimulator *simulator)
+{
+	m_simulator = simulator;
+}
+
 void Character::setState(State state)
 {
 	m_state = state;
@@ -107,10 +118,27 @@ float Character::getInterpolationTime() const
 
 void Character::update(float etime)
 {
+	if(m_fullysimulated)
+		m_posmgr.setPosition(m_posmgr.getDesiredPosition() + m_direction * DEFAULT_SPEED * etime);
 	if(m_posmgr.update(etime))
 	{
+		//Only tell the listener about the position change if it has really changed
 		if(m_listener)
 			m_listener->onPositionChanged(m_posmgr.getPosition());
+	}
+}
+
+void Character::setDirection(sf::Vector2f direction)
+{
+	//Normalize the direction if non-zero
+	if(direction.x != 0.f && direction.y != 0.f)
+		direction = direction / std::sqrt(direction.x * direction.x + direction.y * direction.y);
+	if(m_direction != direction)
+	{
+		//Only tell the simulator if the direction has changed (to avoid sending extra packets)
+		m_direction = direction;
+		if(m_simulator)
+			m_simulator->onCharacterSpeedChanged(*this, direction);
 	}
 }
 

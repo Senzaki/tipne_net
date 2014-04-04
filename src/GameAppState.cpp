@@ -77,9 +77,16 @@ void GameAppState::onKeyPressed(const sf::Event::KeyEvent &evt)
 				break;
 
 			default:
+				m_gscr.onKeyPressed(evt);
 				break;
 		}
 	}
+}
+
+void GameAppState::onKeyReleased(const sf::Event::KeyEvent &evt)
+{
+	if(!m_guimgr.onKeyReleased(evt))
+		m_gscr.onKeyReleased(evt);
 }
 
 void GameAppState::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)

@@ -21,6 +21,7 @@ class GameAppState : public ApplicationState
 
 	virtual void onWindowClosed();
 	virtual void onKeyPressed(const sf::Event::KeyEvent &evt);
+	virtual void onKeyReleased(const sf::Event::KeyEvent &evt);
 	virtual void onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt);
 	virtual void onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt);
 	virtual void onMouseMoved(const sf::Event::MouseMoveEvent &evt);

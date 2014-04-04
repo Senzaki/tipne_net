@@ -24,17 +24,22 @@ class GameSimulator
 
 	void setStateListener(SimulatorStateListener *listener);//nullptr to remove the current simulator
 
-	const Player &getPlayer(sf::Uint8 id) const;//May throw std::out_of_range if no player corresponds to this id.
-	Player &getPlayer(sf::Uint8 id);//May throw std::out_of_range if no player corresponds to this id.
+	const Player &getPlayer(sf::Uint8 id) const;//Throws std::out_of_range if no player corresponds to this id.
+	Player &getPlayer(sf::Uint8 id);//Throws std::out_of_range if no player corresponds to this id.
 	bool playerExists(sf::Uint8 id) const;
 
-	const Character &getCharacter(sf::Uint16 id) const;
-	Character &getCharacter(sf::Uint16 id);
+	const Character &getCharacter(sf::Uint16 id) const;//Throws std::out_of_range if no player corresponds to this id.
+	Character &getCharacter(sf::Uint16 id);//Throws std::out_of_range if no player corresponds to this id.
 	bool characterExists(sf::Uint16 id);
 
 	sf::Uint8 getOwnId() const;//Will return NEUTRAL_PLAYER if no id
 
 	const Map &getMap() const;
+
+	//Override to prevent full-authority (e.g. in a client, only send a request)
+	virtual void selfSetDirection(const sf::Vector2f &direction);
+
+	virtual void onCharacterSpeedChanged(Character &character, const sf::Vector2f &direction) { }
 
 	protected:
 	template<typename... Args>

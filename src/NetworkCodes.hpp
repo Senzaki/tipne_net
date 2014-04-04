@@ -13,7 +13,8 @@ enum class PacketType : sf::Uint8
 	Disconnection,
 	Map,
 	NewCharacter,
-	RemoveCharacters
+	RemoveCharacters,
+	SetDirection
 };
 
 enum class DisconnectionReason : sf::Uint8
@@ -22,5 +23,8 @@ enum class DisconnectionReason : sf::Uint8
 	Error,
 	Kicked
 };
+
+const float DEFAULT_SNAPSHOT_TIME = 0.05f;
+const float DEFAULT_INTERPOLATION_TIME = DEFAULT_SNAPSHOT_TIME * 2.f;
 
 #endif // NETWORKCODES_HPP_INCLUDED

@@ -32,6 +32,18 @@ const Map &GameSimulator::getMap() const
 	return m_map;
 }
 
+void GameSimulator::selfSetDirection(const sf::Vector2f &direction)
+{
+	if(!m_owncharacter)
+	{
+#ifndef NDEBUG
+		std::cerr << "[DEBUG]selfSetDirection() function called, but no character exists for self." << std::endl;
+#endif
+		return;
+	}
+	m_owncharacter->setDirection(direction);
+}
+
 Player *GameSimulator::addPlayer(Player &&player)
 {
 	sf::Uint8 id = player.id;
@@ -118,6 +130,7 @@ Character *GameSimulator::addCharacter(Character &&character)
 #endif
 		return nullptr;
 	}
+	added.first->second.setSimulator(this);
 	//Tell the listener if required
 	if(m_statelistener)
 		m_statelistener->onNewCharacter(m_characters[id]);

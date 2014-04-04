@@ -19,6 +19,8 @@ class ClientSimulator : public GameSimulator
 	void stopNetThread();
 	bool isConnected() const;
 
+	virtual void selfSetDirection(const sf::Vector2f &direction);
+
 	private:
 	bool parseConnectionData(sf::Packet &packet);
 	bool parseReceivedPacket(sf::Packet &packet);
@@ -27,6 +29,7 @@ class ClientSimulator : public GameSimulator
 	bool onMapPacket(sf::Packet &packet);
 	bool onNewCharacterPacket(sf::Packet &packet);
 	bool onRemoveCharactersPacket(sf::Packet &packet);
+	bool onSetDirectionPacket(sf::Packet &packet);
 
 	void netThread();
 	bool receivePackets();
