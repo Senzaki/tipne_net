@@ -43,10 +43,20 @@ void GameScreen::draw(sf::RenderWindow &window)
 	//Save the old view and use the game camera
 	sf::View oldview = window.getView();
 	window.setView(m_camera);
-	//Draw the graphical entities
+	//Draw the map
 	m_map.draw(window, m_seen);
+	//Put the graphical entities that need to be drawn in a list
+	std::list<DrawableEntity *> todraw;
 	for(std::pair<const sf::Uint16, DrawableCharacter> &character : m_characters)
-		character.second.draw(window);
+	{
+		if(character.second.isContainedIn(m_seen))
+			todraw.emplace_back(&character.second);
+	}
+	//Sort the entities by depth
+	todraw.sort(DrawableEntity::isDepthLower);
+	//Draw all the entities
+	for(DrawableEntity *entity : todraw)
+		entity->draw(window);
 	//Go back to the old view
 	window.setView(oldview);
 }

@@ -36,9 +36,22 @@ sf::Vector2f DrawableCharacter::getPosition() const
 	return m_sprite.getPosition();
 }
 
+float DrawableCharacter::getDepth() const
+{
+	return m_depth;
+}
+
+bool DrawableCharacter::isContainedIn(const sf::FloatRect &rect) const
+{
+	return m_sprite.getGlobalBounds().intersects(rect);
+}
+
 void DrawableCharacter::onPositionChanged(sf::Vector2f position)
 {
 	m_sprite.setPosition(BasisChange::gridToPixel(position));
+	//Update the depth as well
+	sf::FloatRect bounds = m_sprite.getGlobalBounds();
+	m_depth = bounds.top + bounds.width;
 }
 
 void DrawableCharacter::onStatusChanged(Character::State state)

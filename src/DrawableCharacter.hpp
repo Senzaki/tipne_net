@@ -2,9 +2,9 @@
 #define DRAWABLECHARACTER_HPP_INCLUDED
 
 #include "CharacterStateListener.hpp"
-#include <SFML/Graphics.hpp>
+#include "DrawableEntity.hpp"
 
-class DrawableCharacter : public CharacterStateListener
+class DrawableCharacter : public CharacterStateListener, public DrawableEntity
 {
 	public:
 	DrawableCharacter();
@@ -12,15 +12,18 @@ class DrawableCharacter : public CharacterStateListener
 	virtual ~DrawableCharacter();
 
 	void update(float etime);
-	void draw(sf::RenderWindow &window);
+	virtual void draw(sf::RenderWindow &window);
 
 	sf::Vector2f getPosition() const;
+	virtual float getDepth() const;
+	virtual bool isContainedIn(const sf::FloatRect &rect) const;
 
 	virtual void onPositionChanged(sf::Vector2f position);
 	virtual void onStatusChanged(Character::State state);
 
 	private:
 	sf::Sprite m_sprite;
+	float m_depth;
 };
 
 #endif // DRAWABLECHARACTER_HPP_INCLUDED
