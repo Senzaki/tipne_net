@@ -70,6 +70,7 @@ int PureServerApplication::execute(int argc, char **argv)
 
 void PureServerApplication::quit()
 {
+	std::cout << "Closing the server..." << std::endl;
 	m_running = false;
 }
 
