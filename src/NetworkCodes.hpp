@@ -4,7 +4,8 @@
 enum class ConnectionStatus : sf::Uint8
 {
 	Accepted = 0,
-	GameIsFull
+	GameIsFull,
+	WrongAddress
 };
 
 enum class PacketType : sf::Uint8
@@ -17,11 +18,18 @@ enum class PacketType : sf::Uint8
 	SetDirection
 };
 
+enum class UdpPacketType : sf::Uint8
+{
+	KeepAlive = 0,
+	Snapshot
+};
+
 enum class DisconnectionReason : sf::Uint8
 {
 	Left = 0,
 	Error,
-	Kicked
+	Kicked,
+	Timeout
 };
 
 const float DEFAULT_SNAPSHOT_TIME = 0.05f;

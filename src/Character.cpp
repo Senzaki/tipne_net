@@ -118,8 +118,8 @@ float Character::getInterpolationTime() const
 
 void Character::update(float etime)
 {
-	//Change the position if the character is moving (don't change it if it is not needed, because it would restart the interpolation time, thus preventing the character from really reaching its target)
-	if(m_fullysimulated && m_direction.x != 0.f && m_direction.y != 0.f)
+    //Change the position if the character is moving (don't change it if it is not needed, because it would restart the interpolation time, thus preventing the character from really reaching its target)
+    if(m_fullysimulated && m_direction.x != 0.f && m_direction.y != 0.f)
 		m_posmgr.setPosition(m_posmgr.getDesiredPosition() + m_direction * DEFAULT_SPEED * etime);
 	if(m_posmgr.update(etime))
 	{
@@ -141,6 +141,16 @@ void Character::setDirection(sf::Vector2f direction)
 		if(m_simulator)
 			m_simulator->onCharacterSpeedChanged(*this, direction);
 	}
+}
+
+void Character::setPosition(float x, float y)
+{
+	m_posmgr.setPosition(x, y);
+}
+
+void Character::forcePosition(float x, float y)
+{
+	m_posmgr.forcePosition(x, y);
 }
 
 sf::Vector2f Character::getPosition() const

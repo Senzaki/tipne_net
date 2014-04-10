@@ -7,7 +7,8 @@
 #include <SFML/System.hpp>
 
 constexpr const char *DEFAULT_LANGUAGE = "en";
-const unsigned short DEFAULT_PORT = 57575;
+const unsigned short DEFAULT_TCP_PORT = 57575;
+const unsigned short DEFAULT_UDP_PORT = 57577;
 
 struct Config
 {
@@ -27,8 +28,10 @@ struct Config
 	unsigned int dispfreq;
 	std::string lang;
 	std::string connectto_ip;
-	unsigned short connectto_port;
-	unsigned short server_port;
+	unsigned short connectto_tcpport;
+	unsigned short connectto_udpport;
+	unsigned short server_tcpport;
+	unsigned short server_udpport;
 	sf::Uint8 max_players;
 
 	private:

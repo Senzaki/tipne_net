@@ -4,6 +4,7 @@
 #include "NetworkCodes.hpp"
 #include "Config.hpp"
 #include <cassert>
+#include "ServerUdpManager.hpp"
 
 //TODO: Check each received value (e.g. Does the id exist ? Is it different from NO_CHARACTER_ID ?)
 
@@ -11,7 +12,8 @@ static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 
 ServerSimulator::ServerSimulator(bool pure):
 	m_thread(nullptr),
-	m_thrrunning(false)
+	m_thrrunning(false),
+	m_udpmgr(*this)
 {
 	m_playersids.reserveID(NEUTRAL_PLAYER);
 	m_charactersids.reserveID(NO_CHARACTER_ID);
@@ -33,9 +35,14 @@ ServerSimulator::~ServerSimulator()
 bool ServerSimulator::update(float etime)
 {
 	using namespace std::placeholders;
+	m_udpmgr.update(etime);
 	//Examine network info
 	//First, new connections
-	m_acceptedplayers.foreach(std::bind(&ServerSimulator::acceptNewPlayer, this, _1));
+	//m_acceptedplayers.foreach(std::bind(&ServerSimulator::acceptNewPlayer, this, _1));
+	m_acceptedplayers.foreach([this](std::tuple<sf::IpAddress, unsigned short, Player> &newplayer)
+	{
+		acceptNewPlayer(std::get<0>(newplayer), std::get<1>(newplayer), std::get<2>(newplayer));
+	});
 	m_acceptedplayers.clear();
 	//Then packets
 	m_receivedpackets.foreach([this](std::tuple<sf::Uint8, sf::Packet *> &received)
@@ -54,6 +61,15 @@ bool ServerSimulator::update(float etime)
 	return GameSimulator::update(etime);
 }
 
+void ServerSimulator::buildSnapshotPacket(sf::Packet &packet)
+{
+	//Put all the characters info in the packet
+	const std::unordered_map<sf::Uint16, Character> &characters = getCharacters();
+	packet << (sf::Uint8)UdpPacketType::Snapshot << (sf::Uint16)characters.size();
+	for(const std::pair<const sf::Uint16, Character> &character : characters)
+		packet << (sf::Uint16)character.first << (float)character.second.getPosition().x << (float)character.second.getPosition().y;
+}
+
 bool ServerSimulator::loadMap(sf::Uint8 mapid)
 {
 	//Try to load the map
@@ -66,7 +82,7 @@ bool ServerSimulator::loadMap(sf::Uint8 mapid)
 	return true;
 }
 
-bool ServerSimulator::startNetThread(unsigned short port, sf::Uint8 maxplayers)
+bool ServerSimulator::startNetThread(unsigned short tcpport, unsigned short udpport, sf::Uint8 maxplayers)
 {
 	//If the thread already exists, don't start a new one
 	if(m_thread)
@@ -82,12 +98,19 @@ bool ServerSimulator::startNetThread(unsigned short port, sf::Uint8 maxplayers)
 	m_maxplayers = maxplayers;
 
 	//Start listening and accepting connections, and set the listener to non-blocking mode
-	if(m_listener.listen(port) != sf::Socket::Done)
+	if(m_listener.listen(tcpport) != sf::Socket::Done)
+	{
+		m_listener.close();
+		std::cerr << "Cannot listen to port " << (int)tcpport << std::endl;
+		return false;
+	}
+	m_listener.setBlocking(false);
+
+	if(!m_udpmgr.startNetThread(udpport))
 	{
 		m_listener.close();
 		return false;
 	}
-	m_listener.setBlocking(false);
 
 	//Create the thread
 	try
@@ -98,8 +121,10 @@ bool ServerSimulator::startNetThread(unsigned short port, sf::Uint8 maxplayers)
 	catch(const std::exception &e)
 	{
 		m_thrrunning = false;
+		m_thread = nullptr;
 		std::cerr << "Could not start networking thread." << std::endl;
 		std::cerr << e.what() << std::endl;
+		m_listener.close();
 		return false;
 	}
 
@@ -113,6 +138,9 @@ void ServerSimulator::stopNetThread()
 	{
 		//Stop it
 		m_thrrunning = false;
+
+		//Stop the UDP thread
+		m_udpmgr.stopNetThread();
 
 		//Wait for the thread to stop
 		try
@@ -134,6 +162,7 @@ void ServerSimulator::stopNetThread()
 		{
 			delete std::get<1>(received);
 		});
+		m_receivedpackets.clear();
 	}
 }
 
@@ -173,7 +202,7 @@ void ServerSimulator::netThread()
 			if(selector.isReady(m_listener))
 				acceptNewConnections(newclients, selector);
 			//Client ?
-			for(std::pair<const sf::Uint8, SafeSocket> &client : m_clients)
+			for(std::pair<const sf::Uint8, SafeSocket<sf::TcpSocket>> &client : m_clients)
 			{
 				if(client.second.isReady(selector))
 				{
@@ -270,10 +299,19 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 	//Parse player info
 	Player player;
 	player.ai = false;
-	if(!(packet >> player.name))
+	sf::Uint16 port;
+	if(!(packet >> player.name >> port))
 	{
 		//On error, remove the new client
 		std::cerr << "Invalid connection data received from client." << std::endl;
+		selector.remove(*socket);
+		socket->disconnect();
+		delete socket;
+		return true;
+	}
+	if(port == 0)
+	{
+		std::cerr << "Invalid connection data received from client (UDP port cannot be 0)." << std::endl;
 		selector.remove(*socket);
 		socket->disconnect();
 		delete socket;
@@ -301,11 +339,11 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 		m_clients.emplace(player.id, socket);
 	}
 	//Send the new player to the main thread
-	m_acceptedplayers.emplaceBack(std::move(player));
+	m_acceptedplayers.emplaceBack(socket->getRemoteAddress(), port, std::move(player));
 	return true;
 }
 
-int ServerSimulator::receiveNewPackets(sf::Uint8 id, SafeSocket &socket)
+int ServerSimulator::receiveNewPackets(sf::Uint8 id, SafeSocket<sf::TcpSocket> &socket)
 {
 	sf::Socket::Status status;
 	sf::Packet *packet = new sf::Packet;
@@ -328,7 +366,7 @@ int ServerSimulator::receiveNewPackets(sf::Uint8 id, SafeSocket &socket)
 	return (int)DisconnectionReason::Left;
 }
 
-void ServerSimulator::acceptNewPlayer(Player &toaccept)
+void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned short port, Player &toaccept)
 {
 	sf::Packet packet;
 	//If the room is full, disconnect the player
@@ -338,6 +376,16 @@ void ServerSimulator::acceptNewPlayer(Player &toaccept)
 		std::cerr << "Game is full. Disconnecting the new client." << std::endl;
 		packet.clear();
 		packet << (sf::Uint8)ConnectionStatus::GameIsFull;
+		sendToPlayer(toaccept.id, packet);
+		m_clientstoremove.emplaceBack(toaccept.id);
+		return;
+	}
+	if(!m_udpmgr.addPlayer(toaccept.id, address, port))
+	{
+		//Address & port already used, tell it to the client & remove it
+		std::cerr << "Address and port of the new client seem to be already used. Disconnecting it." << std::endl;
+		packet.clear();
+		packet << (sf::Uint8)ConnectionStatus::WrongAddress;
 		sendToPlayer(toaccept.id, packet);
 		m_clientstoremove.emplaceBack(toaccept.id);
 		return;
@@ -386,6 +434,7 @@ void ServerSimulator::acceptNewPlayer(Player &toaccept)
 			std::cerr << "Cannot accept client : socket buffer is full." << std::endl;//Impossible, right ?
 		//On error, remove the new client
 		m_clientstoremove.emplaceBack(toaccept.id);
+		m_udpmgr.removePlayer(toaccept.id);
 		//Release the id of the character
 		m_charactersids.releaseID(newcharacter.getId());
 		return;
@@ -446,6 +495,7 @@ void ServerSimulator::disconnectPlayer(sf::Uint8 id, sf::Uint8 reason)
 	//Remove the player. Note : he may not exists if the client disconnects before being accepted or removed (e.g. the game is full).
 	if(removePlayer(id, reason))
 	{
+		m_udpmgr.removePlayer(id);
 		sf::Packet packet;
 		//Remove the characters that need to be removed
 		packet << (sf::Uint8)PacketType::RemoveCharacters;

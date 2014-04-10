@@ -38,7 +38,7 @@ int PureServerApplication::execute(int argc, char **argv)
 		return 1;
 	//////
 
-	if(!m_simulator->startNetThread(Config::getInstance().server_port, Config::getInstance().max_players))
+	if(!m_simulator->startNetThread(Config::getInstance().server_tcpport, Config::getInstance().server_udpport, Config::getInstance().max_players))
 	{
 		std::cerr << "Cannot start server." << std::endl;
 		return 1;

@@ -3,14 +3,15 @@
 #include <iostream>
 
 static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
-static const sf::Time CONNECTION_MAX_TIME = sf::seconds(15.f);
+static const sf::Time CONNECTION_MAX_TIME = sf::seconds(7.f);
 static const sf::Time CONNECTION_INFO_MAX_TIME = sf::seconds(10.f);
 
 //TODO: Check each received value (e.g. Does the id exist ? Is it different of NO_CHARACTER_ID ?)
 
 ClientSimulator::ClientSimulator():
 	m_thread(nullptr),
-	m_thrrunning(false)
+	m_thrrunning(false),
+	m_udpmgr(*this)
 {
 
 }
@@ -38,23 +39,33 @@ bool ClientSimulator::update(float etime)
 
 	if(!success)
 		return false;
+	if(!m_udpmgr.update(etime))
+		return false;
 	return GameSimulator::update(etime);
 }
 
-int ClientSimulator::startNetThread(const sf::IpAddress &serveraddr, unsigned short port, const std::string &name)
+int ClientSimulator::startNetThread(const sf::IpAddress &serveraddr, unsigned short tcpport, unsigned short udpport, const std::string &name)
 {
 	//If the thread already exists, don't start a new one
 	if(m_thread)
 		return -1;
 
 	sf::Socket::Status status;
+	//Try starting the UDP server
+	unsigned short localudpport = m_udpmgr.startNetThread(serveraddr, udpport);
+	if(localudpport == 0)
+	{
+		std::cerr << "Cannot start UDP networking thread." << std::endl;
+		m_server.disconnect();
+		return -1;
+	}
 	//Connect to the server
 	m_server.setBlocking(true);
-	if((status = m_server.connect(serveraddr, port, CONNECTION_MAX_TIME)) != sf::Socket::Done)
+	if((status = m_server.connect(serveraddr, tcpport, CONNECTION_MAX_TIME)) != sf::Socket::Done)
 		return -1;
 	//Send connection info
 	sf::Packet packet;
-	packet << name;
+	packet << name << localudpport;
 	if((status = m_server.send(packet)) != sf::Socket::Done)
 	{
 		std::cerr << "Error while sending connection informations." << std::endl;
@@ -115,6 +126,10 @@ int ClientSimulator::startNetThread(const sf::IpAddress &serveraddr, unsigned sh
 		m_thrrunning = false;
 		std::cerr << "Could not start networking thread." << std::endl;
 		std::cerr << e.what() << std::endl;
+		delete m_thread;
+		m_thread = nullptr;
+		m_server.disconnect();
+		m_udpmgr.stopNetThread();
 		return -1;
 	}
 
@@ -148,6 +163,7 @@ void ClientSimulator::stopNetThread()
 		{
 			delete packet;
 		});
+		m_receivedpackets.clear();
 	}
 }
 
@@ -162,6 +178,38 @@ void ClientSimulator::selfSetDirection(const sf::Vector2f &direction)
 	sf::Packet packet;
 	packet << (sf::Uint8)PacketType::SetDirection << direction.x << direction.y;
 	m_server.send(packet);
+}
+
+bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
+{
+	//How many characters ?
+	sf::Uint16 characterscount;
+	if(!(packet >> characterscount))
+	{
+		std::cerr << "Error in snapshot packet1." << std::endl;
+		return false;
+	}
+	//Extract all characters info
+	sf::Uint16 charid;
+	float x, y;
+	for(sf::Uint16 i = 0; i < characterscount; i++)
+	{
+		if(!(packet >> charid >> x >> y))
+		{
+			std::cerr << "Error in snapshot packet2." << std::endl;
+			return false;
+		}
+		try
+		{
+			//Apply modifications to character if it exists
+			getCharacter(charid).setPosition(x, y);
+		}
+		catch(const std::out_of_range &e)
+		{
+
+		}
+	}
+	return true;
 }
 
 bool ClientSimulator::parseConnectionData(sf::Packet &packet)
@@ -196,7 +244,7 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 	{
 		if(!character.loadFromPacket(packet))
 			return false;
-		//character.setFullySimulated(false);
+		character.setFullySimulated(false);
 		character.setInterpolationTime(DEFAULT_INTERPOLATION_TIME);
 		if(!addCharacter(std::move(character)))
 			return false;

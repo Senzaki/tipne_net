@@ -70,6 +70,13 @@ void SafeList<T>::clear()
 }
 
 template<typename T>
+bool SafeList<T>::empty()
+{
+	std::lock_guard<std::mutex> lock(m_mutex);
+	return m_list.empty();
+}
+
+template<typename T>
 void SafeList<T>::foreach(std::function<void(T &)> tocall)
 {
 	std::lock_guard<std::mutex> lock(m_mutex);

@@ -3,11 +3,7 @@
 
 #include "GameSimulator.hpp"
 #include "IDCreator.hpp"
-#include "SafeSocket.hpp"
-#include <thread>
-#include <atomic>
-#include "SafeList.hpp"
-#include <tuple>
+#include "ServerUdpManager.hpp"
 
 class ServerSimulator : public GameSimulator
 {
@@ -16,22 +12,24 @@ class ServerSimulator : public GameSimulator
 	virtual ~ServerSimulator();
 
 	virtual bool update(float etime);
+	void buildSnapshotPacket(sf::Packet &packet);
 
 	virtual bool loadMap(sf::Uint8 mapid);
-	bool startNetThread(unsigned short port, sf::Uint8 maxplayers);
+	bool startNetThread(unsigned short tcpport, unsigned short udpport, sf::Uint8 maxplayers);
 	void stopNetThread();
 
 	virtual void onCharacterSpeedChanged(Character &character, const sf::Vector2f &speed);
+
+	void disconnectPlayer(sf::Uint8 id, sf::Uint8 reason);
 
 	private:
 	void netThread();
 	void acceptNewConnections(std::list<sf::TcpSocket *> &newclients, sf::SocketSelector &selector);
 	bool receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::SocketSelector &selector); //Returns false if no information was received (true if some data was received or if the client disconnected).
-	int receiveNewPackets(sf::Uint8 id, SafeSocket &socket);//Returns -1 if no error, and a DisconnectionReason otherwise
+	int receiveNewPackets(sf::Uint8 id, SafeSocket<sf::TcpSocket> &socket);//Returns -1 if no error, and a DisconnectionReason otherwise
 
-	void acceptNewPlayer(Player &toaccept);
+	void acceptNewPlayer(const sf::IpAddress &address, unsigned short port, Player &toaccept);
 	void parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &received);
-	void disconnectPlayer(sf::Uint8 id, sf::Uint8 reason);
 	sf::Socket::Status sendToPlayer(sf::Uint8 id, sf::Packet &packet);
 	void sendToAllPlayers(sf::Packet &packet);
 
@@ -50,12 +48,13 @@ class ServerSimulator : public GameSimulator
 	std::unordered_map<sf::Uint8, Character *> m_playerschars;
 
 	sf::TcpListener m_listener;//Not locked
-	std::unordered_map<sf::Uint8, SafeSocket> m_clients;//Don't write to the container in main thread
+	std::unordered_map<sf::Uint8, SafeSocket<sf::TcpSocket>> m_clients;//Don't write to the container in main thread
 	std::mutex m_clientsmutex;
+	ServerUdpManager m_udpmgr;
 
 	//Communication between main thread/child thread
 	//Child->Main
-	SafeList<Player> m_acceptedplayers;
+	SafeList<std::tuple<sf::IpAddress, unsigned short, Player>> m_acceptedplayers;
 	SafeList<std::tuple<sf::Uint8, sf::Packet *>> m_receivedpackets;
 	SafeList<std::tuple<sf::Uint8, sf::Uint8>> m_disconnectedplayers;
 	//Main->Child

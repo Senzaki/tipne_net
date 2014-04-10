@@ -4,8 +4,7 @@
 #include "GameSimulator.hpp"
 #include <thread>
 #include <atomic>
-#include "SafeSocket.hpp"
-#include "SafeList.hpp"
+#include "ClientUdpManager.hpp"
 
 class ClientSimulator : public GameSimulator
 {
@@ -15,11 +14,13 @@ class ClientSimulator : public GameSimulator
 
 	virtual bool update(float etime);
 
-	int startNetThread(const sf::IpAddress &serveraddr, unsigned short port, const std::string &name); //Returns -1 in case of error, and the connection status otherwise
+	int startNetThread(const sf::IpAddress &serveraddr, unsigned short tcpport, unsigned short udpport, const std::string &name); //Returns -1 in case of error, and the connection status otherwise
 	void stopNetThread();
 	bool isConnected() const;
 
 	virtual void selfSetDirection(const sf::Vector2f &direction);
+
+	bool onSnapshotReceived(sf::Packet &packet);
 
 	private:
 	bool parseConnectionData(sf::Packet &packet);
@@ -37,7 +38,8 @@ class ClientSimulator : public GameSimulator
 	std::thread *m_thread;
 	std::atomic<bool> m_thrrunning;
 
-	SafeSocket m_server;
+	SafeSocket<sf::TcpSocket> m_server;
+	ClientUdpManager m_udpmgr;
 	SafeList<sf::Packet *> m_receivedpackets;//Write : child. Read : main.
 };
 

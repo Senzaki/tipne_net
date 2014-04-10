@@ -23,8 +23,10 @@ Config::Config():
 	dispfreq(0),
 	lang(DEFAULT_LANGUAGE),
 	connectto_ip("127.0.0.1"),
-	connectto_port(DEFAULT_PORT),
-	server_port(DEFAULT_PORT),
+	connectto_tcpport(DEFAULT_TCP_PORT),
+	connectto_udpport(DEFAULT_UDP_PORT),
+	server_tcpport(DEFAULT_TCP_PORT),
+	server_udpport(DEFAULT_UDP_PORT),
 	max_players(16)
 {
 	using namespace std::placeholders;
@@ -36,8 +38,10 @@ Config::Config():
 	m_parsers["dispfreq"] = std::bind(&Config::parseDispFreq, this, _1, _2);
 	m_parsers["lang"] = std::bind(&Config::parseString, this, _1, _2, std::ref(lang));
 	m_parsers["connectto_ip"] = std::bind(&Config::parseIpAddress, this, _1, _2, std::ref(connectto_ip));
-	m_parsers["connectto_port"] = std::bind(&Config::parsePort, this, _1, _2, std::ref(connectto_port));
-	m_parsers["server_port"] = std::bind(&Config::parsePort, this, _1, _2, std::ref(server_port));
+	m_parsers["connectto_tcpport"] = std::bind(&Config::parsePort, this, _1, _2, std::ref(connectto_tcpport));
+	m_parsers["connectto_udpport"] = std::bind(&Config::parsePort, this, _1, _2, std::ref(connectto_udpport));
+	m_parsers["server_tcpport"] = std::bind(&Config::parsePort, this, _1, _2, std::ref(server_tcpport));
+	m_parsers["server_udpport"] = std::bind(&Config::parsePort, this, _1, _2, std::ref(server_udpport));
 	m_parsers["max_players"] = std::bind(&Config::parseMaxPlayers, this, _1, _2);
 
 	load();
@@ -115,8 +119,10 @@ bool Config::save() const
 		 << "\ndispfreq " << (int)dispfreq
 		 << "\nlang " << lang
 		 << "\nconnectto_ip " << connectto_ip
-		 << "\nconnectto_port " << (int)connectto_port
-		 << "\nserver_port " << (int)server_port
+		 << "\nconnectto_tcpport " << (int)connectto_tcpport
+		 << "\nconnectto_udpport " << (int)connectto_udpport
+		 << "\nserver_tcpport " << (int)server_tcpport
+		 << "\nserver_udpport " << (int)server_udpport
 		 << "\nmax_players " << (int)max_players;
 
 	file.close();

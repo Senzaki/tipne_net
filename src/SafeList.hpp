@@ -4,6 +4,7 @@
 #include <list>
 #include <functional>
 #include <thread>
+#include <mutex>
 
 template<typename T>
 class SafeList
@@ -22,6 +23,7 @@ class SafeList
 	void pushBack(T &&arg);
 	void popBack();
 	void clear();
+	bool empty();
 	void foreach(std::function<void(T &)> tocall);
 
 	private:

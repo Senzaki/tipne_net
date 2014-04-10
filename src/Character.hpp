@@ -48,6 +48,8 @@ class Character
 
 	void setDirection(sf::Vector2f direction);
 
+	void setPosition(float x, float y);//Uses interpolation
+	void forcePosition(float x, float y);//Does not use interpolation
 	sf::Vector2f getPosition() const;
 
 	private:
