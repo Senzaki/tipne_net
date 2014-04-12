@@ -253,7 +253,6 @@ void ServerUdpManager::parseReceivedPacket(sf::Packet &packet, sf::Uint8 id)
 	switch(type)
 	{
 		case (sf::Uint8)UdpPacketType::KeepAlive:
-			std::cout << "Keep-alive received from " << (int)id << std::endl;
 			break;//Just a keep-alive, ignore
 
 		default:
