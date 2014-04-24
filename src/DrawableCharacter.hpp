@@ -22,7 +22,13 @@ class DrawableCharacter : public CharacterStateListener, public DrawableEntity
 	virtual void onStatusChanged(Character::State state);
 
 	private:
+	void initializeBaseCircle();
+
 	sf::Sprite m_sprite;
+	sf::Transform m_transform;
+	sf::VertexArray m_basecircle;
+	sf::FloatRect m_localbounds;
+	sf::FloatRect m_bounds;
 	float m_depth;
 };
 

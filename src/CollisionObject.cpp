@@ -46,10 +46,21 @@ CollisionObject::~CollisionObject()
 
 void CollisionObject::setPosition(float x, float y)
 {
+#warning TEMP
+	sf::Vector2f temp = m_desired;
 	//Set the desired position & update the tile hash
-	m_justset = true;
 	m_desired.x = x;
 	m_desired.y = y;
+	//Is it possible to go there ?
+	if(m_colmgr)
+	{
+		if(m_colmgr->isColliding(this))
+		{
+			m_desired = temp;
+			return;
+		}
+	}
+	m_justset = true;
 	updateTiles();
 	//Interpolation ?
 	if(m_maxtime != 0.f)

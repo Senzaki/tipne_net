@@ -3,7 +3,6 @@
 #include "GameSimulator.hpp"
 #include <cmath>
 
-static const float SQRT_2 = 1.41421356237309504880168872420969807f;
 static const float DEFAULT_SPEED = 3.f;
 
 Character::Character(sf::Uint16 id, bool fullysimulated, float interpolationtime, sf::Uint8 owner, sf::Vector2f position, State state):

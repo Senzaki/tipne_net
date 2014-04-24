@@ -2,7 +2,6 @@
 #define COLLISIONOBJECT_HPP_INCLUDED
 
 #include <SFML/System.hpp>
-#include <vector>
 
 class CollisionManager;
 
@@ -11,6 +10,8 @@ constexpr const float CLIENT_INTERPOLATION_TIME = 0.1f;
 enum class CollisionEntityType
 {
 	None, //nullptr
+	Bound, //nullptr
+	Wall, //Cast to sf::Vector2u * (Representing the position. NOTE : any collision object of this type is very likely to be temporary.)
 	Character //Cast to Character *
 };
 
@@ -74,7 +75,6 @@ class CollisionObject
 		unsigned int miny;
 		unsigned int maxy;
 	} m_tiles;
-
 
 	friend class CollisionManager;
 };
