@@ -104,6 +104,11 @@ const Tile &Map::getTile(unsigned int x, unsigned int y) const
 	return m_tiles[y * m_size.x + x];
 }
 
+const Tile &Map::getTileByHash(unsigned int xy) const
+{
+	return m_tiles[xy];
+}
+
 const sf::Vector2u &Map::getSize() const
 {
 	return m_size;

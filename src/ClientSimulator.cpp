@@ -9,6 +9,7 @@ static const sf::Time CONNECTION_INFO_MAX_TIME = sf::seconds(10.f);
 //TODO: Check each received value (e.g. Does the id exist ? Is it different of NO_CHARACTER_ID ?)
 
 ClientSimulator::ClientSimulator():
+	GameSimulator(false),
 	m_thread(nullptr),
 	m_thrrunning(false),
 	m_udpmgr(*this)

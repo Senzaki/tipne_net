@@ -27,6 +27,7 @@ class Map
 	sf::Uint8 getID() const;
 
 	const Tile &getTile(unsigned int x, unsigned int y) const;
+	const Tile &getTileByHash(unsigned int xy) const; //Retrieve it passing y * size.x + x
 	const sf::Vector2u &getSize() const;
 
 	operator bool() const;

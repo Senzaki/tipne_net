@@ -1,8 +1,9 @@
 #ifndef CHARACTER_HPP_INCLUDED
 #define CHARACTER_HPP_INCLUDED
 
-#include "PositionManager.hpp"
+#include "CollisionManager.hpp"
 #include "Player.hpp"
+
 class GameSimulator;
 class CharacterStateListener;
 
@@ -32,6 +33,7 @@ class Character
 
 	void setCharacterStateListener(CharacterStateListener *listener);
 	void setSimulator(GameSimulator *simulator);
+	void setCollisionManager(CollisionManager *colmgr);
 
 	void setState(State state);
 	State getState() const;
@@ -54,7 +56,7 @@ class Character
 
 	private:
 	State m_state;
-	PositionManager m_posmgr;
+	CollisionObject m_colobj;
 	sf::Vector2f m_direction;
 
 	sf::Uint16 m_id;

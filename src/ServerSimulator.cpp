@@ -11,6 +11,7 @@
 static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 
 ServerSimulator::ServerSimulator(bool pure):
+	GameSimulator(true),
 	m_thread(nullptr),
 	m_thrrunning(false),
 	m_udpmgr(*this)

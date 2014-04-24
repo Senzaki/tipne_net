@@ -14,7 +14,7 @@
 class GameSimulator
 {
 	public:
-	GameSimulator();
+	GameSimulator(bool collisions);
 	virtual ~GameSimulator();
 
 	GameSimulator(const GameSimulator &) = delete;
@@ -64,6 +64,8 @@ class GameSimulator
 	private:
 	std::unordered_map<sf::Uint8, Player> m_players;
 	Map m_map;
+	CollisionManager *m_colmgr;
+	bool m_collisions;
 
 	std::unordered_map<sf::Uint16, Character> m_characters;
 	Character *m_owncharacter;

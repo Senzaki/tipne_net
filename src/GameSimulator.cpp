@@ -2,8 +2,10 @@
 #include <iostream>
 #include <cassert>
 
-GameSimulator::GameSimulator():
+GameSimulator::GameSimulator(bool collisions):
 	m_ownid(NEUTRAL_PLAYER),
+	m_colmgr(nullptr),
+	m_collisions(collisions),
 	m_owncharacter(nullptr),
 	m_statelistener(nullptr)
 {
@@ -12,7 +14,7 @@ GameSimulator::GameSimulator():
 
 GameSimulator::~GameSimulator()
 {
-
+	delete m_colmgr;
 }
 
 bool GameSimulator::update(float etime)
@@ -131,6 +133,8 @@ Character *GameSimulator::addCharacter(Character &&character)
 		return nullptr;
 	}
 	added.first->second.setSimulator(this);
+	//Add it to the collision manager
+	added.first->second.setCollisionManager(m_colmgr);
 	//Tell the listener if required
 	if(m_statelistener)
 		m_statelistener->onNewCharacter(m_characters[id]);
@@ -234,6 +238,14 @@ bool GameSimulator::loadMap(sf::Uint8 mapid)
 {
 	if(m_map.load(mapid))
 	{
+		if(m_collisions)
+		{
+			//Reload the collision manager if necessary
+			delete m_colmgr;
+			m_colmgr = new CollisionManager(m_map);
+			for(std::pair<const sf::Uint16, Character> &character : m_characters)
+				character.second.setCollisionManager(m_colmgr);
+		}
 		if(m_statelistener)
 			m_statelistener->onMapLoaded(m_map);
 		return true;

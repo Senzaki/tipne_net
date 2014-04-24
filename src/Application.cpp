@@ -108,7 +108,7 @@ int Application::execute(int argc, char **argv)
 
 		//Delete the state if requested
 		if(m_deletestate)
-			delete(m_curstate);
+			delete m_curstate;
 	}
 
 	return 0;
