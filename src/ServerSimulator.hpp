@@ -14,7 +14,7 @@ class ServerSimulator : public GameSimulator
 	virtual bool update(float etime);
 	void buildSnapshotPacket(sf::Packet &packet);
 
-	virtual bool loadMap(sf::Uint8 mapid);
+	virtual bool loadMap(const std::string &mapname);
 	bool startNetThread(unsigned short tcpport, unsigned short udpport, sf::Uint8 maxplayers);
 	void stopNetThread();
 

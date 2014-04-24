@@ -156,7 +156,7 @@ void Menu::TEMPtestPlay()
 			std::cout << "[Client failed]" << std::endl;
 			std::cout << "Trying as server... " << std::endl;
 			simulator = new ServerSimulator(false);
-			if(!static_cast<ServerSimulator *>(simulator)->loadMap((sf::Uint8)MapId::Default))
+			if(!static_cast<ServerSimulator *>(simulator)->loadMap("default"))
 			{
 				std::cout << "[Server failed]" << std::endl;
 				delete simulator;

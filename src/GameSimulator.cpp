@@ -234,9 +234,9 @@ void GameSimulator::setStateListener(SimulatorStateListener *listener)
 	}
 }
 
-bool GameSimulator::loadMap(sf::Uint8 mapid)
+bool GameSimulator::loadMap(const std::string &name)
 {
-	if(m_map.load(mapid))
+	if(m_map.load(name))
 	{
 		if(m_collisions)
 		{

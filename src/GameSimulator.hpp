@@ -57,7 +57,7 @@ class GameSimulator
 	const Character *getOwnCharacter() const;
 	bool setOwnCharacter(sf::Uint16 id);
 
-	virtual bool loadMap(sf::Uint8 mapid);
+	virtual bool loadMap(const std::string &name);
 
 	sf::Uint8 m_ownid;
 

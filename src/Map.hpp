@@ -23,8 +23,8 @@ class Map
 
 	Map &operator=(Map &&other);
 
-	bool load(sf::Uint8 mapid);
-	sf::Uint8 getID() const;
+	bool load(const std::string &name);
+	const std::string &getName() const;
 
 	const Tile &getTile(unsigned int x, unsigned int y) const;
 	const Tile &getTileByHash(unsigned int xy) const; //Retrieve it passing y * size.x + x
@@ -33,7 +33,7 @@ class Map
 	operator bool() const;
 
 	private:
-	sf::Uint8 m_id;
+	std::string m_name;
 	std::vector<Tile> m_tiles;
 	sf::Vector2u m_size;
 };

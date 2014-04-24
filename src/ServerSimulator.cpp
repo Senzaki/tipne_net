@@ -71,14 +71,14 @@ void ServerSimulator::buildSnapshotPacket(sf::Packet &packet)
 		packet << (sf::Uint16)character.first << (float)character.second.getPosition().x << (float)character.second.getPosition().y;
 }
 
-bool ServerSimulator::loadMap(sf::Uint8 mapid)
+bool ServerSimulator::loadMap(const std::string &mapname)
 {
 	//Try to load the map
-	if(!GameSimulator::loadMap(mapid))
+	if(!GameSimulator::loadMap(mapname))
 		return false;
 	//Tell the players the map has changed
 	sf::Packet packet;
-	packet << (sf::Uint8)PacketType::Map << mapid;
+	packet << (sf::Uint8)PacketType::Map << mapname;
 	sendToAllPlayers(packet);
 	return true;
 }
@@ -412,8 +412,8 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 	for(const std::pair<const sf::Uint8, Player> &player : players)
 		packet << player.second;
 	packet << toaccept;
-	//Map Id
-	packet << (sf::Uint8)getMap().getID();
+	//Map name
+	packet << getMap().getName();
 	//Add all characters
 	const std::unordered_map<sf::Uint16, Character> &characters = getCharacters();
 	packet << (sf::Uint16)(characters.size() + 1);

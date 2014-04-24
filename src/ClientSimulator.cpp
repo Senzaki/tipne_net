@@ -231,10 +231,10 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 	if(!playerExists(m_ownid))
 		return false;
 	//Get the map
-	sf::Uint8 mapid;
-	if(!(packet >> mapid))
+	std::string mapname;
+	if(!(packet >> mapname))
 		return false;
-	if(!loadMap(mapid))
+	if(!loadMap(mapname))
 		return false;
 	//Get the characters
 	sf::Uint16 characterscount;
@@ -338,11 +338,11 @@ bool ClientSimulator::onDisconnectionPacket(sf::Packet &packet)
 
 bool ClientSimulator::onMapPacket(sf::Packet &packet)
 {
-	//Map id ?
-	sf::Uint8 id;
-	if(!(packet >> id))
+	//Map name ?
+	std::string name;
+	if(!(packet >> name))
 		return false;
-	if(!loadMap(id))
+	if(!loadMap(name))
 		return false;
 	return true;
 }

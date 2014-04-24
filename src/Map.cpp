@@ -3,16 +3,16 @@
 #include <SFML/Network.hpp>
 #include <iostream>
 
-static constexpr const char *MAP_FILES[] = {"data/maps/default.map"};
+static const std::string MAP_PREFIX = "data/maps/";
+static const std::string MAP_SUFFIX = ".map";
 
-Map::Map():
-	m_id((sf::Uint8)MapId::Count)
+Map::Map()
 {
 
 }
 
 Map::Map(Map &&other):
-	m_id(other.m_id),
+	m_name(std::move(other.m_name)),
 	m_tiles(std::move(other.m_tiles)),
 	m_size(other.m_size)
 {
@@ -26,17 +26,15 @@ Map::~Map()
 
 Map &Map::operator=(Map &&other)
 {
-	m_id = other.m_id;
+	m_name = std::move(other.m_name);
 	m_tiles = std::move(other.m_tiles);
 	m_size = other.m_size;
 	return *this;
 }
 
-bool Map::load(sf::Uint8 mapid)
+bool Map::load(const std::string &name)
 {
-	if(mapid >= (sf::Uint8)MapId::Count)
-		return false;
-	const char *filename = MAP_FILES[mapid];
+	const std::string filename = MAP_PREFIX + name + MAP_SUFFIX;
 	//TODO : Stop using sf::Packet to avoid unuseful copies
 	//Open the map file
 	std::ifstream file(filename, std::ios::binary);
@@ -89,14 +87,14 @@ bool Map::load(sf::Uint8 mapid)
 		data.clear();
 	}
 
-	m_id = mapid;
+	m_name = name;
 
 	return true;
 }
 
-sf::Uint8 Map::getID() const
+const std::string &Map::getName() const
 {
-	return m_id;
+	return m_name;
 }
 
 const Tile &Map::getTile(unsigned int x, unsigned int y) const
