@@ -2,6 +2,8 @@
 #define EDAPPLICATION_HPP_INCLUDED
 
 #include <SFML/Graphics.hpp>
+#include "Map.hpp"
+#include "DrawableMap.hpp"
 
 class EdApplication
 {
@@ -16,6 +18,8 @@ class EdApplication
 	private:
 	EdApplication();
 	sf::RenderWindow m_window;
+	Map m_map;
+	DrawableMap m_dmap;
 
 	bool m_running;
 };
