@@ -1,4 +1,6 @@
-int main()
+#include "EdApplication.hpp"
+
+int main(int argc, char *argv[])
 {
-	return 0;
+	return EdApplication::getInstance().execute(argc, argv);;
 }
