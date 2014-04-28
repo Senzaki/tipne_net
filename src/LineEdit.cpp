@@ -73,13 +73,10 @@ void LineEdit::onPositionChanged()
 bool LineEdit::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 {
 	sf::FloatRect bounds(getAbsolutePosition(), getSize());
-	if(bounds.contains(evt.x, evt.y))
-	{
+	m_inputison = bounds.contains(evt.x, evt.y);
+	if(m_inputison)
 		Widget::onMouseButtonPressed(evt);
-		m_inputison = mouseIsOn();
-		return true;
-	}
-	return false;
+	return m_inputison;
 }
 
 bool LineEdit::onTextEntered(const sf::Event::TextEvent &evt)
@@ -97,10 +94,11 @@ bool LineEdit::onTextEntered(const sf::Event::TextEvent &evt)
 		}
 
 		m_text.setString(m_string);
-	}
 
-	updateCursor();
-	return true;
+		updateCursor();
+		return true;
+	}
+	return false;
 }
 
 bool LineEdit::onKeyPressed(const sf::Event::KeyEvent &evt)
@@ -148,8 +146,9 @@ bool LineEdit::onKeyPressed(const sf::Event::KeyEvent &evt)
 		}
 
 		updateCursor();
+		return true;
 	}
-	return true;
+	return false;
 }
 
 void LineEdit::updateCursor()

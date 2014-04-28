@@ -31,7 +31,7 @@ class Menu : public ApplicationState
 	void showConnectMenu();
 	void showHostMenu();
 	void host();
-	void connect();
+	void connect(std::string ipadress);
 	void launchGame(GameSimulator *simulator);
 	//void TEMPtestPlay();
 

@@ -137,14 +137,27 @@ void Menu::showConnectMenu()
 {
 	m_guimgr.clear();
 	Widget *topwidget = m_guimgr.getTopWidget();
+
 	Label *portlabel = new Label(topwidget, tr("port"));
+	Label *iplabel = new Label(topwidget, tr("ipadress"));
 	DecoratedLineEdit *port = new DecoratedLineEdit(topwidget, 150);
+	DecoratedLineEdit *ipadress = new DecoratedLineEdit(topwidget, 150);
 	Button *cancel = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
-	Button *connect = new Button(topwidget, tr("connect"), std::bind(&Menu::connect, this));
+	Button *connect = new Button(topwidget, tr("connect"), std::bind(&Menu::connect, this, ipadress->getString()));
+
+	std::ostringstream oss;
+	oss.str("");
+	oss << Config::getInstance().connectto_tcpport;
+	ipadress->setString(Config::getInstance().connectto_ip);
+	port->setString(oss.str());
+
+	//Set widgets position
 	int interval = 100;
 	sf::Vector2f size = topwidget->getSize();
 	port->setPosition(size.x / 2.f- port->getSize().x / 2.f, size.y / 2.f- port->getSize().y / 2.f);
-	portlabel->setPosition(port->getPosition().x - portlabel->getSize().x - 25, port->getPosition().y);
+	ipadress->setPosition(size.x / 2.f - ipadress->getSize().x / 2.f, size.y / 2.f- ipadress->getSize().y / 2.f - interval);
+	portlabel->setPosition(port->getPosition().x - portlabel->getSize().x - 25, port->getPosition().y + 10);
+	iplabel->setPosition(ipadress->getPosition().x - iplabel->getSize().x - 25, ipadress->getPosition().y + 10);
 	connect->setPosition(size.x / 3.f, size.y - interval);
 	cancel->setPosition(2 * size.x / 3.f, size.y - interval);
 }
@@ -153,10 +166,18 @@ void Menu::showHostMenu()
 {
 	m_guimgr.clear();
 	Widget *topwidget = m_guimgr.getTopWidget();
+
 	Label *portlabel = new Label(topwidget, tr("port"));
 	DecoratedLineEdit *port = new DecoratedLineEdit(topwidget, 150);
 	Button *cancel = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
 	Button *host = new Button(topwidget, tr("host"), std::bind(&Menu::host, this));
+
+	std::ostringstream oss;
+	oss.str("");
+	oss << Config::getInstance().server_tcpport;
+	port->setString(oss.str());
+
+	//Set widgets position
 	int interval = 100;
 	sf::Vector2f size = topwidget->getSize();
 	port->setPosition(size.x / 2.f- port->getSize().x / 2.f, size.y / 2.f- port->getSize().y / 2.f);
@@ -187,24 +208,25 @@ void Menu::host()
 	launchGame(simulator);
 }
 
-void Menu::connect()
+void Menu::connect(std::string ipadress)
 {
 	Config &config = Config::getInstance();
+	config.connectto_ip = ipadress;
+	config.save();
 	GameSimulator *simulator = new ClientSimulator();
 	int status;
 	std::cout << "Trying as client..." << std::endl;
 	if((status = static_cast<ClientSimulator *>(simulator)->startNetThread(sf::IpAddress(config.connectto_ip), config.connectto_tcpport, config.connectto_udpport, config.name)) != (int)ConnectionStatus::Accepted)
 	{
 		delete simulator;
+		simulator = nullptr;
 		if(status == (int)ConnectionStatus::GameIsFull)
 		{
 			std::cout << "[Game is full]" << std::endl;
-			simulator = nullptr;
 		}
 		else if(status == (int)ConnectionStatus::WrongAddress)
 		{
 			std::cout << "[Address/port error]" << std::endl;
-			simulator = nullptr;
 		}
 		else
 		{
@@ -223,8 +245,6 @@ void Menu::launchGame(GameSimulator *simulator)
 		GameAppState *next = new GameAppState(m_window, m_vratio, m_xyratio, simulator);
 		Application::getInstance().setNextAppState(next);
 	}
-	else
-		Application::getInstance().setNextAppState(nullptr);
 }
 
 /*void Menu::TEMPtestPlay()
