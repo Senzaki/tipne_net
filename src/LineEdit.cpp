@@ -1,7 +1,6 @@
 #include "LineEdit.hpp"
 #include "ResourceManager.hpp"
 
-
 static constexpr const unsigned int LINEEDIT_FONT_SIZE = 12;
 static constexpr const unsigned int LINEEDIT_REPOS = 5;
 static constexpr const unsigned int LINEEDIT_HEIGHT = 15;
@@ -44,17 +43,17 @@ void LineEdit::setCallback(std::function<void(std::string)> callback)
 	m_func = callback;
 }
 
-void LineEdit::setString(std::string string)
+void LineEdit::setString(const std::string &string)
 {
-	m_string = sf::String::fromUtf8(string.begin(), string.end());
+	m_string = string;
 	m_text.setString(m_string);
-	m_positioncursor = m_string.getSize();
+	m_positioncursor = m_string.size();
 	updateCursor();
 }
 
-std::string LineEdit::getString() const
+const std::string &LineEdit::getString() const
 {
-	return m_string.toAnsiString();
+	return m_string;
 }
 
 void LineEdit::draw(sf::RenderWindow &window)
@@ -85,11 +84,11 @@ bool LineEdit::onTextEntered(const sf::Event::TextEvent &evt)
 	if(m_inputison)
 	{
 		//Check whether the character is valid or not
-		if((m_string.getSize() < m_maxchar || m_maxchar == 0)
+		if((m_string.size() < m_maxchar || m_maxchar == 0)
 			&& (evt.unicode > 31 &&(evt.unicode < 127 || evt.unicode > 159)))
 		{
 			//add the character
-			m_string.insert(m_positioncursor, evt.unicode);
+			m_string.insert(m_positioncursor, (char*)&evt.unicode);
 			m_positioncursor++;
 		}
 
@@ -120,7 +119,7 @@ bool LineEdit::onKeyPressed(const sf::Event::KeyEvent &evt)
 				break;
 
 			case sf::Keyboard::Right:
-				if(m_positioncursor < m_string.getSize())
+				if(m_positioncursor < m_string.size())
 					m_positioncursor++;
 				break;
 
@@ -136,7 +135,7 @@ bool LineEdit::onKeyPressed(const sf::Event::KeyEvent &evt)
 
 			case sf::Keyboard::Delete:
 				//erase character
-				if(m_positioncursor < m_string.getSize())
+				if(m_positioncursor < m_string.size())
 					m_string.erase(m_positioncursor, 1);
 				m_text.setString(m_string);
 				break;

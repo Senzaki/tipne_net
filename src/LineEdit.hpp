@@ -12,8 +12,8 @@ class LineEdit : public Widget
 	void setMaxChar(unsigned int maxchar);
 	void setWidth(float width);
 	void setCallback(std::function<void(std::string)> callback);
-	void setString(std::string string);
-	std::string getString() const;
+	void setString(const std::string &string);
+	const std::string &getString() const;
 
 	virtual void draw(sf::RenderWindow &window);
 
@@ -30,7 +30,7 @@ class LineEdit : public Widget
 	unsigned int m_positioncursor;
 	float m_width;
 	sf::Text m_text;
-	sf::String m_string;
+	std::string m_string;
 	sf::RectangleShape m_cursor;
 	std::function<void(std::string)> m_func;
 };

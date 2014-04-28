@@ -58,12 +58,12 @@ void DecoratedLineEdit::setCallback(std::function<void(std::string)> callback)
 	m_lineedit->setCallback(callback);
 }
 
-void DecoratedLineEdit::setString(std::string string)
+void DecoratedLineEdit::setString(const std::string &string)
 {
 	m_lineedit->setString(string);
 }
 
-std::string DecoratedLineEdit::getString() const
+const std::string &DecoratedLineEdit::getString() const
 {
 	return m_lineedit->getString();
 }
