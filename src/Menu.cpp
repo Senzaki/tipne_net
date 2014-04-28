@@ -146,7 +146,7 @@ void Menu::showConnectMenu()
 	DecoratedLineEdit *udpport = new DecoratedLineEdit(topwidget, 150);
 	DecoratedLineEdit *ipadress = new DecoratedLineEdit(topwidget, 150);
 	Button *cancel = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
-	Button *connect = new Button(topwidget, tr("connect"), std::bind(&Menu::connect, this, ipadress->getString(), tcpport->getString(), udpport->getString()));
+	Button *connect = new Button(topwidget, tr("connect"), std::bind(&Menu::connect, this, std::ref(ipadress->getString()), std::ref(tcpport->getString()), std::ref(udpport->getString())));
 
 	//Set default values in line edits
 	ipadress->setString(Config::getInstance().connectto_ip);
@@ -182,7 +182,7 @@ void Menu::showHostMenu()
 	DecoratedLineEdit *tcpport = new DecoratedLineEdit(topwidget, 150);
 	DecoratedLineEdit *udpport = new DecoratedLineEdit(topwidget, 150);
 	Button *cancel = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
-	Button *host = new Button(topwidget, tr("host"), std::bind(&Menu::host, this, tcpport->getString(), udpport->getString()));
+	Button *host = new Button(topwidget, tr("host"), std::bind(&Menu::host, this,  std::ref(tcpport->getString()), std::ref(udpport->getString())));
 
 	//Set default values in line edits
 	std::ostringstream oss;
@@ -305,54 +305,3 @@ void Menu::launchGame(GameSimulator *simulator)
 	}
 }
 
-/*void Menu::TEMPtestPlay()
-{
-	Config &config = Config::getInstance();
-	GameSimulator *simulator = new ClientSimulator();
-	int status;
-	std::cout << "Trying as client..." << std::endl;
-	if((status = static_cast<ClientSimulator *>(simulator)->startNetThread(sf::IpAddress(config.connectto_ip), config.connectto_tcpport, config.connectto_udpport, config.name)) != (int)ConnectionStatus::Accepted)
-	{
-		delete simulator;
-		if(status == (int)ConnectionStatus::GameIsFull)
-		{
-			std::cout << "[Game is full]" << std::endl;
-			simulator = nullptr;
-		}
-		else if(status == (int)ConnectionStatus::WrongAddress)
-		{
-			std::cout << "[Address/port error]" << std::endl;
-			simulator = nullptr;
-		}
-		else
-		{
-			std::cout << "[Client failed]" << std::endl;
-			std::cout << "Trying as server... " << std::endl;
-			simulator = new ServerSimulator(false);
-			if(!static_cast<ServerSimulator *>(simulator)->loadMap("default"))
-			{
-				std::cout << "[Server failed]" << std::endl;
-				delete simulator;
-				simulator = nullptr;
-			}
-			else if(!static_cast<ServerSimulator *>(simulator)->startNetThread(config.server_tcpport, config.server_udpport, config.max_players))
-			{
-				std::cout << "[Server failed]" << std::endl;
-				delete simulator;
-				simulator = nullptr;
-			}
-			else
-				std::cout << "[Server ok]" << std::endl;
-		}
-	}
-	else
-		std::cout << "[Client ok]" << std::endl;
-	if(simulator)
-	{
-		GameAppState *next = new GameAppState(m_window, m_vratio, m_xyratio, simulator);
-		Application::getInstance().setNextAppState(next);
-	}
-	else
-		Application::getInstance().setNextAppState(nullptr);
-}
-*/

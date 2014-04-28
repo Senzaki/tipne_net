@@ -33,7 +33,6 @@ class Menu : public ApplicationState
 	void host(const std::string &tcp_port, const std::string &udp_port);
 	void connect(const std::string &ipadress, const std::string &tcp_port, const std::string &udp_port);
 	void launchGame(GameSimulator *simulator);
-	//void TEMPtestPlay();
 
 	sf::RenderWindow &m_window;
 	GUIManager m_guimgr;
