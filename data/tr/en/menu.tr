@@ -1,5 +1,9 @@
 #play
 .Play
+#host
+.Host
+#connect
+.Connect
 #options
 .Options
 #credits
@@ -22,6 +26,8 @@
 .FPS
 #lang
 .Language
+#port
+.Port
 #en
 .English
 #fr

@@ -3,6 +3,7 @@
 
 #include "ApplicationState.hpp"
 #include "GUIManager.hpp"
+#include "GameSimulator.hpp"
 
 class Menu : public ApplicationState
 {
@@ -27,7 +28,12 @@ class Menu : public ApplicationState
 	private:
 	void showMainMenu();
 	void showOptions();
-	void TEMPtestPlay();
+	void showConnectMenu();
+	void showHostMenu();
+	void host();
+	void connect();
+	void launchGame(GameSimulator *simulator);
+	//void TEMPtestPlay();
 
 	sf::RenderWindow &m_window;
 	GUIManager m_guimgr;

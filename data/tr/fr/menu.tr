@@ -1,5 +1,9 @@
 #play
 .Jouer
+#host
+.Héberger
+#connect
+.Rejoindre
 #options
 .Options
 #credits
@@ -22,6 +26,8 @@
 .FPS
 #lang
 .Langue
+#port
+.Port
 #en
 .English
 #fr
