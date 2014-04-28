@@ -30,8 +30,8 @@ class Menu : public ApplicationState
 	void showOptions();
 	void showConnectMenu();
 	void showHostMenu();
-	void host();
-	void connect(std::string ipadress);
+	void host(const std::string &tcp_port, const std::string &udp_port);
+	void connect(const std::string &ipadress, const std::string &tcp_port, const std::string &udp_port);
 	void launchGame(GameSimulator *simulator);
 	//void TEMPtestPlay();
 

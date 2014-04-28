@@ -26,8 +26,10 @@
 .FPS
 #lang
 .Langue
-#port
-.Port
+#tcpport
+.Port TCP
+#udpport
+.Port UDP
 #ipadress
 .Adresse IP
 #en
