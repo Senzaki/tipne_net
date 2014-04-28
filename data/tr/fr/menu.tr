@@ -28,6 +28,8 @@
 .Langue
 #port
 .Port
+#ipadress
+.Adresse IP
 #en
 .English
 #fr
