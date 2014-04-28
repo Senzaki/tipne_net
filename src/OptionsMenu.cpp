@@ -3,33 +3,38 @@
 #include "Config.hpp"
 #include <sstream>
 
-OptionsMenu::OptionsMenu(Widget *parent, std::function<void()> callbacksave, std::function<void()> callbackcancel):
-	Widget(parent)
+OptionsMenu::OptionsMenu(Widget *parent, std::function<void()> callback):
+	Widget(parent),
+	m_callback(callback),
+	m_name(new DecoratedLineEdit(this, 150)),
+	m_vsync(new CheckBox(this)),
+	m_fullscreen(new CheckBox(this)),
+	m_videomode(new Label(this)),
+	m_lang(new Label(this)),
+	m_cancel(new Button(this, tr("cancel"), callback)),
+	m_save(new Button(this, tr("save"), std::bind(&OptionsMenu::saveOptions, this))),
+	m_curvmode(0)
 {
 	setSize(getParent()->getSize());
-	m_callbacksave = callbacksave;
+	getAvailablesVideoModes();
 
-	m_save = new Button(this, tr("save"), std::bind(&OptionsMenu::saveOptions, this));
-	m_cancel = new Button(this, tr("cancel"), callbackcancel);
-	m_vsync = new CheckBox(this);
-	m_fullscreen = new CheckBox(this);
-	m_videomode = new Label(this);
-	m_lang = new Label(this);
-	m_name = new DecoratedLineEdit(this, 150);
+	//TEMP (create a function in Config.hpp to read the names in a file)
+	m_langs.push_back("en");
+	m_langs.push_back("fr");
 
 	//Labels
 	m_labels[OPTIONS_NAME] = new Label(this, tr("name"));
+	m_labels[OPTIONS_VIDEOMODE] = new Label(this, tr("videomode"));
+	m_labels[OPTIONS_VSYNC] = new Label(this, tr("vsync"));
 	m_labels[OPTIONS_FULLSCREEN] = new Label(this, tr("fullscreen"));
 	m_labels[OPTIONS_LANG] = new Label(this, tr("lang"));
-	m_labels[OPTIONS_VSYNC] = new Label(this, tr("vsync"));
-	m_labels[OPTIONS_VIDEOMODE] = new Label(this, tr("videomode"));
 
 	std::string left = " < ";
 	std::string right = " > ";
-	m_videomodebuttons[0] = new Button(this, left);
-	m_videomodebuttons[1] = new Button(this, right);
-	m_langbuttons[0] = new Button(this, left);
-	m_langbuttons[1] = new Button(this, right);
+	m_videomodebuttons[0] = new Button(this, left, std::bind(&OptionsMenu::previousVideoMode, this));
+	m_videomodebuttons[1] = new Button(this, right, std::bind(&OptionsMenu::nextVideoMode, this));
+	m_langbuttons[0] = new Button(this, left, std::bind(&OptionsMenu::previousLanguage, this));
+	m_langbuttons[1] = new Button(this, right, std::bind(&OptionsMenu::nextLanguage, this));
 
 	setDefaultValues();
 	setWidgetsPosition();
@@ -38,11 +43,6 @@ OptionsMenu::OptionsMenu(Widget *parent, std::function<void()> callbacksave, std
 OptionsMenu::~OptionsMenu()
 {
 
-}
-
-bool OptionsMenu::onKeyPressed(const sf::Event::KeyEvent &evt)
-{
-	return false;
 }
 
 void OptionsMenu::setWidgetsPosition()
@@ -83,11 +83,52 @@ void OptionsMenu::saveOptions()
 	Config::getInstance().name = m_name->getString();
 	Config::getInstance().fullscreen = m_fullscreen->isChecked();
 	Config::getInstance().vsync = m_vsync->isChecked();
-	//need to add the language and the video mode
+	Config::getInstance().height = m_vmodes[m_curvmode].height;
+	Config::getInstance().width = m_vmodes[m_curvmode].width;
+	Config::getInstance().lang = m_langs[m_curlang];
 	Config::getInstance().save();
-	if(m_callbacksave)
+	if(m_callback)
 	{
-		m_callbacksave();
+		m_callback();
 	}
 }
 
+void OptionsMenu::nextVideoMode()
+{
+	m_curvmode = (m_curvmode + 1) % m_vmodes.size();
+	std::ostringstream oss;
+	oss.str("");
+	oss << m_vmodes[m_curvmode].width << "x" << m_vmodes[m_curvmode].height;
+	m_videomode->setString(oss.str());
+}
+
+void OptionsMenu::previousVideoMode()
+{
+	m_curvmode = (m_curvmode - 1) % m_vmodes.size();
+	std::ostringstream oss;
+	oss.str("");
+	oss << m_vmodes[m_curvmode].width << "x" << m_vmodes[m_curvmode].height;
+	m_videomode->setString(oss.str());
+}
+
+void OptionsMenu::nextLanguage()
+{
+	m_curlang = (m_curlang + 1) % m_langs.size();
+	m_lang->setString(tr(m_langs[m_curlang]));
+}
+
+void OptionsMenu::previousLanguage()
+{
+	m_curlang = (m_curlang - 1) % m_langs.size();
+	m_lang->setString(tr(m_langs[m_curlang]));
+}
+
+void OptionsMenu::getAvailablesVideoModes()
+{
+	std::vector<sf::VideoMode> modes = sf::VideoMode::getFullscreenModes();
+	for(unsigned int i = 0 ; i < modes.size() ; ++i)
+	{
+		if(modes[i].width >= 800 && modes[i].height >= 600)
+			m_vmodes.push_back(modes[i]);
+	}
+}

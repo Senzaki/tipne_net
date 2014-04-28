@@ -129,7 +129,7 @@ void Menu::showOptions()
 {
 	m_guimgr.clear();
 	Widget *topwidget = m_guimgr.getTopWidget();
-	new OptionsMenu(topwidget, std::bind(&Menu::showMainMenu, this), std::bind(&Menu::showMainMenu, this));
+	new OptionsMenu(topwidget, std::bind(&Menu::showMainMenu, this));
 }
 
 void Menu::TEMPtestPlay()

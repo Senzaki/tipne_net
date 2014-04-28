@@ -20,18 +20,25 @@ enum OPTIONS_LABELS
 class OptionsMenu : public Widget
 {
 	public:
-	OptionsMenu(Widget *parent = nullptr, std::function<void()> callbacksave = std::function<void()>(), std::function<void()> callbackcancel = std::function<void()>());
+	OptionsMenu(Widget *parent = nullptr, std::function<void()> callbacksave = std::function<void()>());
 	virtual ~OptionsMenu();
 	virtual void draw(sf::RenderWindow &window) { }
 
 	protected:
-	virtual bool onKeyPressed(const sf::Event::KeyEvent &evt);
+	//virtual bool onKeyPressed(const sf::Event::KeyEvent &evt);
 
 	private:
 	void setWidgetsPosition();
 	void setDefaultValues();
 	void saveOptions();
-	std::function<void()> m_callbacksave;
+	void nextVideoMode();
+	void previousVideoMode();
+	void getAvailablesVideoModes();
+	void nextLanguage();
+	void previousLanguage();
+
+
+	std::function<void()> m_callback;
 	Label *m_labels[OPTIONS_LABEL_COUNT];
 	DecoratedLineEdit *m_name;
 	CheckBox *m_vsync;
@@ -42,6 +49,10 @@ class OptionsMenu : public Widget
 	Button *m_langbuttons[2];
 	Button *m_cancel;
 	Button *m_save;
+	std::vector<sf::VideoMode> m_vmodes;
+	int m_curvmode;
+	std::vector<std::string> m_langs;
+	int m_curlang;
 };
 
 #endif //OPTIONS_HPP_INCLUDED

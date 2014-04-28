@@ -1,8 +1,6 @@
 #include "LineEdit.hpp"
 #include "ResourceManager.hpp"
-#include <GL/gl.h>
 
-#include <iostream>
 
 static constexpr const unsigned int LINEEDIT_FONT_SIZE = 12;
 static constexpr const unsigned int LINEEDIT_REPOS = 5;
@@ -68,18 +66,19 @@ void LineEdit::draw(sf::RenderWindow &window)
 
 void LineEdit::onPositionChanged()
 {
-	//sf::Vector2f size = getSize();
-	//sf::Vector2f pos = getPosition();
-	//Put the text right in the middle of the parent widget (coords are integer so that the text does not look blurred)
-	//sf::Vector2f pos2 = sf::Vector2f(std::round(pos.x), std::round(pos.y + (size.y - LINEEDIT_HEIGHT) / 2.f));
 	m_text.setPosition(getAbsolutePosition());
 	updateCursor();
 }
 
 bool LineEdit::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 {
-	m_inputison = mouseIsOn();
-	return true;
+	sf::FloatRect bounds(getAbsolutePosition(), getSize());
+	if(bounds.contains(evt.x, evt.y))
+	{
+		m_inputison = mouseIsOn();
+		return true;
+	}
+	return false;
 }
 
 bool LineEdit::onTextEntered(const sf::Event::TextEvent &evt)
