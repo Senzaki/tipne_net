@@ -75,6 +75,7 @@ bool LineEdit::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 	sf::FloatRect bounds(getAbsolutePosition(), getSize());
 	if(bounds.contains(evt.x, evt.y))
 	{
+		Widget::onMouseButtonPressed(evt);
 		m_inputison = mouseIsOn();
 		return true;
 	}
@@ -83,6 +84,7 @@ bool LineEdit::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 
 bool LineEdit::onTextEntered(const sf::Event::TextEvent &evt)
 {
+	Widget::onTextEntered(evt);
 	if(m_inputison)
 	{
 		//Check whether the character is valid or not
@@ -103,6 +105,7 @@ bool LineEdit::onTextEntered(const sf::Event::TextEvent &evt)
 
 bool LineEdit::onKeyPressed(const sf::Event::KeyEvent &evt)
 {
+	Widget::onKeyPressed(evt);
 	if(m_inputison)
 	{
 		switch(evt.code)

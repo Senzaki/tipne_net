@@ -31,10 +31,10 @@ OptionsMenu::OptionsMenu(Widget *parent, std::function<void()> callback):
 
 	std::string left = " < ";
 	std::string right = " > ";
-	m_videomodebuttons[0] = new Button(this, left, std::bind(&OptionsMenu::previousVideoMode, this));
-	m_videomodebuttons[1] = new Button(this, right, std::bind(&OptionsMenu::nextVideoMode, this));
-	m_langbuttons[0] = new Button(this, left, std::bind(&OptionsMenu::previousLanguage, this));
-	m_langbuttons[1] = new Button(this, right, std::bind(&OptionsMenu::nextLanguage, this));
+	m_videomodebuttons[0] = new Button(this, left, std::bind(&OptionsMenu::changeVideoMode, this, -1));
+	m_videomodebuttons[1] = new Button(this, right, std::bind(&OptionsMenu::changeVideoMode, this, 1));
+	m_langbuttons[0] = new Button(this, left, std::bind(&OptionsMenu::changeLanguage, this, -1));
+	m_langbuttons[1] = new Button(this, right, std::bind(&OptionsMenu::changeLanguage, this, 1));
 
 	setDefaultValues();
 	setWidgetsPosition();
@@ -93,33 +93,19 @@ void OptionsMenu::saveOptions()
 	}
 }
 
-void OptionsMenu::nextVideoMode()
+void OptionsMenu::changeVideoMode(int direction)
 {
-	m_curvmode = (m_curvmode + 1) % m_vmodes.size();
+	m_curvmode = (m_curvmode + direction) % m_vmodes.size();
 	std::ostringstream oss;
 	oss.str("");
 	oss << m_vmodes[m_curvmode].width << "x" << m_vmodes[m_curvmode].height;
 	m_videomode->setString(oss.str());
+
 }
 
-void OptionsMenu::previousVideoMode()
+void OptionsMenu::changeLanguage(int direction)
 {
-	m_curvmode = (m_curvmode - 1) % m_vmodes.size();
-	std::ostringstream oss;
-	oss.str("");
-	oss << m_vmodes[m_curvmode].width << "x" << m_vmodes[m_curvmode].height;
-	m_videomode->setString(oss.str());
-}
-
-void OptionsMenu::nextLanguage()
-{
-	m_curlang = (m_curlang + 1) % m_langs.size();
-	m_lang->setString(tr(m_langs[m_curlang]));
-}
-
-void OptionsMenu::previousLanguage()
-{
-	m_curlang = (m_curlang - 1) % m_langs.size();
+	m_curlang = (m_curlang + direction) % m_langs.size();
 	m_lang->setString(tr(m_langs[m_curlang]));
 }
 

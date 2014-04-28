@@ -31,11 +31,9 @@ class OptionsMenu : public Widget
 	void setWidgetsPosition();
 	void setDefaultValues();
 	void saveOptions();
-	void nextVideoMode();
-	void previousVideoMode();
 	void getAvailablesVideoModes();
-	void nextLanguage();
-	void previousLanguage();
+	void changeVideoMode(int direction);
+	void changeLanguage(int direction);
 
 
 	std::function<void()> m_callback;
