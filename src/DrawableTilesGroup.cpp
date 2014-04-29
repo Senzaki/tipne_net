@@ -21,10 +21,43 @@ struct GraphTileInfo
 };
 
 //Index is Tile::appearance
-const unsigned int TILE_INFO_SIZE = 3;
+const unsigned int TILE_INFO_SIZE = 14;
 GraphTileInfo TILE_INFO[TILE_INFO_SIZE] =
 {
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 720.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 660.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 600.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 540.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 480.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 420.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 360.f, 120.f, 60.f, 60.f, 30.f}
+	}},
 	//0
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 300.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	//0
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 180.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	//4
+	{Resource::BASE_TILES_TEX, 1, {
+	{0.f, 120.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	//3
 	{Resource::BASE_TILES_TEX, 1, {
 		{0.f, 0.f, 120.f, 60.f, 60.f, 30.f}
 	}},
@@ -35,7 +68,11 @@ GraphTileInfo TILE_INFO[TILE_INFO_SIZE] =
 	//2
 	{Resource::GRASS_TEST_TEX, 1, {
 		{0.f, 0.f, 120.f, 60.f, 60.f, 30.f}
-	}}
+	}},
+	{Resource::BASE_TILES_TEX, 1, {
+	{0.f, 240.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	//0
 };
 
 struct TileSortInfo
