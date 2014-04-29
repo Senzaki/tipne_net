@@ -30,7 +30,6 @@ class LineEdit : public Widget
 	unsigned int m_positioncursor;
 	float m_width;
 	sf::Text m_text;
-	std::string m_string;
 	sf::RectangleShape m_cursor;
 	std::function<void(std::string)> m_func;
 };

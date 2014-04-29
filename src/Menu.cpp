@@ -146,7 +146,7 @@ void Menu::showConnectMenu()
 	DecoratedLineEdit *udpport = new DecoratedLineEdit(topwidget, 150);
 	DecoratedLineEdit *ipadress = new DecoratedLineEdit(topwidget, 150);
 	Button *cancel = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
-	Button *connect = new Button(topwidget, tr("connect"), std::bind(&Menu::connect, this, std::ref(ipadress->getString()), std::ref(tcpport->getString()), std::ref(udpport->getString())));
+	Button *connect = new Button(topwidget, tr("connect"), std::bind(&Menu::connect, this, ipadress, tcpport, udpport));
 
 	//Set default values in line edits
 	ipadress->setString(Config::getInstance().connectto_ip);
@@ -182,7 +182,7 @@ void Menu::showHostMenu()
 	DecoratedLineEdit *tcpport = new DecoratedLineEdit(topwidget, 150);
 	DecoratedLineEdit *udpport = new DecoratedLineEdit(topwidget, 150);
 	Button *cancel = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
-	Button *host = new Button(topwidget, tr("host"), std::bind(&Menu::host, this,  std::ref(tcpport->getString()), std::ref(udpport->getString())));
+	Button *host = new Button(topwidget, tr("host"), std::bind(&Menu::host, this, tcpport, udpport));
 
 	//Set default values in line edits
 	std::ostringstream oss;
@@ -204,29 +204,22 @@ void Menu::showHostMenu()
 	cancel->setPosition(2 * size.x / 3.f, size.y - interval);
 }
 
-void Menu::connect(const std::string &ipadress, const std::string &tcp_port, const std::string &udp_port)
+void Menu::connect(DecoratedLineEdit* le_ipadress, DecoratedLineEdit* le_tcpport, DecoratedLineEdit* le_udpport)
 {
 	//TO DO :Comment
 	Config &config = Config::getInstance();
 
+	//Get strings
+	std::string ipadress(le_ipadress->getString());
+	std::string str_tcpport(le_tcpport->getString());
+	std::string str_udpport(le_udpport->getString());
+
 	//Convert string in short
 	unsigned short tcpport;
 	unsigned short udpport;
-	std::istringstream iss;
-	if(tcp_port.empty())
-		tcpport = DEFAULT_TCP_PORT;
-	else
-	{
-		iss.str(tcp_port);
-		iss >> tcpport;
-	}
-	if(udp_port.empty())
-		udpport = DEFAULT_UDP_PORT;
-	else
-	{
-		iss.str(udp_port);
-		iss >> udpport;
-	}
+	convertPorts(str_tcpport, str_udpport, tcpport, udpport);
+
+	std::cout << "-" << tcpport << "-" << udpport << std::endl;
 
 	GameSimulator *simulator = new ClientSimulator();
 	int status;
@@ -253,29 +246,19 @@ void Menu::connect(const std::string &ipadress, const std::string &tcp_port, con
 	launchGame(simulator);
 }
 
-void Menu::host(const std::string &tcp_port, const std::string &udp_port)
+void Menu::host(DecoratedLineEdit* le_tcpport, DecoratedLineEdit* le_udpport)
 {
 	//TO DO : Comment
 	Config &config = Config::getInstance();
 
+	//Get strings
+	std::string str_tcpport(le_tcpport->getString());
+	std::string str_udpport(le_udpport->getString());
+
 	//Convert string in short
 	unsigned short tcpport;
 	unsigned short udpport;
-	std::istringstream iss;
-	if(tcp_port.empty())
-		tcpport = DEFAULT_TCP_PORT;
-	else
-	{
-		iss.str(tcp_port);
-		iss >> tcpport;
-	}
-	if(udp_port.empty())
-		udpport = DEFAULT_UDP_PORT;
-	else
-	{
-		iss.str(udp_port);
-		iss >> udpport;
-	}
+	convertPorts(str_tcpport, str_udpport, tcpport, udpport);
 
 	std::cout << "Trying as server... " << std::endl;
 	GameSimulator *simulator = new ServerSimulator(false);
@@ -294,6 +277,25 @@ void Menu::host(const std::string &tcp_port, const std::string &udp_port)
 	else
 		std::cout << "[Server ok]" << std::endl;
 	launchGame(simulator);
+}
+
+void Menu::convertPorts(const std::string &str_tcpport, const std::string &str_udpport, unsigned short &tcpport, unsigned short &udpport)
+{
+	std::istringstream iss;
+	if(str_tcpport.empty())
+		tcpport = DEFAULT_TCP_PORT;
+	else
+	{
+		iss.str(str_tcpport);
+		iss >> tcpport;
+	}
+	if(str_udpport.empty())
+		udpport = DEFAULT_UDP_PORT;
+	else
+	{
+		iss.str(str_udpport);
+		iss >> udpport;
+	}
 }
 
 void Menu::launchGame(GameSimulator *simulator)

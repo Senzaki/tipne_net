@@ -4,6 +4,7 @@
 #include "ApplicationState.hpp"
 #include "GUIManager.hpp"
 #include "GameSimulator.hpp"
+#include "DecoratedLineEdit.hpp"
 
 class Menu : public ApplicationState
 {
@@ -30,8 +31,9 @@ class Menu : public ApplicationState
 	void showOptions();
 	void showConnectMenu();
 	void showHostMenu();
-	void host(const std::string &tcp_port, const std::string &udp_port);
-	void connect(const std::string &ipadress, const std::string &tcp_port, const std::string &udp_port);
+	void host(DecoratedLineEdit* le_tcpport, DecoratedLineEdit* le_udpport);
+	void connect(DecoratedLineEdit* le_ipadress, DecoratedLineEdit* le_tcpport, DecoratedLineEdit* le_udpport);
+	void convertPorts(const std::string &str_tcpport, const std::string &str_udpport, unsigned short &tcpport, unsigned short &udpport);
 	void launchGame(GameSimulator *simulator);
 
 	sf::RenderWindow &m_window;

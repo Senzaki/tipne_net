@@ -45,15 +45,14 @@ void LineEdit::setCallback(std::function<void(std::string)> callback)
 
 void LineEdit::setString(const std::string &string)
 {
-	m_string = string;
-	m_text.setString(m_string);
-	m_positioncursor = m_string.size();
+	m_text.setString(string);
+	m_positioncursor = string.size();
 	updateCursor();
 }
 
 const std::string &LineEdit::getString() const
 {
-	return m_string;
+	return std::string((char*)m_text.getString().toUtf8().c_str());
 }
 
 void LineEdit::draw(sf::RenderWindow &window)
@@ -84,15 +83,15 @@ bool LineEdit::onTextEntered(const sf::Event::TextEvent &evt)
 	if(m_inputison)
 	{
 		//Check whether the character is valid or not
-		if((m_string.size() < m_maxchar || m_maxchar == 0)
+		if((m_text.getString().getSize() < m_maxchar || m_maxchar == 0)
 			&& (evt.unicode > 31 &&(evt.unicode < 127 || evt.unicode > 159)))
 		{
 			//add the character
-			m_string.insert(m_positioncursor, (char*)&evt.unicode);
+			sf::String temp(m_text.getString());
+			temp.insert(m_positioncursor, evt.unicode);
+			m_text.setString(temp);
 			m_positioncursor++;
 		}
-
-		m_text.setString(m_string);
 
 		updateCursor();
 		return true;
@@ -119,7 +118,7 @@ bool LineEdit::onKeyPressed(const sf::Event::KeyEvent &evt)
 				break;
 
 			case sf::Keyboard::Right:
-				if(m_positioncursor < m_string.size())
+				if(m_positioncursor < m_text.getString().getSize())
 					m_positioncursor++;
 				break;
 
@@ -127,17 +126,21 @@ bool LineEdit::onKeyPressed(const sf::Event::KeyEvent &evt)
 				//erase character
 				if(m_positioncursor > 0)
 				{
-					m_string.erase(m_positioncursor - 1, 1);
+					sf::String temp(m_text.getString());
+					temp.erase(m_positioncursor - 1, 1);
+					m_text.setString(temp);
 					m_positioncursor--;
 				}
-				m_text.setString(m_string);
 				break;
 
 			case sf::Keyboard::Delete:
 				//erase character
-				if(m_positioncursor < m_string.size())
-					m_string.erase(m_positioncursor, 1);
-				m_text.setString(m_string);
+				if(m_positioncursor < m_text.getString().getSize())
+				{
+					sf::String temp(m_text.getString());
+					temp.erase(m_positioncursor, 1);
+					m_text.setString(temp);
+				}
 				break;
 
 			default:
