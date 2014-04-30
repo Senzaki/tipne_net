@@ -19,13 +19,13 @@ void DrawableMap::draw(sf::RenderWindow &window, sf::FloatRect seen)
 	if(m_chunkscount.x == 0 || m_chunkscount.y == 0)
 		return;
 	//Translate the "seen" rectangle into grid coordinates then in chunks coords (we only need top, left, right and bottom of the bounding box)
-	const unsigned int left = std::max(std::floor(BasisChange::pixelToGridX(seen.left, seen.top + seen.height)), 0.f);
+	const unsigned int left = std::max(std::floor(BasisChange::pixelToGridX(seen.left, seen.top + seen.height) + 0.5f), 0.f);
 	const unsigned int cleft = left / CHUNK_SIZE;
-	const unsigned int top = std::max(std::floor(BasisChange::pixelToGridY(seen.left, seen.top)), 0.f);
+	const unsigned int top = std::max(std::floor(BasisChange::pixelToGridY(seen.left, seen.top) + 0.5f), 0.f);
 	const unsigned int ctop = top / CHUNK_SIZE;
-	const unsigned int right = std::max(std::floor(BasisChange::pixelToGridX(seen.left + seen.width, seen.top)), 0.f);
+	const unsigned int right = std::max(std::floor(BasisChange::pixelToGridX(seen.left + seen.width, seen.top) + 0.5f), 0.f);
 	const unsigned int cright = std::min(right / CHUNK_SIZE + 1, m_chunkscount.x);
-	const unsigned int bottom = std::max(std::floor(BasisChange::pixelToGridY(seen.left + seen.width, seen.top + seen.height)), 0.f);
+	const unsigned int bottom = std::max(std::floor(BasisChange::pixelToGridY(seen.left + seen.width, seen.top + seen.height) + 0.5f), 0.f);
 	const unsigned int cbottom = std::min(bottom / CHUNK_SIZE + 1, m_chunkscount.y);
 	//Simply use the computed bounding box (unnecessary chunks will be drawn, but it is a very simple method)
 	//We need to draw for x decreasing and y increasing (so that the depth decreases)

@@ -33,6 +33,7 @@ class GameSimulator
 	bool characterExists(sf::Uint16 id);
 
 	sf::Uint8 getOwnId() const;//Will return NEUTRAL_PLAYER if no id
+	const Character *getOwnCharacter() const;
 
 	const Map &getMap() const;
 
@@ -54,7 +55,6 @@ class GameSimulator
 	virtual bool removeCharacter(sf::Uint16 id);
 	const std::unordered_map<sf::Uint16, Character> &getCharacters() const;
 	Character *getOwnCharacter();
-	const Character *getOwnCharacter() const;
 	bool setOwnCharacter(sf::Uint16 id);
 
 	virtual bool loadMap(const std::string &name);

@@ -40,6 +40,15 @@ bool GameScreen::update(float etime)
 
 void GameScreen::draw(sf::RenderWindow &window)
 {
+	//Update the camera
+	const Character *player = static_cast<const GameSimulator *>(m_simulator)->getOwnCharacter();
+	if(player)
+	{
+		sf::Vector2f camcenter = BasisChange::gridToPixel(player->getPosition());
+		m_camera.setCenter(camcenter);
+        m_seen.left = camcenter.x - m_seen.width / 2.f;
+        m_seen.top = camcenter.y - m_seen.height / 2.f;
+	}
 	//Save the old view and use the game camera
 	sf::View oldview = window.getView();
 	window.setView(m_camera);
