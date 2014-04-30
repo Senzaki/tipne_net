@@ -3,8 +3,8 @@
 
 #include "Button.hpp"
 #include "Widget.hpp"
-#include "Checkbox.hpp"
-#include "GuiManager.hpp"
+#include "CheckBox.hpp"
+#include "GUIManager.hpp"
 #include "Label.hpp"
 #include "LineEdit.hpp"
 
