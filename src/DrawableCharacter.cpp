@@ -5,13 +5,58 @@
 
 static const unsigned int BASE_CIRCLE_VERTICES_COUNT = DEFAULT_CHARACTER_RADIUS * 32 + 1;
 
-DrawableCharacter::DrawableCharacter():
-	m_basecircle(sf::TrianglesStrip, BASE_CIRCLE_VERTICES_COUNT * 2)
+enum class CharacterAnimationName
 {
-	//TEMP
+	Normal = 0,
+	Count
+};
+
+struct CharacterAnimation
+{
+	unsigned int fcount;
+	Animator::Frame frames[16];
+};
+
+static constexpr CharacterAnimation ANIMATIONS[(int)Character::State::Count][(int)CharacterAnimationName::Count][(int)IsometricDirection::Count] =
+{
+	//Ghost
+	{
+		//Normal
+		{
+			//Down
+			{1,
+				{33, 35, 82, 275, 41.f, 262.f}
+			},
+			//DownRight
+			{1,
+				{156, 40, 102, 278, 41.f, 262.f}
+			},
+			//Right
+			{1,
+				{293, 41, 69, 270, 41.f, 262.f}
+			},
+			//UpRight
+			{1,
+				{374, 42, 87, 270, 41.f, 262.f}
+			},
+			//Up
+			{1,
+				{471, 37, 82, 272, 41.f, 262.f}
+			},
+		},
+	},
+};
+
+DrawableCharacter::DrawableCharacter():
+	m_animator(m_sprite),
+	m_basecircle(sf::TrianglesStrip, BASE_CIRCLE_VERTICES_COUNT * 2),
+	m_direction(IsometricDirection::Down),
+	m_state(Character::State::Ghost)
+{
+	//Setup animation
 	m_sprite.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Characters, Resource::GHOST_TEX));
-	m_sprite.setTextureRect(sf::IntRect(33, 35, 82, 275));
-	m_sprite.setOrigin(41.f, 262.f);
+	resetAnimation();
+	//Setup bound
 	m_localbounds = m_sprite.getGlobalBounds();
 	m_localbounds.height += 40.f;
 
@@ -31,7 +76,7 @@ DrawableCharacter::~DrawableCharacter()
 
 void DrawableCharacter::update(float etime)
 {
-
+	m_animator.update(etime);
 }
 
 void DrawableCharacter::draw(sf::RenderWindow &window)
@@ -55,7 +100,12 @@ bool DrawableCharacter::isContainedIn(const sf::FloatRect &rect) const
 	return m_bounds.intersects(rect);
 }
 
-void DrawableCharacter::onPositionChanged(sf::Vector2f position)
+void DrawableCharacter::onStateChanged(Character::State state)
+{
+	resetAnimation();
+}
+
+void DrawableCharacter::onPositionChanged(const sf::Vector2f &position)
 {
 	//Update the transform
 	m_transform = sf::Transform::Identity;
@@ -65,9 +115,15 @@ void DrawableCharacter::onPositionChanged(sf::Vector2f position)
 	m_depth = m_bounds.top + m_bounds.width;
 }
 
-void DrawableCharacter::onStatusChanged(Character::State state)
+void DrawableCharacter::onDirectionChanged(const sf::Vector2f &direction)
 {
-
+	if(direction.x == 0.f && direction.y == 0.f)
+		return;
+	sf::Vector2f scale;
+	//Which direction is the closest one ?
+	getDirectionInfo(direction, scale, m_direction);
+	m_sprite.setScale(scale);
+	resetAnimation();
 }
 
 void DrawableCharacter::initializeBaseCircle()
@@ -93,4 +149,10 @@ void DrawableCharacter::initializeBaseCircle()
 		m_basecircle[i * 2].position = positions[i];
 		m_basecircle[i * 2 + 1].position = positions[i] * 0.9f;
 	}
+}
+
+void DrawableCharacter::resetAnimation()
+{
+	const CharacterAnimation &anim = ANIMATIONS[(int)m_state][(int)CharacterAnimationName::Normal][(int)m_direction];
+	m_animator.setFrames(anim.frames, anim.fcount);
 }

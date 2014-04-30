@@ -9,7 +9,8 @@ class CharacterStateListener
 	virtual ~CharacterStateListener() {}
 
 	virtual void onStateChanged(Character::State state) {}
-	virtual void onPositionChanged(sf::Vector2f position) {}
+	virtual void onPositionChanged(const sf::Vector2f &position) {}
+	virtual void onDirectionChanged(const sf::Vector2f &direction) {}
 };
 
 #endif // CHARACTERSTATELISTENER_HPP_INCLUDED

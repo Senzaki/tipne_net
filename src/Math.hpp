@@ -3,5 +3,6 @@
 
 constexpr float PI = 3.14159265359f;
 constexpr float SQRT_2 = 1.41421356237309504880168872420969807f;
+constexpr float INVSQRT_2 = 1.f / SQRT_2;
 
 #endif // MATH_HPP_INCLUDED

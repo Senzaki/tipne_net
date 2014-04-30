@@ -3,6 +3,16 @@
 
 #include <SFML/Graphics.hpp>
 
+enum class IsometricDirection
+{
+	Down = 0,
+	DownRight,
+	Right,
+	UpRight,
+	Up,
+	Count
+};
+
 class DrawableEntity
 {
 	public:
@@ -13,6 +23,7 @@ class DrawableEntity
 	virtual void draw(sf::RenderWindow &window) = 0;
 
 	static inline bool isDepthLower(const DrawableEntity *a, const DrawableEntity *b);
+	static void getDirectionInfo(sf::Vector2f direction, sf::Vector2f &scale, IsometricDirection &closestdir);
 };
 
 #include "DrawableEntity.inl"

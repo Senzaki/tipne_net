@@ -143,6 +143,8 @@ void Character::setDirection(sf::Vector2f direction)
 	//Normalize the direction if non-zero
 	if(!(direction.x == 0.f && direction.y == 0.f))
 		direction = direction / std::sqrt(direction.x * direction.x + direction.y * direction.y);
+	if(m_listener)
+		m_listener->onDirectionChanged(direction);
 	if(m_direction != direction)
 	{
 		//Only tell the simulator if the direction has changed (to avoid sending extra packets)

@@ -17,7 +17,6 @@ class Character
 	enum class State
 	{
 		Ghost = 0,
-		Human,
 		Count
 	};
 
