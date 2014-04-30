@@ -28,8 +28,8 @@
 .TCP Port (optionnal) :
 #udpport
 .UDP Port (optionnal) :
-#ipadress
-.IP Address
+#ipaddress
+.Server address :
 #en
 .English
 #fr

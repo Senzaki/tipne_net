@@ -15,7 +15,6 @@
 #include <sstream>
 #include <iostream>
 
-
 Menu::Menu(sf::RenderWindow &window, float vratio, float xyratio):
 	m_window(window),
 	m_guimgr(window),
@@ -141,12 +140,12 @@ void Menu::showConnectMenu()
 	//Create widgets
 	Label *tcpportlabel = new Label(topwidget, tr("tcpport"));
 	Label *udpportlabel = new Label(topwidget, tr("udpport"));
-	Label *iplabel = new Label(topwidget, tr("ipadress"));
+	Label *iplabel = new Label(topwidget, tr("ipaddress"));
 	DecoratedLineEdit *tcpport = new DecoratedLineEdit(topwidget, 150);
 	DecoratedLineEdit *udpport = new DecoratedLineEdit(topwidget, 150);
-	DecoratedLineEdit *ipadress = new DecoratedLineEdit(topwidget, 150);
+	DecoratedLineEdit *ipaddress = new DecoratedLineEdit(topwidget, 150);
 	Button *cancel = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
-	Button *connect = new Button(topwidget, tr("connect"), std::bind(&Menu::connect, this, ipadress, tcpport, udpport));
+	Button *connect = new Button(topwidget, tr("connect"), std::bind(&Menu::connect, this, ipaddress, tcpport, udpport));
 
 	//Set default values in line edits
 	if(Config::getInstance().server_tcpport != DEFAULT_TCP_PORT)
@@ -165,8 +164,8 @@ void Menu::showConnectMenu()
 	//Set widgets position
 	constexpr int interval = 100;
 	sf::Vector2f size = topwidget->getSize();
-	ipadress->setPosition(size.x / 2.f - ipadress->getSize().x / 2.f, size.y / 2.f- ipadress->getSize().y / 2.f - interval);
-	iplabel->setPosition(ipadress->getPosition().x - iplabel->getSize().x - 25, ipadress->getPosition().y + 10);
+	ipaddress->setPosition(size.x / 2.f - ipaddress->getSize().x / 2.f, size.y / 2.f- ipaddress->getSize().y / 2.f - interval);
+	iplabel->setPosition(ipaddress->getPosition().x - iplabel->getSize().x - 25, ipaddress->getPosition().y + 10);
 	tcpport->setPosition(size.x / 2.f - tcpport->getSize().x / 2.f, size.y / 2.f - tcpport->getSize().y / 2.f);
 	tcpportlabel->setPosition(tcpport->getPosition().x - tcpportlabel->getSize().x - 25, tcpport->getPosition().y + 10);
 	udpport->setPosition(size.x / 2.f - udpport->getSize().x / 2.f, size.y / 2.f - udpport->getSize().y / 2.f + interval);
@@ -213,104 +212,111 @@ void Menu::showHostMenu()
 	cancel->setPosition(2 * size.x / 3.f, size.y - interval);
 }
 
-void Menu::connect(DecoratedLineEdit* le_ipadress, DecoratedLineEdit* le_tcpport, DecoratedLineEdit* le_udpport)
+void Menu::connect(DecoratedLineEdit *ipaddrwidget, DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget)
 {
-	//TODO: Comment
 	Config &config = Config::getInstance();
 
 	//Get strings
-	std::string ipadress(le_ipadress->getString());
-	std::string str_tcpport(le_tcpport->getString());
-	std::string str_udpport(le_udpport->getString());
+	sf::IpAddress ipaddress(ipaddrwidget->getString());
+	if(ipaddress == sf::IpAddress::None)
+	{
+		std::cerr << "Invalid server address." << std::endl;
+		return;
+	}
+	std::string tcpportstr(tcpportwidget->getString());
+	std::string udpportstr(udpportwidget->getString());
 
-	//Convert string in short
+	//Convert ports string unsigned short
 	unsigned short tcpport;
 	unsigned short udpport;
-	convertPorts(str_tcpport, str_udpport, tcpport, udpport);
+	if(!convertPorts(tcpportstr, udpportstr, tcpport, udpport))
+	{
+		std::cerr << "Invalid port number." << std::endl;
+		return;
+	}
 
 	GameSimulator *simulator = new ClientSimulator();
 	int status;
-	std::cout << "Trying as client..." << std::endl;
-	if((status = static_cast<ClientSimulator *>(simulator)->startNetThread(sf::IpAddress(ipadress), tcpport, udpport, config.name)) != (int)ConnectionStatus::Accepted)
+	//Launch simulator
+	if((status = static_cast<ClientSimulator *>(simulator)->startNetThread(ipaddress, tcpport, udpport, config.name)) != (int)ConnectionStatus::Accepted)
 	{
 		delete simulator;
-		simulator = nullptr;
 		if(status == (int)ConnectionStatus::GameIsFull)
-		{
-			std::cout << "[Game is full]" << std::endl;
-		}
+			std::cerr << "Unable to join game : game is full." << std::endl;
 		else if(status == (int)ConnectionStatus::WrongAddress)
-		{
-			std::cout << "[Address/port error]" << std::endl;
-		}
+			std::cerr << "Unable to join game : address/port error." << std::endl;
 		else
-		{
-			std::cout << "[Client failed]" << std::endl;
-		}
+			std::cout << "Unable to join game." << std::endl;
+		return;
 	}
-	else
-		std::cout << "[Client ok]" << std::endl;
+
 	launchGame(simulator);
 }
 
-void Menu::host(DecoratedLineEdit* le_tcpport, DecoratedLineEdit* le_udpport)
+void Menu::host(DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget)
 {
-	//TODO: Comment
 	Config &config = Config::getInstance();
 
 	//Get strings
-	std::string str_tcpport(le_tcpport->getString());
-	std::string str_udpport(le_udpport->getString());
+	std::string tcpportstr(tcpportwidget->getString());
+	std::string udpportstr(udpportwidget->getString());
 
-	//Convert string in short
+	//Convert ports string to unsigned short
 	unsigned short tcpport;
 	unsigned short udpport;
-	convertPorts(str_tcpport, str_udpport, tcpport, udpport);
+	if(!convertPorts(tcpportstr, udpportstr, tcpport, udpport))
+	{
+		std::cerr << "Invalid port number." << std::endl;
+		return;
+	}
 
-	std::cout << "Trying as server... " << std::endl;
 	GameSimulator *simulator = new ServerSimulator(false);
+	//Load map
 	if(!static_cast<ServerSimulator *>(simulator)->loadMap("default"))
 	{
-		std::cout << "[Server failed]" << std::endl;
+		std::cerr << "Unable to host game : map cannot be loaded." << std::endl;
 		delete simulator;
-		simulator = nullptr;
+		return;
 	}
-	else if(!static_cast<ServerSimulator *>(simulator)->startNetThread(tcpport, udpport, config.max_players))
+	//Launch simulator
+	if(!static_cast<ServerSimulator *>(simulator)->startNetThread(tcpport, udpport, config.max_players))
 	{
-		std::cout << "[Server failed]" << std::endl;
+		std::cerr << "Unable to host game." << std::endl;
 		delete simulator;
-		simulator = nullptr;
+		return;
 	}
-	else
-		std::cout << "[Server ok]" << std::endl;
 	launchGame(simulator);
 }
 
-void Menu::convertPorts(const std::string &str_tcpport, const std::string &str_udpport, unsigned short &tcpport, unsigned short &udpport)
+bool Menu::convertPorts(const std::string &tcpportstr, const std::string &udpportstr, unsigned short &tcpport, unsigned short &udpport)
 {
 	std::istringstream iss;
-	if(str_tcpport.empty())
+	//Default port if no port specified
+	if(tcpportstr.empty())
 		tcpport = DEFAULT_TCP_PORT;
 	else
 	{
-		iss.str(str_tcpport);
-		iss >> tcpport;
+		//Extract port
+		iss.str(tcpportstr);
+		if(!(iss >> tcpport))
+			return false;
 	}
-	if(str_udpport.empty())
+	//Default port if no port specified
+	if(udpportstr.empty())
 		udpport = DEFAULT_UDP_PORT;
 	else
 	{
-		iss.str(str_udpport);
-		iss >> udpport;
+		//Extract port
+		iss.clear();
+		iss.str(udpportstr);
+		if(!(iss >> udpport))
+			return false;
 	}
+	return true;
 }
 
 void Menu::launchGame(GameSimulator *simulator)
 {
-	if(simulator)
-	{
-		GameAppState *next = new GameAppState(m_window, m_vratio, m_xyratio, simulator);
-		Application::getInstance().setNextAppState(next);
-	}
+	GameAppState *next = new GameAppState(m_window, m_vratio, m_xyratio, simulator);
+	Application::getInstance().setNextAppState(next);
 }
-

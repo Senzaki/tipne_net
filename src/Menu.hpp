@@ -31,9 +31,9 @@ class Menu : public ApplicationState
 	void showOptions();
 	void showConnectMenu();
 	void showHostMenu();
-	void host(DecoratedLineEdit* le_tcpport, DecoratedLineEdit* le_udpport);
-	void connect(DecoratedLineEdit* le_ipadress, DecoratedLineEdit* le_tcpport, DecoratedLineEdit* le_udpport);
-	void convertPorts(const std::string &str_tcpport, const std::string &str_udpport, unsigned short &tcpport, unsigned short &udpport);
+	void host(DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget);
+	void connect(DecoratedLineEdit *ipaddrwidget, DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget);
+	bool convertPorts(const std::string &tcpportstr, const std::string &udpportstr, unsigned short &tcpport, unsigned short &udpport);
 	void launchGame(GameSimulator *simulator);
 
 	sf::RenderWindow &m_window;
