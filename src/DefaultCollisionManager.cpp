@@ -66,9 +66,6 @@ void DefaultCollisionManager::update(float etime)
 		//Move the objects and put them in the hash
 		for(CollisionObject *object : m_objects)
 			updateObject(object);
-		//Don't put the sensors in the hash
-		for(CollisionObject *object : m_sensors)
-			object->updatePosition(STEP_TIME);
 		handleCollisions();
 		m_remainingtime -= STEP_TIME;
 	}

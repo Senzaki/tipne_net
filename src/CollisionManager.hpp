@@ -22,8 +22,6 @@ class CollisionManager
 
 	void attach(CollisionObject *object);
 	void detach(CollisionObject *object);
-	void attachSensor(CollisionObject *object);
-	void detachSensor(CollisionObject *object);
 
 	virtual void update(float etime) = 0;
 
@@ -33,7 +31,6 @@ class CollisionManager
 	void applyCorrection(CollisionObject *obj, float correctionfactor);
 	const Map &m_map;
 	std::unordered_set<CollisionObject *> m_objects;
-	std::unordered_set<CollisionObject *> m_sensors;
 };
 
 #endif // COLLISIONMANAGER_HPP_INCLUDED
