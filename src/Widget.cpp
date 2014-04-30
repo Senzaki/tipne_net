@@ -7,7 +7,6 @@ Widget::Widget(Widget *parent):
 {
 	if(parent)
 		parent->addChild(this);
-	setPosition(0.f, 0.f);
 }
 
 Widget::~Widget()
@@ -59,14 +58,12 @@ sf::Vector2f Widget::getAbsolutePosition() const
 void Widget::setSize(const sf::Vector2f &size)
 {
 	m_size = size;
-	onPositionChanged();
 }
 
 void Widget::setSize(float w, float h)
 {
 	m_size.x = w;
 	m_size.y = h;
-	onPositionChanged();
 }
 
 sf::Vector2f Widget::getSize() const
