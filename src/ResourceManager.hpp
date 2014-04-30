@@ -36,7 +36,6 @@ namespace Resource
 	enum MapTexture
 	{
 		BASE_TILES_TEX = 0,
-		GRASS_TEST_TEX,
 		MAP_TEXTURES_COUNT
 	};
 

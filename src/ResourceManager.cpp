@@ -41,7 +41,6 @@ ResourceManager::ResourceManager()
 		sec.textures.resize(MAP_TEXTURES_COUNT, nullptr);
 
 		sec.tex_files[BASE_TILES_TEX] = "tiles/base.png";
-		sec.tex_files[GRASS_TEST_TEX] = "tiles/grass.png";
 	}
 
 	//Characters
