@@ -7,8 +7,8 @@
 #include <SFML/System.hpp>
 
 constexpr const char *DEFAULT_LANGUAGE = "en";
-const unsigned short DEFAULT_TCP_PORT = 57575;
-const unsigned short DEFAULT_UDP_PORT = 57577;
+const unsigned short DEFAULT_TCP_PORT = 6161;
+const unsigned short DEFAULT_UDP_PORT = 6162;
 
 struct Config
 {
