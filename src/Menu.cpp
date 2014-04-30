@@ -149,14 +149,18 @@ void Menu::showConnectMenu()
 	Button *connect = new Button(topwidget, tr("connect"), std::bind(&Menu::connect, this, ipadress, tcpport, udpport));
 
 	//Set default values in line edits
-	ipadress->setString(Config::getInstance().connectto_ip);
-	std::ostringstream oss;
-	oss.str("");
-	oss << Config::getInstance().connectto_tcpport;
-	tcpport->setString(oss.str());
-	oss.str("");
-	oss << Config::getInstance().connectto_udpport;
-	udpport->setString(oss.str());
+	if(Config::getInstance().server_tcpport != DEFAULT_TCP_PORT)
+	{
+		std::ostringstream oss;
+		oss << Config::getInstance().server_tcpport;
+		tcpport->setString(oss.str());
+	}
+	if(Config::getInstance().server_udpport != DEFAULT_UDP_PORT)
+	{
+		std::ostringstream oss;
+		oss << Config::getInstance().server_udpport;
+		udpport->setString(oss.str());
+	}
 
 	//Set widgets position
 	constexpr int interval = 100;
@@ -185,13 +189,18 @@ void Menu::showHostMenu()
 	Button *host = new Button(topwidget, tr("host"), std::bind(&Menu::host, this, tcpport, udpport));
 
 	//Set default values in line edits
-	std::ostringstream oss;
-	oss.str("");
-	oss << Config::getInstance().server_tcpport;
-	tcpport->setString(oss.str());
-	oss.str("");
-	oss << Config::getInstance().server_udpport;
-	udpport->setString(oss.str());
+	if(Config::getInstance().server_tcpport != DEFAULT_TCP_PORT)
+	{
+		std::ostringstream oss;
+		oss << Config::getInstance().server_tcpport;
+		tcpport->setString(oss.str());
+	}
+	if(Config::getInstance().server_udpport != DEFAULT_UDP_PORT)
+	{
+		std::ostringstream oss;
+		oss << Config::getInstance().server_udpport;
+		udpport->setString(oss.str());
+	}
 
 	//Set widgets position
 	constexpr int interval = 100;
@@ -206,7 +215,7 @@ void Menu::showHostMenu()
 
 void Menu::connect(DecoratedLineEdit* le_ipadress, DecoratedLineEdit* le_tcpport, DecoratedLineEdit* le_udpport)
 {
-	//TO DO :Comment
+	//TODO: Comment
 	Config &config = Config::getInstance();
 
 	//Get strings
@@ -246,7 +255,7 @@ void Menu::connect(DecoratedLineEdit* le_ipadress, DecoratedLineEdit* le_tcpport
 
 void Menu::host(DecoratedLineEdit* le_tcpport, DecoratedLineEdit* le_udpport)
 {
-	//TO DO : Comment
+	//TODO: Comment
 	Config &config = Config::getInstance();
 
 	//Get strings

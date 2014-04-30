@@ -1,9 +1,7 @@
-#play
-.Play
 #host
-.Host
+.Host a game
 #connect
-.Connect
+.Join a game
 #options
 .Options
 #credits
@@ -23,15 +21,15 @@
 #vsync
 .Vertical synchronisation 
 #dispfreq
-.FPS
+.FPS limit
 #lang
 .Language
 #tcpport
-.TCP Port
+.TCP Port (optionnal) :
 #udpport
-.UDP Port
+.UDP Port (optionnal) :
 #ipadress
-.IP Adress
+.IP Address
 #en
 .English
 #fr

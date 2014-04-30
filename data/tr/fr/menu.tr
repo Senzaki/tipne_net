@@ -1,9 +1,7 @@
-#play
-.Jouer
 #host
-.Héberger
+.Héberger une partie
 #connect
-.Rejoindre
+.Rejoindre une partie
 #options
 .Options
 #credits
@@ -23,7 +21,7 @@
 #vsync
 .Synchronisation verticale
 #dispfreq
-.FPS
+.Limite de FPS
 #lang
 .Langue
 #tcpport
