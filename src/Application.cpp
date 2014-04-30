@@ -4,6 +4,12 @@
 #include "Translator.hpp"
 #include "ResourceManager.hpp"
 #include "KeyMap.hpp"
+#include <csignal>
+
+static void quitApplication(int signal)
+{
+	Application::getInstance().setNextAppState(nullptr, true);
+}
 
 Application::Application():
 	m_curstate(nullptr),
@@ -21,6 +27,10 @@ Application &Application::getInstance()
 
 int Application::execute(int argc, char **argv)
 {
+	//Handle SIGINT (Ctrl + C) and SIGTERM (kill), so that the application can quit cleanly
+	signal(SIGINT, &quitApplication);
+	signal(SIGTERM, &quitApplication);
+
 	const Config &conf = Config::getInstance();
 	//Preload the key mapping
 	KeyMap::getInstance();

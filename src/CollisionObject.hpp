@@ -11,7 +11,7 @@ enum class CollisionEntityType
 {
 	None, //nullptr
 	Bound, //nullptr
-	Wall, //Cast to sf::Vector2u * (Representing the position. NOTE : any collision object of this type is very likely to be temporary.)
+	Wall, //nullptr
 	Character //Cast to Character *
 };
 
@@ -31,14 +31,17 @@ class CollisionObject
 	void forcePosition(const sf::Vector2f &position);
 	sf::Vector2f getPosition() const;
 	sf::Vector2f getDesiredPosition() const;
-	void setHalfSize(const sf::Vector2f &halfsize);//If the object becomes bigger, you may want to call CollisionManager::getNearestPosition to avoid collision bugs
-	sf::Vector2f getHalfSize() const;
+	void setRadius(float radius);//If the object becomes bigger, you may want to call CollisionManager::getNearestPosition to avoid collision bugs
+	float getRadius() const;
+	void setSpeed(const sf::Vector2f &speed);
+	sf::Vector2f getSpeed() const;
 
 	CollisionEntityType getEntityType() const;
 	void setEntity(void *entity);
 	void *getEntity();
-	bool isOverlappingAllowed() const;
-	void setOverlappingAllowed(bool allow);
+	bool isSensor() const;
+	void setSensor(bool sensor);
+	void setCollisionCallback(const std::function<void(CollisionObject *)> &callback);
 
 	CollisionManager *getCollisionManager();
 
@@ -47,14 +50,14 @@ class CollisionObject
 
 	bool isStatic() const;
 
-	bool update(float etime);//Returns true if the position has changed
+	void updatePosition(float etime);//Returns true if the position has changed
+	void correctPosition(const sf::Vector2f &position);
 
 	private:
-	void updateTiles();
-
 	CollisionEntityType m_enttype;
 	void *m_entity;
-	bool m_overlap;
+	bool m_sensor;
+	std::function<void(CollisionObject *)> m_callback;
 
 	sf::Vector2f m_start;
 	sf::Vector2f m_direction;
@@ -62,19 +65,12 @@ class CollisionObject
 	sf::Vector2f m_desired;
 	float m_maxtime;
 	float m_time;
-	bool m_justset;
+	sf::Vector2f m_speed;
 
-	sf::Vector2f m_halfsize;
+	float m_radius;
 
 	CollisionManager *m_colmgr;//Set by attach/detach. Never modify it in any other way
-	//Managed by the CollisionManager
-	struct TileBounds
-	{
-		unsigned int minx;
-		unsigned int maxx;
-		unsigned int miny;
-		unsigned int maxy;
-	} m_tiles;
+	sf::Vector2f m_correctionvect;//Set by the CollisionManager. Never modify it in any other way
 
 	friend class CollisionManager;
 };

@@ -1,6 +1,8 @@
 #include "GameSimulator.hpp"
 #include <iostream>
 #include <cassert>
+#include "DefaultCollisionManager.hpp"
+#include "DummyCollisionManager.hpp"
 
 GameSimulator::GameSimulator(bool collisions):
 	m_ownid(NEUTRAL_PLAYER),
@@ -19,6 +21,7 @@ GameSimulator::~GameSimulator()
 
 bool GameSimulator::update(float etime)
 {
+	m_colmgr->update(etime);
 	for(std::pair<const sf::Uint16, Character> &character : m_characters)
 		character.second.update(etime);
 	return true;
@@ -238,14 +241,14 @@ bool GameSimulator::loadMap(const std::string &name)
 {
 	if(m_map.load(name))
 	{
+		//Reload the collision manager if necessary
+		delete m_colmgr;
 		if(m_collisions)
-		{
-			//Reload the collision manager if necessary
-			delete m_colmgr;
-			m_colmgr = new CollisionManager(m_map);
-			for(std::pair<const sf::Uint16, Character> &character : m_characters)
-				character.second.setCollisionManager(m_colmgr);
-		}
+			m_colmgr = new DefaultCollisionManager(m_map);
+		else
+			m_colmgr = new DefaultCollisionManager(m_map);
+		for(std::pair<const sf::Uint16, Character> &character : m_characters)
+			character.second.setCollisionManager(m_colmgr);
 		if(m_statelistener)
 			m_statelistener->onMapLoaded(m_map);
 		return true;

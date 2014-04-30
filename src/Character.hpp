@@ -1,13 +1,15 @@
 #ifndef CHARACTER_HPP_INCLUDED
 #define CHARACTER_HPP_INCLUDED
 
-#include "CollisionManager.hpp"
 #include "Player.hpp"
+#include "CollisionObject.hpp"
 
 class GameSimulator;
 class CharacterStateListener;
+class CollisionManager;//Reduce compile time
 
 constexpr const sf::Uint16 NO_CHARACTER_ID = 0;
+constexpr const float DEFAULT_CHARACTER_RADIUS = 0.45f;
 
 class Character
 {

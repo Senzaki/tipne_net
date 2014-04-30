@@ -3,7 +3,7 @@
 #include "ResourceManager.hpp"
 #include "Math.hpp"
 
-static const unsigned int BASE_CIRCLE_VERTICES_COUNT = 24;
+static const unsigned int BASE_CIRCLE_VERTICES_COUNT = DEFAULT_CHARACTER_RADIUS * 32 + 1;
 
 DrawableCharacter::DrawableCharacter():
 	m_basecircle(sf::TrianglesStrip, BASE_CIRCLE_VERTICES_COUNT * 2)
@@ -83,7 +83,7 @@ void DrawableCharacter::initializeBaseCircle()
 		for(unsigned int i = 0; i < BASE_CIRCLE_VERTICES_COUNT; i++)
 		{
 			angle = static_cast<float>(i) * interval;
-			positions[i] = BasisChange::gridToPixel(std::cos(angle), std::sin(angle)) / 2.f;
+			positions[i] = BasisChange::gridToPixel(std::cos(angle), std::sin(angle)) * DEFAULT_CHARACTER_RADIUS;
 		}
 	}
 

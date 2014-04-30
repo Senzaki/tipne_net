@@ -3,7 +3,6 @@
 
 #include "CollisionObject.hpp"
 #include "Map.hpp"
-#include <list>
 #include <unordered_set>
 
 /*
@@ -16,30 +15,25 @@ class CollisionManager
 {
 	public:
 	CollisionManager(const Map &map);
-	~CollisionManager();
+	virtual ~CollisionManager();
 
 	CollisionManager(const CollisionManager &) = delete;
 	CollisionManager &operator=(const CollisionManager &) = delete;
 
-	void setMap(const Map *map);
-
 	void attach(CollisionObject *object);
 	void detach(CollisionObject *object);
+	void attachSensor(CollisionObject *object);
+	void detachSensor(CollisionObject *object);
 
-	bool isColliding(CollisionObject *object) const;//Objects with overlapping allowed ARE NOT considered as a collision.
-	void foreachCollision(CollisionObject *object, const std::function<bool(CollisionObject *)> &callback);//Objects with overlapping allowed ARE considered as a collision.
+	virtual void update(float etime) = 0;
 
-	void updateTilesForObject(CollisionObject *object);
-
-	private:
-	void getTilesForObject(const sf::Vector2f &position, const sf::Vector2f &halfsize, CollisionObject::TileBounds &tiles);
-
-	unsigned int m_mapwidth;
-
+	protected:
+	void notifyCollision(CollisionObject *a, CollisionObject *b);
+	void addCorrection(CollisionObject *obj, const sf::Vector2f &correction);
+	void applyCorrection(CollisionObject *obj, float correctionfactor);
 	const Map &m_map;
-	std::vector<std::list<CollisionObject *>> m_tilescontent;
 	std::unordered_set<CollisionObject *> m_objects;
-	CollisionObject m_boundsobject;
+	std::unordered_set<CollisionObject *> m_sensors;
 };
 
 #endif // COLLISIONMANAGER_HPP_INCLUDED

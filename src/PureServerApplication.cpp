@@ -34,7 +34,7 @@ int PureServerApplication::execute(int argc, char **argv)
 	m_simulator->setStateListener(this);
 
 	//TEMP
-	if(!m_simulator->loadMap((sf::Uint8)MapId::Default))
+	if(!m_simulator->loadMap("default"))
 		return 1;
 	//////
 

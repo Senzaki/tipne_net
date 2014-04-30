@@ -79,8 +79,10 @@ void Widget::setParent(Widget *parent)
 	//If there's a new parent, notify it that we're its child
 	if(parent)
 		parent->addChild(this);
+#ifndef NDEBUG
 	else
-		std::cout << "Warning : Setting a widget's parent to NULL may result in a memory leak. Be sure to free it properly." << std::endl;
+		std::cout << "[DEBUG]Warning : Setting a widget's parent to NULL may result in a memory leak. Be sure to free it properly." << std::endl;
+#endif
 }
 
 Widget *Widget::getParent() const

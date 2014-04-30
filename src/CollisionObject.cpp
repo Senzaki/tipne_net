@@ -5,10 +5,9 @@
 CollisionObject::CollisionObject(CollisionEntityType enttype, void *entity, float interpolationtime):
 	m_enttype(enttype),
 	m_entity(entity),
-	m_overlap(false),
+	m_sensor(false),
 	m_maxtime(interpolationtime),
 	m_time(0.f),
-	m_justset(false),
 	m_colmgr(nullptr)
 {
 
@@ -17,15 +16,14 @@ CollisionObject::CollisionObject(CollisionEntityType enttype, void *entity, floa
 CollisionObject::CollisionObject(CollisionObject &&other):
 	m_enttype(other.m_enttype),
 	m_entity(other.m_entity),
-	m_overlap(other.m_overlap),
+	m_sensor(other.m_sensor),
 	m_start(other.m_start),
 	m_direction(other.m_direction),
 	m_position(other.m_position),
 	m_desired(other.m_desired),
 	m_maxtime(other.m_maxtime),
 	m_time(other.m_time),
-	m_justset(other.m_justset),
-	m_halfsize(other.m_halfsize),
+	m_radius(other.m_radius),
 	m_colmgr(nullptr)
 {
 	other.m_entity = nullptr;
@@ -46,22 +44,9 @@ CollisionObject::~CollisionObject()
 
 void CollisionObject::setPosition(float x, float y)
 {
-#warning TEMP
-	sf::Vector2f temp = m_desired;
-	//Set the desired position & update the tile hash
+	//Set the desired position
 	m_desired.x = x;
 	m_desired.y = y;
-	//Is it possible to go there ?
-	if(m_colmgr)
-	{
-		if(m_colmgr->isColliding(this))
-		{
-			m_desired = temp;
-			return;
-		}
-	}
-	m_justset = true;
-	updateTiles();
 	//Interpolation ?
 	if(m_maxtime != 0.f)
 	{
@@ -87,10 +72,8 @@ void CollisionObject::setPosition(const sf::Vector2f &position)
 void CollisionObject::forcePosition(float x, float y)
 {
 	//Directly set the position & update the tile hash
-	m_justset = true;
 	m_desired.x = x;
 	m_desired.y = y;
-	updateTiles();
 	m_position.x = x;
 	m_position.y = y;
 	//Cancel current interpolation
@@ -118,18 +101,25 @@ sf::Vector2f CollisionObject::getDesiredPosition() const
 	return m_desired;
 }
 
-void CollisionObject::setHalfSize(const sf::Vector2f &halfsize)
+void CollisionObject::setRadius(const float radius)
 {
-	assert(halfsize.x >= 0.f && halfsize.y >= 0.f);
-	m_halfsize = halfsize;
-	updateTiles();
+	m_radius = radius;
 }
 
-sf::Vector2f CollisionObject::getHalfSize() const
+float CollisionObject::getRadius() const
 {
-	return m_halfsize;
+	return m_radius;
 }
 
+void CollisionObject::setSpeed(const sf::Vector2f &speed)
+{
+	m_speed = speed;
+}
+
+sf::Vector2f CollisionObject::getSpeed() const
+{
+	return m_speed;
+}
 
 CollisionEntityType CollisionObject::getEntityType() const
 {
@@ -146,14 +136,14 @@ void *CollisionObject::getEntity()
 	return m_entity;
 }
 
-bool CollisionObject::isOverlappingAllowed() const
+bool CollisionObject::isSensor() const
 {
-	return m_overlap;
+	return m_sensor;
 }
 
-void CollisionObject::setOverlappingAllowed(bool allow)
+void CollisionObject::setSensor(bool sensor)
 {
-	m_overlap = allow;
+	m_sensor = sensor;
 }
 
 CollisionManager *CollisionObject::getCollisionManager()
@@ -185,26 +175,31 @@ bool CollisionObject::isStatic() const
 	return (m_time >= m_maxtime || (m_direction.x == 0.f && m_direction.y == 0.f));
 }
 
-bool CollisionObject::update(float etime)
+void CollisionObject::updatePosition(float etime)
 {
-	if(isStatic())
-	{
-		//We need to notify a position change right after the position was forced
-		if(m_justset)
-		{
-			m_justset = false;
-			return true;
-		}
-		return false;
-	}
+	//Change speed ?
+	if(m_speed.x != 0.f || m_speed.y != 0.f)
+		setPosition(m_desired + m_speed * etime);
 
+	if(isStatic())
+		return;
+
+	//Interpolation
 	m_time += etime;
 	m_position = m_start + m_direction * std::min(m_time / m_maxtime, 1.f);
-	return true;
 }
 
-void CollisionObject::updateTiles()
+void CollisionObject::correctPosition(const sf::Vector2f &position)
 {
-	if(m_colmgr)
-		m_colmgr->updateTilesForObject(this);
+	if(m_maxtime == 0.f || m_time >= m_maxtime)
+		forcePosition(position.x, position.y);
+	else
+	{
+		m_position.x = position.x;
+		m_position.y = position.y;
+		//Continue interpolation from a different start position (disabling it makes the client more accurate, but the displayed data is less stable)
+		//Linear 2-eq system solution
+		m_direction = (m_desired - m_position) / (1.f - m_time / m_maxtime);
+		m_start = m_desired - m_direction;
+	}
 }

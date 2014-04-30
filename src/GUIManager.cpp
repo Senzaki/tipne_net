@@ -50,7 +50,9 @@ void GUIManager::draw()
 
 void GUIManager::deleteLater(Widget *widget)
 {
-	std::cout << "The parent is set to NULL on purpose. You can safely ignore next warning." << std::endl;
+#ifndef NDEBUG
+	std::cout << "[DEBUG]The parent is set to NULL on purpose. You can safely ignore next warning." << std::endl;
+#endif
 	widget->setParent(nullptr);
 	m_todelete.push_back(widget);
 }

@@ -1,6 +1,7 @@
 #include "Character.hpp"
 #include "CharacterStateListener.hpp"
 #include "GameSimulator.hpp"
+#include "CollisionManager.hpp"
 #include <cmath>
 
 static const float DEFAULT_SPEED = 3.f;
@@ -14,7 +15,7 @@ Character::Character(sf::Uint16 id, bool fullysimulated, float interpolationtime
 	m_listener(nullptr),
 	m_simulator(nullptr)
 {
-	m_colobj.setHalfSize(sf::Vector2f(0.4f, 0.4f));
+	m_colobj.setRadius(DEFAULT_CHARACTER_RADIUS);
 }
 
 Character::Character(Character &&other):
@@ -132,15 +133,9 @@ float Character::getInterpolationTime() const
 
 void Character::update(float etime)
 {
-    //Change the position if the character is moving (don't change it if it is not needed, because it would restart the interpolation time, thus preventing the character from really reaching its target)
-    if(m_fullysimulated && (m_direction.x != 0.f || m_direction.y != 0.f))
-		m_colobj.setPosition(m_colobj.getDesiredPosition() + m_direction * DEFAULT_SPEED * etime);
-	if(m_colobj.update(etime))
-	{
-		//Only tell the listener about the position change if it has really changed
-		if(m_listener)
-			m_listener->onPositionChanged(m_colobj.getPosition());
-	}
+	//Change the position if the character is moving (don't change it if it is not needed, because it would restart the interpolation time, thus preventing the character from really reaching its target)
+	if(m_listener)
+		m_listener->onPositionChanged(m_colobj.getPosition());
 }
 
 void Character::setDirection(sf::Vector2f direction)
@@ -152,6 +147,8 @@ void Character::setDirection(sf::Vector2f direction)
 	{
 		//Only tell the simulator if the direction has changed (to avoid sending extra packets)
 		m_direction = direction;
+		if(m_fullysimulated)
+			m_colobj.setSpeed(m_direction * DEFAULT_SPEED);
 		if(m_simulator)
 			m_simulator->onCharacterSpeedChanged(*this, direction);
 	}
