@@ -26,7 +26,12 @@ int EdApplication::execute(int argc, char **argv)
 	m_tsettings = new TileSettings(m_guimgr.getTopWidget());
 
 	//Create the view
-	sf::View view(sf::FloatRect(0,0,1024,768));
+	m_rect.top = 0;
+	m_rect.left = 0;
+	m_rect.width = 1024;
+	m_rect.height = 768;
+
+	sf::View view(m_rect);
 
 	//Create the window
 	m_window.setView(view);
@@ -46,13 +51,25 @@ int EdApplication::execute(int argc, char **argv)
 					if(evt.key.code == sf::Keyboard::Escape)
 						m_running = false;
 					else if(evt.key.code == sf::Keyboard::Up)
+					{
 						view.move(0, -1 * view.getSize().y / 2); //moves the camera up by half the height of the window
+						m_rect.top -= view.getSize().y / 2;
+					}
 					else if(evt.key.code == sf::Keyboard::Down)
+					{
 						view.move(0, view.getSize().y / 2); //moves the camera down by half the height of the window
+						m_rect.top += view.getSize().y / 2;
+					}
 					else if(evt.key.code == sf::Keyboard::Left)
+					{
 						view.move(-1 * view.getSize().x / 2, 0); //moves the camera left by half the width of the window
+						m_rect.left -= view.getSize().x / 2;
+					}
 					else if(evt.key.code == sf::Keyboard::Right)
+					{
 						view.move(view.getSize().x / 2, 0); //moves the camera right by half the width of the window
+						m_rect.left += view.getSize().x / 2;
+					}
 					break;
 
 				case sf::Event::MouseButtonPressed:
@@ -64,7 +81,7 @@ int EdApplication::execute(int argc, char **argv)
 		}
 		m_window.clear(sf::Color::Black);
 		m_window.setView(view);
-		m_dmap.draw(m_window, sf::FloatRect(0,0,1024,768));
+		m_dmap.draw(m_window, m_rect);
 		m_guimgr.update(0.1f);
 		m_window.setView(m_window.getDefaultView());
 		m_guimgr.draw();

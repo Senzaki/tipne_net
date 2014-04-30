@@ -1,7 +1,7 @@
 #include "TileSettings.hpp"
 #include "Label.hpp"
 #include "LineEdit.hpp"
-#include "Checkbox.hpp"
+#include "CheckBox.hpp"
 
 TileSettings::TileSettings(Widget *parent) : Widget(parent)
 {
