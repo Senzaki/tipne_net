@@ -63,7 +63,7 @@ void DecoratedLineEdit::setString(const std::string &string)
 	m_lineedit->setString(string);
 }
 
-const std::string &DecoratedLineEdit::getString() const
+std::string DecoratedLineEdit::getString() const
 {
 	return m_lineedit->getString();
 }

@@ -219,8 +219,6 @@ void Menu::connect(DecoratedLineEdit* le_ipadress, DecoratedLineEdit* le_tcpport
 	unsigned short udpport;
 	convertPorts(str_tcpport, str_udpport, tcpport, udpport);
 
-	std::cout << "-" << tcpport << "-" << udpport << std::endl;
-
 	GameSimulator *simulator = new ClientSimulator();
 	int status;
 	std::cout << "Trying as client..." << std::endl;

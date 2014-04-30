@@ -50,7 +50,7 @@ void LineEdit::setString(const std::string &string)
 	updateCursor();
 }
 
-const std::string &LineEdit::getString() const
+std::string LineEdit::getString() const
 {
 	return std::string((char*)m_text.getString().toUtf8().c_str());
 }

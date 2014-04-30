@@ -13,7 +13,7 @@ class LineEdit : public Widget
 	void setWidth(float width);
 	void setCallback(std::function<void(std::string)> callback);
 	void setString(const std::string &string);
-	const std::string &getString() const;
+	std::string getString() const;
 
 	virtual void draw(sf::RenderWindow &window);
 
