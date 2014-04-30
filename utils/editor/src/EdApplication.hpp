@@ -4,6 +4,8 @@
 #include <SFML/Graphics.hpp>
 #include "Map.hpp"
 #include "DrawableMap.hpp"
+#include "GUIManager.hpp"
+#include "TileSettings.hpp"
 
 class EdApplication
 {
@@ -18,10 +20,12 @@ class EdApplication
 	private:
 	EdApplication();
 	sf::RenderWindow m_window;
+	sf::FloatRect m_rect;
 	Map m_map;
 	DrawableMap m_dmap;
-
+	GUIManager m_guimgr;
 	bool m_running;
+	TileSettings *m_tsettings;
 };
 
 #endif // EDAPPLICATION_HPP_INCLUDED

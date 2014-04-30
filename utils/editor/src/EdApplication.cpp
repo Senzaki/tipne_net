@@ -5,7 +5,7 @@
 #include <SFML/Graphics.hpp>
 //#include "BasisChange.hpp"
 
-EdApplication::EdApplication()
+EdApplication::EdApplication() : m_window(sf::VideoMode(1024, 768), "Editor Window", sf::Style::Close), m_guimgr(m_window)
 {
 	ResourceManager::getInstance().loadSection(ResourceSection::Base);
 	ResourceManager::getInstance().loadSection(ResourceSection::Map);
@@ -23,12 +23,12 @@ int EdApplication::execute(int argc, char **argv)
 	m_running = true;
 	m_map.load("default");
 	m_dmap.setMap(m_map);
+	m_tsettings = new TileSettings(m_guimgr.getTopWidget());
 
 	//Create the view
 	sf::View view(sf::FloatRect(0,0,1024,768));
 
 	//Create the window
-	m_window.create(sf::VideoMode(1024, 768), "Editor Window", sf::Style::Close);
 	m_window.setView(view);
 
 	while(m_running)
@@ -55,14 +55,20 @@ int EdApplication::execute(int argc, char **argv)
 						view.move(view.getSize().x / 2, 0); //moves the camera right by half the width of the window
 					break;
 
+				case sf::Event::MouseButtonPressed:
+					break;
+
 				default:
 					break;
-			};
-		};
+			}
+		}
 		m_window.clear(sf::Color::Black);
 		m_window.setView(view);
 		m_dmap.draw(m_window, sf::FloatRect(0,0,1024,768));
+		m_guimgr.update(0.1f);
+		m_window.setView(m_window.getDefaultView());
+		m_guimgr.draw();
 		m_window.display();
-	};
+	}
 	return 0;
 }

@@ -1,4 +1,5 @@
 #include "EdApplication.hpp"
+#include "TileSettings.hpp"
 
 int main(int argc, char *argv[])
 {
