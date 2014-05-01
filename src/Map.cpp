@@ -116,3 +116,37 @@ Map::operator bool() const
 {
 	return !m_tiles.empty();
 }
+
+void Map::setTile(unsigned int x, unsigned int y, const Tile &tile)
+{
+	m_tiles[y * m_size.x + x] = tile;
+}
+
+bool Map::save(const std::string &name)
+{
+	const std::string filename = MAP_PREFIX + name + MAP_SUFFIX;
+	//Open the map file
+	std::ofstream file(filename, std::ios::binary);
+	if(!file)
+	{
+		std::cerr << "Cannot open map file " << filename << " for writing." << std::endl;
+		return false;
+	}
+
+	sf::Packet data;
+	//Append size
+	data << (sf::Uint16)m_size.x << (sf::Uint16)m_size.y;
+	//Append tiles
+	for(unsigned int i = 0; i < m_tiles.size(); i++)
+		data << m_tiles[i];
+	//Write to file
+	file.write((char *)data.getData(), data.getDataSize());
+	if(!file)
+	{
+		std::cerr << "Could not write map to file " << filename << ". (Output error.)" << std::endl;
+		file.close();
+		return false;
+	}
+	file.close();
+	return true;
+}

@@ -15,5 +15,6 @@ struct Tile
 };
 
 sf::Packet &operator>>(sf::Packet &packet, Tile &tile);
+sf::Packet &operator<<(sf::Packet &packet, const Tile &tile);
 
 #endif // TILE_HPP_INCLUDED

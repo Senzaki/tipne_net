@@ -7,3 +7,9 @@ sf::Packet &operator>>(sf::Packet &packet, Tile &tile)
 	tile.passable = passable;
 	return packet;
 }
+
+sf::Packet &operator<<(sf::Packet &packet, const Tile &tile)
+{
+	packet << tile.passable << tile.appearance;
+	return packet;
+}
