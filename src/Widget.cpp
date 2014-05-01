@@ -102,78 +102,60 @@ bool Widget::mouseIsOn() const
 
 bool Widget::onTextEntered(const sf::Event::TextEvent &evt)
 {
+	bool consume = false;
 	//Transmit to children
 	for(Widget *child : m_children)
-	{
-		if(child->onTextEntered(evt))
-			return true;
-	}
-
-	return false;
+		consume = child->onTextEntered(evt) || consume;
+	return consume;
 }
 
 bool Widget::onKeyPressed(const sf::Event::KeyEvent &evt)
 {
+	bool consume = false;
 	//Transmit to children
 	for(Widget *child : m_children)
-	{
-		if(child->onKeyPressed(evt))
-			return true;
-	}
-
-	return false;
+		consume = child->onKeyPressed(evt) || consume;
+	return consume;
 }
 
 bool Widget::onKeyReleased(const sf::Event::KeyEvent &evt)
 {
+	bool consume = false;
 	//Transmit to children
 	for(Widget *child : m_children)
-	{
-		if(child->onKeyReleased(evt))
-			return true;
-	}
-
+		consume = child->onKeyReleased(evt) || consume;
 	return false;
 }
 
 bool Widget::onMouseWheelMoved(const sf::Event::MouseWheelEvent &evt)
 {
+	bool consume = false;
 	//Transmit to children if they contain the mouse position
 	for(Widget *child : m_children)
 	{
 		sf::FloatRect childrect(child->getAbsolutePosition(), child->getSize());
 		if(childrect.contains(evt.x, evt.y))
-		{
-			if(child->onMouseWheelMoved(evt))
-				return true;
-		}
+			consume = child->onMouseWheelMoved(evt) || consume;
 	}
-
-	return false;
+	return consume;
 }
 
 bool Widget::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 {
+	bool consume = false;
 	//Transmit to children if they contain the mouse position
 	for(Widget *child : m_children)
-	{
-		if(child->onMouseButtonPressed(evt))
-			return true;
-	}
-
-	return false;
+		consume = child->onMouseButtonPressed(evt) || consume;
+	return consume;
 }
 
 bool Widget::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
 {
+	bool consume = false;
 	//Transmit to children if they contain the mouse position
 	for(Widget *child : m_children)
-	{
-		if(child->onMouseButtonReleased(evt))
-			return true;
-	}
-
-	return false;
+		consume = child->onMouseButtonReleased(evt) || consume;
+	return consume;
 }
 
 void Widget::onMouseMoved(const sf::Event::MouseMoveEvent &evt)
@@ -187,7 +169,6 @@ void Widget::onMouseMoved(const sf::Event::MouseMoveEvent &evt)
 			//If the mouse just entered in the child, notify it
 			if(!child->m_mouseison)
 				child->onMouseEntered(evt);
-
 			child->onMouseMoved(evt);
 		}
 		else
@@ -214,7 +195,6 @@ void Widget::onMouseEntered(const sf::Event::MouseMoveEvent &evt)
 void Widget::onMouseLeft()
 {
 	m_mouseison = false;
-
 	//Transmit to children if the mouse was over them
 	for(Widget *child : m_children)
 	{

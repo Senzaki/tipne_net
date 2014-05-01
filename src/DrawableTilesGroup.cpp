@@ -16,7 +16,7 @@ struct GraphTileInfo
 		float height;
 		float center_x;
 		float center_y;
-		float time;
+		float duration;
 	} frames[16];
 };
 

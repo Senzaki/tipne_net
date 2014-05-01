@@ -70,10 +70,9 @@ void LineEdit::onPositionChanged()
 
 bool LineEdit::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 {
+	Widget::onMouseButtonPressed(evt);
 	sf::FloatRect bounds(getAbsolutePosition(), getSize());
 	m_inputison = bounds.contains(evt.x, evt.y);
-	if(m_inputison)
-		Widget::onMouseButtonPressed(evt);
 	return m_inputison;
 }
 
