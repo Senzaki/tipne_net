@@ -3,7 +3,7 @@
 #include "DrawableMap.hpp"
 #include "ResourceManager.hpp"
 #include <SFML/Graphics.hpp>
-//#include "BasisChange.hpp"
+#include "BasisChange.hpp"
 
 EdApplication::EdApplication() : m_window(sf::VideoMode(1024, 768), "Editor Window", sf::Style::Close), m_guimgr(m_window)
 {
@@ -24,6 +24,7 @@ int EdApplication::execute(int argc, char **argv)
 	m_map.load("default");
 	m_dmap.setMap(m_map);
 	m_tsettings = new TileSettings(m_guimgr.getTopWidget());
+	sf::Vector2f tilecoords;
 
 	//Create the view
 	m_rect.top = 0;
@@ -38,10 +39,10 @@ int EdApplication::execute(int argc, char **argv)
 
 	//Create the interface
 	sf::RectangleShape frame(sf::Vector2f(200, 300));
-	frame.setFillColor(sf::Color(94, 94, 94));
+	frame.setFillColor(sf::Color(60, 60, 60));
 	frame.setOrigin(-50.f, -200.f);
 	frame.setOutlineThickness(5);
-	frame.setOutlineColor(sf::Color(60, 60, 60));
+	frame.setOutlineColor(sf::Color(40, 40, 40));
 
 	while(m_running)
 	{
@@ -94,6 +95,9 @@ int EdApplication::execute(int argc, char **argv)
 
 				case sf::Event::MouseButtonPressed:
 					m_guimgr.onMouseButtonPressed(evt.mouseButton);
+					tilecoords = BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top);
+					tilecoords += sf::Vector2f(0.5f, 0.5f);
+					m_tsettings->setTile(m_map.getTile(tilecoords.x, tilecoords.y));
 					break;
 
 				case sf::Event::MouseButtonReleased:

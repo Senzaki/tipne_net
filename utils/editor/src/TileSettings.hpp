@@ -7,12 +7,14 @@
 #include "GUIManager.hpp"
 #include "Label.hpp"
 #include "DecoratedLineEdit.hpp"
+#include "Tile.hpp"
 
 class TileSettings : public Widget
 {
 	public:
 	TileSettings(Widget *parent = nullptr);
 	virtual ~TileSettings();
+	void setTile(Tile tile);
 
 	private:
 	Label *m_label, *m_label2;

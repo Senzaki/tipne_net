@@ -2,6 +2,7 @@
 #include "Label.hpp"
 #include "DecoratedLineEdit.hpp"
 #include "CheckBox.hpp"
+#include <sstream>
 
 TileSettings::TileSettings(Widget *parent) : Widget(parent)
 {
@@ -24,4 +25,15 @@ void TileSettings::setWidgetsPositions()
 	m_label2->setPosition(120.f, 250.f);
 	m_appearence->setPosition(62.f, 400.f);
 	m_passable->setPosition(145.f, 290.f);
+}
+
+void TileSettings::setTile(Tile tile)
+{
+	m_passable->setChecked(tile.passable);
+
+	std::string string(" ");
+	std::ostringstream oss;
+	oss << std::hex << tile.appearance;
+	string = oss.str();
+	m_appearence->setString(string);
 }
