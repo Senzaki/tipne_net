@@ -21,6 +21,7 @@ class EdApplication
 	EdApplication();
 	sf::RenderWindow m_window;
 	sf::FloatRect m_rect;
+	sf::RectangleShape m_frame;
 	Map m_map;
 	DrawableMap m_dmap;
 	GUIManager m_guimgr;

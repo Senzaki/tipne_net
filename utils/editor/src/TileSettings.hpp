@@ -6,7 +6,7 @@
 #include "CheckBox.hpp"
 #include "GUIManager.hpp"
 #include "Label.hpp"
-#include "LineEdit.hpp"
+#include "DecoratedLineEdit.hpp"
 
 class TileSettings : public Widget
 {
@@ -15,8 +15,8 @@ class TileSettings : public Widget
 	virtual ~TileSettings();
 
 	private:
-	Label *m_label;
-	LineEdit *m_appearence;
+	Label *m_label, *m_label2;
+	DecoratedLineEdit *m_appearence;
 	CheckBox *m_passable;
 	void setWidgetsPositions();
 };
