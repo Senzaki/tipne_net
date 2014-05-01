@@ -9,12 +9,12 @@ DrawableMap::DrawableMap()
 
 }
 
-void DrawableMap::update(float etime, sf::FloatRect seen)
+void DrawableMap::update(float etime, const sf::FloatRect &seen)
 {
 
 }
 
-void DrawableMap::draw(sf::RenderWindow &window, sf::FloatRect seen)
+void DrawableMap::draw(sf::RenderWindow &window, const sf::FloatRect &seen, std::list<DrawableEntity *> &mapentities)
 {
 	if(m_chunkscount.x == 0 || m_chunkscount.y == 0)
 		return;
@@ -32,7 +32,12 @@ void DrawableMap::draw(sf::RenderWindow &window, sf::FloatRect seen)
 	for(unsigned int j = ctop; j < cbottom; j++)
 	{
 		for(unsigned int i = cright - 1; i != cleft - 1; i--)
+		{
 			m_chunks[j * m_chunkscount.x + i].draw(window);
+			std::list<DrawableWall> &walls = m_chunks[j * m_chunkscount.x + i].getWalls();
+			for(DrawableWall &character : walls)
+				mapentities.emplace_back(&character);
+		}
 	}
 }
 

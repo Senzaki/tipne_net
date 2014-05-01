@@ -109,10 +109,10 @@ void DrawableCharacter::onPositionChanged(const sf::Vector2f &position)
 {
 	//Update the transform
 	m_transform = sf::Transform::Identity;
-	m_transform.translate(BasisChange::gridToPixel(position));
+	m_depth = BasisChange::gridToPixelY(position);
+	m_transform.translate(BasisChange::gridToPixelX(position), m_depth);
 	//Update the depth as well
 	m_bounds = m_transform.transformRect(m_localbounds);
-	m_depth = m_bounds.top + m_bounds.width;
 }
 
 void DrawableCharacter::onDirectionChanged(const sf::Vector2f &direction)

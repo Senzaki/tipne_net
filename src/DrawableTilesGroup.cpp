@@ -1,28 +1,11 @@
 #include "DrawableTilesGroup.hpp"
 #include "ResourceManager.hpp"
-#include <list>
-#include <iostream>
 #include "BasisChange.hpp"
-
-struct GraphTileInfo
-{
-	unsigned int texture;
-	unsigned int framescount;
-	struct
-	{
-		float x;
-		float y;
-		float width;
-		float height;
-		float center_x;
-		float center_y;
-		float duration;
-	} frames[16];
-};
+#include <iostream>
 
 //Index is Tile::appearance
-const unsigned int TILE_INFO_SIZE = 14;
-GraphTileInfo TILE_INFO[TILE_INFO_SIZE] =
+static const unsigned int TILE_INFO_SIZE = 0xf;
+static constexpr GraphTileInfo TILE_INFO[TILE_INFO_SIZE] =
 {
 	//0
 	{Resource::BASE_TILES_TEX, 1, {
@@ -64,24 +47,32 @@ GraphTileInfo TILE_INFO[TILE_INFO_SIZE] =
 	{Resource::BASE_TILES_TEX, 1, {
 		{0.f, 540.f, 120.f, 60.f, 60.f, 30.f}
 	}},
-	//10
+	//a
 	{Resource::BASE_TILES_TEX, 1, {
 		{0.f, 600.f, 120.f, 60.f, 60.f, 30.f}
 	}},
-	//11
+	//b
 	{Resource::BASE_TILES_TEX, 1, {
 		{0.f, 660.f, 120.f, 60.f, 60.f, 30.f}
 	}},
-	//12
+	//c
 	{Resource::BASE_TILES_TEX, 1, {
 		{0.f, 720.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	//d
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 780.f, 120.f, 60.f, 60.f, 30.f}
+	}},
+	//e
+	{Resource::BASE_TILES_TEX, 1, {
+		{0.f, 840.f, 120.f, 60.f, 60.f, 30.f}
 	}},
 };
 
 struct TileSortInfo
 {
 	const Tile *tile;
-	unsigned int tileset;
+	bool added;
 	sf::Vector2u pos;
 	unsigned int texture;
 };
@@ -91,10 +82,10 @@ DrawableTilesGroup::DrawableTilesGroup()
 
 }
 
-static void sortFurtherTiles(std::vector<TileSortInfo> &tiles, unsigned int curdepth, unsigned int depths, unsigned int height, unsigned int width, unsigned int curset, unsigned int texture, std::vector<std::list<std::pair<GraphTileInfo *, sf::Vector2u>>> &tilesets)
+static void sortFurtherTiles(std::vector<TileSortInfo> &tiles, unsigned int curdepth, unsigned int depths, unsigned int height, unsigned int width, unsigned int texture, std::vector<std::list<std::pair<const GraphTileInfo *, sf::Vector2u>>> &tilesets)
 {
 	//Check this depth for tiles we can add. The requirements are :
-	//- The tile must use the same texture as the orther tiles of the tileset
+	//- The tile must use the same texture as the other tiles of the tileset
 	//- The two tiles below it must have already been added to a tileset
 	const unsigned int xmin = (curdepth < height) ? 0 : curdepth - height + 1;
 	const unsigned int xmax = std::min(curdepth + 1, width);
@@ -104,31 +95,31 @@ static void sortFurtherTiles(std::vector<TileSortInfo> &tiles, unsigned int curd
 	{
 		const unsigned int y = x + height - 1 - curdepth;
 		TileSortInfo &sortinf = tiles[x + y * width];
-		if(sortinf.texture == texture)
+		if(!sortinf.added && sortinf.texture == texture)
 		{
 			bool add = true;
 			//Check the tiles below it
 			if(x > 0)
 			{
-				if(tiles[(x - 1) + y * width].tileset == 0)
+				if(!tiles[(x - 1) + y * width].added)
 					add = false;
 			}
 			if(add && y < height - 1)
 			{
-				if(tiles[x + (y + 1) * width].tileset == 0)
+				if(!tiles[x + (y + 1) * width].added)
 					add = false;
 			}
 			if(add)
 			{
 				neednext = true;
-				sortinf.tileset = curset;
+				sortinf.added = true;
 				tilesets.back().emplace_back(std::make_pair(&TILE_INFO[sortinf.tile->appearance], sortinf.pos));
 			}
 		}
 	}
 	//Go to the next depth if we added at least one line
 	if(neednext && curdepth + 1 < depths)
-		sortFurtherTiles(tiles, curdepth + 1, depths, height, width, curset, texture, tilesets);
+		sortFurtherTiles(tiles, curdepth + 1, depths, height, width, texture, tilesets);
 }
 
 bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> &rect)
@@ -146,20 +137,30 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 		for(unsigned int x = rect.left; x < right; x++)
 		{
 			const Tile *tile = &map.getTile(x, y);
-			if(tile->appearance >= TILE_INFO_SIZE)
+			//Is it a wall or a ground tile ?
+			if(tile->appearance < FIRST_WALL_APPEARANCE)
 			{
-				std::cerr << "Error while loading tiles : tile appearance invalid (" << tile->appearance << ")." << std::endl;
-				return false;
+				if(tile->appearance >= TILE_INFO_SIZE)
+				{
+					std::cerr << "Error while loading tiles : tile appearance invalid (" << tile->appearance << ")." << std::endl;
+					tiles.push_back({tile, true, sf::Vector2u(x, y)});
+				}
+				else
+					tiles.push_back({tile, false, sf::Vector2u(x, y), TILE_INFO[tile->appearance].texture});
 			}
-			tiles.push_back({tile, 0, sf::Vector2u(x, y), TILE_INFO[tile->appearance].texture});
+			else
+			{
+				//It is a wall, so it is already added !
+				tiles.push_back({tile, true, sf::Vector2u(x, y)});
+				m_walls.emplace_back(sf::Vector2u(x, y), tile->appearance);
+			}
 		}
 	}
 
 	//Put the tiles into tilesets that correspond to their (reverse) drawing order (reserve an arbitrary size for the array, we can assume that the tilesets will contain at least two tiles on average)
-	std::vector<std::list<std::pair<GraphTileInfo *, sf::Vector2u>>> sortedtiles;
+	std::vector<std::list<std::pair<const GraphTileInfo *, sf::Vector2u>>> sortedtiles;
 	sortedtiles.reserve(width * height / 2);
 	//Iterate through the whole array to put the tiles into the hash table according to their texture (depth by depth)
-	unsigned int curset = 0;
 	for(unsigned int d = 0; d < depths; d++)
 	{
 		const unsigned int xmin = (d < height) ? 0 : d - height + 1;
@@ -169,11 +170,10 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 			const unsigned int y = x + height - 1 - d;
 			TileSortInfo &sortinf = tiles[x + y * width];
 			//If the tile isn't in a tileset yet, create a new tileset
-			if(sortinf.tileset == 0)
+			if(!sortinf.added)
 			{
-				curset++;
 				//Create a tileset and add this tile to the tileset
-				sortinf.tileset = curset;
+				sortinf.added = true;
 				sortedtiles.emplace_back();
 				sortedtiles.back().emplace_back(std::make_pair(&TILE_INFO[sortinf.tile->appearance], sortinf.pos));
 				//Add all the tiles on the same depth with the same texture to this tileset
@@ -181,15 +181,15 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 				{
 					const unsigned int y2 = x2 + height - 1 - d;
 					TileSortInfo &sortinf2 = tiles[x2 + y2 * width];
-					if(sortinf2.tileset == 0 && sortinf2.texture == sortinf.texture)
+					if(!sortinf2.added && sortinf2.texture == sortinf.texture)
 					{
-						sortinf2.tileset = curset;
+						sortinf2.added = true;
 						sortedtiles.back().emplace_back(std::make_pair(&TILE_INFO[sortinf2.tile->appearance], sortinf2.pos));
 					}
 				}
 				//Add all the other possible tiles to this tileset
 				if(d + 1 < depths)
-					sortFurtherTiles(tiles, d + 1, depths, height, width, curset, sortinf.texture, sortedtiles);
+					sortFurtherTiles(tiles, d + 1, depths, height, width, sortinf.texture, sortedtiles);
 			}
 		}
 	}
@@ -201,45 +201,46 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 	for(unsigned int i = 0; i < m_tilesets.size(); i++)
 	{
 		//Note : since the tilesets were added to the array from bottom to top, we need to reverse this order so that they are drawn by order of depth
+		const std::list<std::pair<const GraphTileInfo *, sf::Vector2u>> &tilelist = sortedtiles[m_tilesets.size() - i - 1];
 		//Set the texture
-		m_tilesets[i].texture = &ResourceManager::getInstance().getTexture(ResourceSection::Map, sortedtiles[m_tilesets.size() - i - 1].front().first->texture);
+		m_tilesets[i].texture = &ResourceManager::getInstance().getTexture(ResourceSection::Map, tilelist.front().first->texture);
 		//Resize the vertex array
 		sf::VertexArray &va = m_tilesets[i].vertices;
 		va.setPrimitiveType(sf::Quads);
-		va.resize(sortedtiles[m_tilesets.size() - i - 1].size() * 4);
+		va.resize(tilelist.size() * 4);
 		//Create info about the vertices
-		unsigned int j = 0;
-		for(const std::pair<GraphTileInfo *, sf::Vector2u> &tile : sortedtiles[m_tilesets.size() - i - 1])
+		unsigned int j = tilelist.size() * 4;
+		for(const std::pair<const GraphTileInfo *, sf::Vector2u> &tile : tilelist)
 		{
 			const GraphTileInfo &tileinfo = *tile.first;
 			const auto &frame = tileinfo.frames[0];
 			//Center transformation (matrix for the change of basis)
-			const float left = BasisChange::gridToPixelX(tile.second) - frame.center_x;//center.x - centeroffset.x
-			const float top = BasisChange::gridToPixelY(tile.second) - frame.center_y;
+			const float left = BasisChange::gridToPixelX(tile.second) - frame.centerx;//center.x - centeroffset.x
+			const float top = BasisChange::gridToPixelY(tile.second) - frame.centery;
 			//top left hand vertex
+			j--;
 			va[j].position.x = left;
 			va[j].position.y = top;
 			va[j].texCoords.x = frame.x;
 			va[j].texCoords.y = frame.y;
-			j++;
 			//top right hand vertex
+			j--;
 			va[j].position.x = left + frame.width;
 			va[j].position.y = top;
 			va[j].texCoords.x = frame.x + frame.width;
 			va[j].texCoords.y = frame.y;
-			j++;
 			//bottom right hand vertex
+			j--;
 			va[j].position.x = left + frame.width;
 			va[j].position.y = top + frame.height;
 			va[j].texCoords.x = frame.x + frame.width;
 			va[j].texCoords.y = frame.y + frame.height;
-			j++;
 			//bottom left hand vertex
+			j--;
 			va[j].position.x = left;
 			va[j].position.y = top + frame.height;
 			va[j].texCoords.x = frame.x;
 			va[j].texCoords.y = frame.y + frame.height;
-			j++;
 		}
 	}
 
@@ -255,4 +256,9 @@ void DrawableTilesGroup::draw(sf::RenderWindow &window)
 {
 	for(unsigned int i = 0; i < m_tilesets.size(); i++)
 		window.draw(m_tilesets[i].vertices, m_tilesets[i].texture);
+}
+
+std::list<DrawableWall> &DrawableTilesGroup::getWalls()
+{
+	return m_walls;
 }

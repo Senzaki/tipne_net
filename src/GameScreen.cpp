@@ -52,10 +52,11 @@ void GameScreen::draw(sf::RenderWindow &window)
 	//Save the old view and use the game camera
 	sf::View oldview = window.getView();
 	window.setView(m_camera);
-	//Draw the map
-	m_map.draw(window, m_seen);
 	//Put the graphical entities that need to be drawn in a list
 	std::list<DrawableEntity *> todraw;
+	//Draw the map & add map entities to thez list
+	m_map.draw(window, m_seen, todraw);
+	//Add the characters to the list
 	for(std::pair<const sf::Uint16, DrawableCharacter> &character : m_characters)
 	{
 		if(character.second.isContainedIn(m_seen))
