@@ -9,19 +9,19 @@ static const float CORRECTION_FACTOR = 0.8f;
 static inline bool getCircleInTilePenetration(sf::Vector2f position, float radius, float x, float y, sf::Vector2f &p)
 {
 	//Find closest point in rectangle
-	float closestx = position.x + 0.5f;
+	float closestx = position.x;
 	if(closestx < x)
 		closestx = x;
 	else if(closestx > x + 1.f)
 		closestx = x + 1.f;
-	float closesty = position.y + 0.5f;
+	float closesty = position.y;
 	if(closesty < y)
 		closesty = y;
 	else if(closesty > y + 1.f)
 		closesty = y + 1.f;
 	//Is this point in the circle ?
-	float dx = closestx - position.x - 0.5f;
-	float dy = closesty - position.y - 0.5f;
+	float dx = closestx - position.x;
+	float dy = closesty - position.y;
 	if(dx == 0.f && dy == 0.f)
 	{
 		//Avoid div by 0, choose the penetration vector
@@ -78,10 +78,10 @@ void DefaultCollisionManager::updateObject(CollisionObject *object)
 	//Compute bounds
 	const sf::Vector2f position = object->getPosition();
 	const float radius = object->getRadius();
-	const float left = position.x - radius + 0.5f;
-	const float right = position.x + radius + 0.5f;
-	const float top = position.y - radius + 0.5f;
-	const float bottom = position.y + radius + 0.5f;
+	const float left = position.x - radius;
+	const float right = position.x + radius;
+	const float top = position.y - radius;
+	const float bottom = position.y + radius;
 	//Compute tiles bounds
 	unsigned int minx;
 	unsigned int maxx;
