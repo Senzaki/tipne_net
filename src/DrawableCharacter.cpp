@@ -186,7 +186,7 @@ void DrawableCharacter::onDirectionChanged(const sf::Vector2f &direction)
 	//Which direction is the closest one ?
 	IsometricDirection isodir;
 	getDirectionInfo(direction, scale, isodir);
-	if(m_direction != isodir)
+	if(m_direction != isodir || m_sprite.getScale().x * scale.x < 0.f)
 	{
 		m_moving = true;
 		m_direction = isodir;
