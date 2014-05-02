@@ -4,6 +4,8 @@
 #include "Math.hpp"
 
 static const unsigned int BASE_CIRCLE_VERTICES_COUNT = DEFAULT_CHARACTER_RADIUS * 32 + 1;
+//TEMP
+static const float TEMP_SCALE_FACTOR = 0.8f;
 
 enum class CharacterAnimationName
 {
@@ -55,6 +57,7 @@ DrawableCharacter::DrawableCharacter():
 {
 	//Setup animation
 	m_sprite.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Characters, Resource::GHOST_TEX));
+	m_sprite.setScale(TEMP_SCALE_FACTOR, TEMP_SCALE_FACTOR);
 	resetAnimation();
 	//Setup bound
 	m_localbounds = m_sprite.getGlobalBounds();
@@ -122,7 +125,7 @@ void DrawableCharacter::onDirectionChanged(const sf::Vector2f &direction)
 	sf::Vector2f scale;
 	//Which direction is the closest one ?
 	getDirectionInfo(direction, scale, m_direction);
-	m_sprite.setScale(scale);
+	m_sprite.setScale(scale * TEMP_SCALE_FACTOR);
 	resetAnimation();
 }
 
