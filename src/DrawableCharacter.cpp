@@ -31,15 +31,15 @@ static constexpr CharacterAnimation ANIMATIONS[(int)Character::State::Count][(in
 			},
 			//DownRight
 			{1,
-				{156, 40, 102, 278, 41.f, 262.f}
+				{156, 40, 102, 278, 53.f, 255.f}
 			},
 			//Right
 			{1,
-				{293, 41, 69, 270, 41.f, 262.f}
+				{293, 41, 69, 270, 41.f, 255.f}
 			},
 			//UpRight
 			{1,
-				{374, 42, 87, 270, 41.f, 262.f}
+				{374, 42, 87, 270, 45.f, 250.f}
 			},
 			//Up
 			{1,
