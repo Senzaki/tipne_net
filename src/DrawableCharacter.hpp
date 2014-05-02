@@ -25,7 +25,7 @@ class DrawableCharacter : public CharacterStateListener, public DrawableEntity
 
 	private:
 	void initializeBaseCircle();
-	void resetAnimation();
+	void resetAnimation(bool dynamic);
 
 	sf::Sprite m_sprite;
 	Animator m_animator;

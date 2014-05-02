@@ -26,24 +26,79 @@ static constexpr CharacterAnimation ANIMATIONS[(int)Character::State::Count][(in
 		//Normal
 		{
 			//Down
-			{1,
-				{33, 35, 82, 275, 41.f, 262.f}
+			{10,
+				{
+					{33, 35, 82, 275, 41.f, 262.f, 0.05f},
+					{33, 35, 82, 275, 41.f, 268.f, 0.05f},
+					{33, 35, 82, 275, 41.f, 273.f, 0.05f},
+					{33, 35, 82, 275, 41.f, 277.f, 0.05f},
+					{33, 35, 82, 275, 41.f, 280.f, 0.05f},
+					{33, 35, 82, 275, 41.f, 280.f, 0.05f},
+					{33, 35, 82, 275, 41.f, 277.f, 0.05f},
+					{33, 35, 82, 275, 41.f, 273.f, 0.05f},
+					{33, 35, 82, 275, 41.f, 268.f, 0.05f},
+					{33, 35, 82, 275, 41.f, 262.f, 0.05f},
+				}
 			},
 			//DownRight
-			{1,
-				{156, 40, 102, 278, 53.f, 255.f}
+			{10,
+				{
+					{156, 40, 102, 278, 53.f, 255.f, 0.05f},
+					{156, 40, 102, 278, 53.f, 261.f, 0.05f},
+					{156, 40, 102, 278, 53.f, 266.f, 0.05f},
+					{156, 40, 102, 278, 53.f, 270.f, 0.05f},
+					{156, 40, 102, 278, 53.f, 273.f, 0.05f},
+					{156, 40, 102, 278, 53.f, 273.f, 0.05f},
+					{156, 40, 102, 278, 53.f, 270.f, 0.05f},
+					{156, 40, 102, 278, 53.f, 266.f, 0.05f},
+					{156, 40, 102, 278, 53.f, 261.f, 0.05f},
+					{156, 40, 102, 278, 53.f, 255.f, 0.05f},
+				}
 			},
 			//Right
-			{1,
-				{293, 41, 69, 270, 41.f, 255.f}
+			{10,
+				{
+					{293, 41, 69, 270, 41.f, 255.f, 0.05f},
+					{293, 41, 69, 270, 41.f, 261.f, 0.05f},
+					{293, 41, 69, 270, 41.f, 266.f, 0.05f},
+					{293, 41, 69, 270, 41.f, 270.f, 0.05f},
+					{293, 41, 69, 270, 41.f, 273.f, 0.05f},
+					{293, 41, 69, 270, 41.f, 273.f, 0.05f},
+					{293, 41, 69, 270, 41.f, 270.f, 0.05f},
+					{293, 41, 69, 270, 41.f, 266.f, 0.05f},
+					{293, 41, 69, 270, 41.f, 261.f, 0.05f},
+					{293, 41, 69, 270, 41.f, 255.f, 0.05f},
+				}
 			},
 			//UpRight
-			{1,
-				{374, 42, 87, 270, 45.f, 250.f}
+			{10,
+				{
+					{374, 42, 87, 270, 45.f, 250.f, 0.05f},
+					{374, 42, 87, 270, 45.f, 256.f, 0.05f},
+					{374, 42, 87, 270, 45.f, 261.f, 0.05f},
+					{374, 42, 87, 270, 45.f, 265.f, 0.05f},
+					{374, 42, 87, 270, 45.f, 268.f, 0.05f},
+					{374, 42, 87, 270, 45.f, 268.f, 0.05f},
+					{374, 42, 87, 270, 45.f, 265.f, 0.05f},
+					{374, 42, 87, 270, 45.f, 261.f, 0.05f},
+					{374, 42, 87, 270, 45.f, 256.f, 0.05f},
+					{374, 42, 87, 270, 45.f, 250.f, 0.05f},
+				}
 			},
 			//Up
-			{1,
-				{471, 37, 82, 272, 41.f, 262.f}
+			{10,
+				{
+					{471, 37, 82, 272, 41.f, 262.f, 0.05f},
+					{471, 37, 82, 272, 41.f, 268.f, 0.05f},
+					{471, 37, 82, 272, 41.f, 275.f, 0.05f},
+					{471, 37, 82, 272, 41.f, 279.f, 0.05f},
+					{471, 37, 82, 272, 41.f, 282.f, 0.05f},
+					{471, 37, 82, 272, 41.f, 282.f, 0.05f},
+					{471, 37, 82, 272, 41.f, 279.f, 0.05f},
+					{471, 37, 82, 272, 41.f, 275.f, 0.05f},
+					{471, 37, 82, 272, 41.f, 268.f, 0.05f},
+					{471, 37, 82, 272, 41.f, 262.f, 0.05f},
+				}
 			},
 		},
 	},
@@ -58,7 +113,7 @@ DrawableCharacter::DrawableCharacter():
 	//Setup animation
 	m_sprite.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Characters, Resource::GHOST_TEX));
 	m_sprite.setScale(TEMP_SCALE_FACTOR, TEMP_SCALE_FACTOR);
-	resetAnimation();
+	resetAnimation(false);
 	//Setup bound
 	m_localbounds = m_sprite.getGlobalBounds();
 	m_localbounds.height += 40.f;
@@ -105,7 +160,7 @@ bool DrawableCharacter::isContainedIn(const sf::FloatRect &rect) const
 
 void DrawableCharacter::onStateChanged(Character::State state)
 {
-	resetAnimation();
+	resetAnimation(false);
 }
 
 void DrawableCharacter::onPositionChanged(const sf::Vector2f &position)
@@ -121,12 +176,17 @@ void DrawableCharacter::onPositionChanged(const sf::Vector2f &position)
 void DrawableCharacter::onDirectionChanged(const sf::Vector2f &direction)
 {
 	if(direction.x == 0.f && direction.y == 0.f)
-		return;
+		resetAnimation(false);
 	sf::Vector2f scale;
 	//Which direction is the closest one ?
-	getDirectionInfo(direction, scale, m_direction);
-	m_sprite.setScale(scale * TEMP_SCALE_FACTOR);
-	resetAnimation();
+	IsometricDirection isodir;
+	getDirectionInfo(direction, scale, isodir);
+	if(m_direction != isodir)
+	{
+		m_direction = isodir;
+		m_sprite.setScale(scale * TEMP_SCALE_FACTOR);
+		resetAnimation(true);
+	}
 }
 
 void DrawableCharacter::initializeBaseCircle()
@@ -154,8 +214,11 @@ void DrawableCharacter::initializeBaseCircle()
 	}
 }
 
-void DrawableCharacter::resetAnimation()
+void DrawableCharacter::resetAnimation(bool dynamic)
 {
 	const CharacterAnimation &anim = ANIMATIONS[(int)m_state][(int)CharacterAnimationName::Normal][(int)m_direction];
-	m_animator.setFrames(anim.frames, anim.fcount);
+	if(dynamic)
+		m_animator.setFrames(anim.frames, anim.fcount);
+	else
+		m_animator.setFrames(anim.frames, 1);
 }
