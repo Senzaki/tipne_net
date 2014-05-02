@@ -160,6 +160,7 @@ void Menu::showConnectMenu()
 		oss << Config::getInstance().server_udpport;
 		udpport->setString(oss.str());
 	}
+	ipaddress->setString(Config::getInstance().connectto_ip);
 
 	//Set widgets position
 	constexpr int interval = 100;
@@ -182,10 +183,12 @@ void Menu::showHostMenu()
 	//Create widgets
 	Label *tcpportlabel = new Label(topwidget, tr("tcpport"));
 	Label *udpportlabel = new Label(topwidget, tr("udpport"));
+	Label *maxplayerslabel = new Label(topwidget, tr("maxplayers"));
 	DecoratedLineEdit *tcpport = new DecoratedLineEdit(topwidget, 150);
 	DecoratedLineEdit *udpport = new DecoratedLineEdit(topwidget, 150);
+	DecoratedLineEdit *maxplayers = new DecoratedLineEdit(topwidget, 150);
 	Button *cancel = new Button(topwidget, tr("cancel"), std::bind(&Menu::showMainMenu, this));
-	Button *host = new Button(topwidget, tr("host"), std::bind(&Menu::host, this, tcpport, udpport));
+	Button *host = new Button(topwidget, tr("host"), std::bind(&Menu::host, this, tcpport, udpport, maxplayers));
 
 	//Set default values in line edits
 	if(Config::getInstance().server_tcpport != DEFAULT_TCP_PORT)
@@ -200,14 +203,19 @@ void Menu::showHostMenu()
 		oss << Config::getInstance().server_udpport;
 		udpport->setString(oss.str());
 	}
+	std::ostringstream oss;
+	oss << Config::getInstance().max_players;
+	maxplayers->setString(oss.str());
 
 	//Set widgets position
 	constexpr int interval = 100;
 	sf::Vector2f size = topwidget->getSize();
-	tcpport->setPosition(size.x / 2.f - tcpport->getSize().x / 2.f, size.y / 2.f - tcpport->getSize().y / 2.f - interval / 2.f);
+	tcpport->setPosition(size.x / 2.f - tcpport->getSize().x / 2.f, size.y / 2.f - tcpport->getSize().y / 2.f - interval);
 	tcpportlabel->setPosition(tcpport->getPosition().x - tcpportlabel->getSize().x - 25, tcpport->getPosition().y);
-	udpport->setPosition(size.x / 2.f - udpport->getSize().x / 2.f, size.y / 2.f - udpport->getSize().y / 2.f + interval / 2.f);
+	udpport->setPosition(size.x / 2.f - udpport->getSize().x / 2.f, size.y / 2.f - udpport->getSize().y / 2.f);
 	udpportlabel->setPosition(udpport->getPosition().x - udpportlabel->getSize().x - 25, udpport->getPosition().y);
+	maxplayers->setPosition(size.x / 2.f - maxplayers->getSize().x / 2.f, size.y / 2.f - maxplayers->getSize().y / 2.f + interval);
+	maxplayerslabel->setPosition(maxplayers->getPosition().x - maxplayerslabel->getSize().x - 25, maxplayers->getPosition().y);
 	host->setPosition(size.x / 3.f, size.y - interval);
 	cancel->setPosition(2 * size.x / 3.f, size.y - interval);
 }
@@ -235,6 +243,12 @@ void Menu::connect(DecoratedLineEdit *ipaddrwidget, DecoratedLineEdit *tcpportwi
 		return;
 	}
 
+	//Save the config
+	Config::getInstance().connectto_ip = ipaddress.toString();
+	Config::getInstance().connectto_tcpport = tcpport;
+	Config::getInstance().connectto_udpport = udpport;
+	Config::getInstance().save();
+
 	GameSimulator *simulator = new ClientSimulator();
 	int status;
 	//Launch simulator
@@ -253,7 +267,7 @@ void Menu::connect(DecoratedLineEdit *ipaddrwidget, DecoratedLineEdit *tcpportwi
 	launchGame(simulator);
 }
 
-void Menu::host(DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget)
+void Menu::host(DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget, DecoratedLineEdit *maxplayerswidget)
 {
 	Config &config = Config::getInstance();
 
@@ -269,6 +283,22 @@ void Menu::host(DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidg
 		std::cerr << "Invalid port number." << std::endl;
 		return;
 	}
+
+	//Convert max players strings to uint
+	unsigned int maxplayers(0);
+	std::istringstream iss;
+	iss.str(maxplayerswidget->getString());
+	if(!(iss >> maxplayers) || maxplayers > 254 || maxplayers < 1)
+	{
+		std::cerr << "Invalid max players number" << std::endl;
+		return;
+	}
+
+	//Save the config
+	Config::getInstance().max_players = maxplayers;
+	Config::getInstance().server_tcpport = tcpport;
+	Config::getInstance().server_udpport = udpport;
+	Config::getInstance().save();
 
 	GameSimulator *simulator = new ServerSimulator(false);
 	//Load map

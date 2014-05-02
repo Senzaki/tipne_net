@@ -30,6 +30,8 @@
 .UDP Port (optionnal) :
 #ipaddress
 .Server address :
+#maxplayers
+.Max players :
 #en
 .English
 #fr

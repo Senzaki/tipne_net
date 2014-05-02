@@ -31,7 +31,7 @@ class Menu : public ApplicationState
 	void showOptions();
 	void showConnectMenu();
 	void showHostMenu();
-	void host(DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget);
+	void host(DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget, DecoratedLineEdit *maxplayerswidget);
 	void connect(DecoratedLineEdit *ipaddrwidget, DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget);
 	bool convertPorts(const std::string &tcpportstr, const std::string &udpportstr, unsigned short &tcpport, unsigned short &udpport);
 	void launchGame(GameSimulator *simulator);

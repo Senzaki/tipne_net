@@ -25,11 +25,13 @@
 #lang
 .Langue
 #tcpport
-.Port TCP
+.Port TCP :
 #udpport
-.Port UDP
+.Port UDP :
 #ipaddress
 .Adresse du serveur :
+#maxplayers
+.Nb joueurs max :
 #en
 .English
 #fr
