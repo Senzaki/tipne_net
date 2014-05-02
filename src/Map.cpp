@@ -1,6 +1,5 @@
 #include "Map.hpp"
-#include <fstream>
-#include <SFML/Network.hpp>
+#include "BinaryFile.hpp"
 #include <iostream>
 
 static const std::string MAP_PREFIX = "data/maps/";
@@ -35,56 +34,39 @@ Map &Map::operator=(Map &&other)
 bool Map::load(const std::string &name)
 {
 	const std::string filename = MAP_PREFIX + name + MAP_SUFFIX;
-	//TODO : Stop using sf::Packet to avoid unuseful copies
 	//Open the map file
-	std::ifstream file(filename, std::ios::binary);
+	BinaryFile file(filename.c_str(), std::ios::in);
 	if(!file)
 	{
 		std::cout << "Cannot open map file " << filename << "." << std::endl;
 		return false;
 	}
 
-	//Use sf::Packet to avoid having to care about endianness etc
-	sf::Packet data;
 	//Read the size of the map
+	sf::Uint16 w, h;
+	if(!(file >> w >> h))
 	{
-		constexpr const std::size_t toread = 2 * sizeof(sf::Uint16);
-		char buf[toread];
-		if(!file.read(buf, toread))
-			return false;
-		//Add it to the packet & extract numbers
-		data.append(buf, toread);
-		sf::Uint16 w, h;
-		data >> w >> h;
-		if(w == 0 || h == 0)
-		{
-			std::cerr << "Error while loading map file " << filename << " : Map size cannot be 0 !" << std::endl;
-			return false;
-		}
-		m_size.x = w;
-		m_size.y = h;
-		m_tiles.resize(m_size.x * m_size.y);
-		//Reset the packet
-		data.clear();
+		std::cerr << "Error while loading map file " << filename << " : Map size section incomplete." << std::endl;
+		return false;
 	}
-	//Read each tile
+	if(w == 0 || h == 0)
 	{
-		const unsigned int tilescount = m_size.x * m_size.y;
-		const std::size_t toread = Tile::getSizeInPacket() * tilescount;
-		char *buf = new char[toread];
-		if(!file.read(buf, toread))
+		std::cerr << "Error while loading map file " << filename << " : Map size cannot be 0 !" << std::endl;
+		return false;
+	}
+	m_size.x = w;
+	m_size.y = h;
+	//Resize the tiles array
+	const unsigned int tilescount = m_size.x * m_size.y;
+	m_tiles.resize(tilescount);
+	//Read each tile
+	for(unsigned int i = 0; i < tilescount; i++)
+	{
+		if(!(file >> m_tiles[i]))
 		{
-			delete[] buf;
-			std::cerr << "Error while loading map file " << filename << " : Not enough tiles !" << std::endl;
+			std::cerr << "Error while loading map file " << filename << " : Tiles data section incomplete." << std::endl;
 			return false;
 		}
-		//Add it to the packet & extract tiles
-		data.append(buf, toread);
-		delete[] buf;
-		for(unsigned int i = 0; i < tilescount; i++)
-			data >> m_tiles[i];
-		//Reset the packet
-		data.clear();
 	}
 
 	m_name = name;
@@ -126,21 +108,18 @@ bool Map::save(const std::string &name)
 {
 	const std::string filename = MAP_PREFIX + name + MAP_SUFFIX;
 	//Open the map file
-	std::ofstream file(filename, std::ios::binary);
+	BinaryFile file(filename.c_str(), std::ios::out);
 	if(!file)
 	{
 		std::cerr << "Cannot open map file " << filename << " for writing." << std::endl;
 		return false;
 	}
 
-	sf::Packet data;
 	//Append size
-	data << (sf::Uint16)m_size.x << (sf::Uint16)m_size.y;
+	file << (sf::Uint16)m_size.x << (sf::Uint16)m_size.y;
 	//Append tiles
 	for(unsigned int i = 0; i < m_tiles.size(); i++)
-		data << m_tiles[i];
-	//Write to file
-	file.write((char *)data.getData(), data.getDataSize());
+		file << m_tiles[i];
 	if(!file)
 	{
 		std::cerr << "Could not write map to file " << filename << ". (Output error.)" << std::endl;

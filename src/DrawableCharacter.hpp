@@ -25,7 +25,7 @@ class DrawableCharacter : public CharacterStateListener, public DrawableEntity
 
 	private:
 	void initializeBaseCircle();
-	void resetAnimation(bool dynamic);
+	void resetAnimation();
 
 	sf::Sprite m_sprite;
 	Animator m_animator;
@@ -35,6 +35,7 @@ class DrawableCharacter : public CharacterStateListener, public DrawableEntity
 	sf::FloatRect m_bounds;
 	float m_depth;
 	IsometricDirection m_direction;
+	bool m_moving;
 	Character::State m_state;
 };
 

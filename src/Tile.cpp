@@ -1,15 +1,15 @@
 #include "Tile.hpp"
 
-sf::Packet &operator>>(sf::Packet &packet, Tile &tile)
+BinaryFile &operator>>(BinaryFile &file, Tile &tile)
 {
 	sf::Uint8 passable;
-	packet >> passable >> tile.appearance;
+	file >> passable >> tile.appearance;
 	tile.passable = passable;
-	return packet;
+	return file;
 }
 
-sf::Packet &operator<<(sf::Packet &packet, const Tile &tile)
+BinaryFile &operator<<(BinaryFile &file, const Tile &tile)
 {
-	packet << tile.passable << tile.appearance;
-	return packet;
+	file << tile.passable << tile.appearance;
+	return file;
 }

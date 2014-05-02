@@ -108,12 +108,13 @@ DrawableCharacter::DrawableCharacter():
 	m_animator(m_sprite),
 	m_basecircle(sf::TrianglesStrip, BASE_CIRCLE_VERTICES_COUNT * 2),
 	m_direction(IsometricDirection::Down),
+	m_moving(false),
 	m_state(Character::State::Ghost)
 {
 	//Setup animation
 	m_sprite.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Characters, Resource::GHOST_TEX));
 	m_sprite.setScale(TEMP_SCALE_FACTOR, TEMP_SCALE_FACTOR);
-	resetAnimation(false);
+	resetAnimation();
 	//Setup bound
 	m_localbounds = m_sprite.getGlobalBounds();
 	m_localbounds.height += 40.f;
@@ -160,7 +161,7 @@ bool DrawableCharacter::isContainedIn(const sf::FloatRect &rect) const
 
 void DrawableCharacter::onStateChanged(Character::State state)
 {
-	resetAnimation(false);
+	resetAnimation();
 }
 
 void DrawableCharacter::onPositionChanged(const sf::Vector2f &position)
@@ -176,16 +177,26 @@ void DrawableCharacter::onPositionChanged(const sf::Vector2f &position)
 void DrawableCharacter::onDirectionChanged(const sf::Vector2f &direction)
 {
 	if(direction.x == 0.f && direction.y == 0.f)
-		resetAnimation(false);
+	{
+		m_moving = false;
+		resetAnimation();
+		return;
+	}
 	sf::Vector2f scale;
 	//Which direction is the closest one ?
 	IsometricDirection isodir;
 	getDirectionInfo(direction, scale, isodir);
 	if(m_direction != isodir)
 	{
+		m_moving = true;
 		m_direction = isodir;
 		m_sprite.setScale(scale * TEMP_SCALE_FACTOR);
-		resetAnimation(true);
+		resetAnimation();
+	}
+	else if(!m_moving)
+	{
+		m_moving = true;
+		resetAnimation();
 	}
 }
 
@@ -214,10 +225,10 @@ void DrawableCharacter::initializeBaseCircle()
 	}
 }
 
-void DrawableCharacter::resetAnimation(bool dynamic)
+void DrawableCharacter::resetAnimation()
 {
 	const CharacterAnimation &anim = ANIMATIONS[(int)m_state][(int)CharacterAnimationName::Normal][(int)m_direction];
-	if(dynamic)
+	if(m_moving)
 		m_animator.setFrames(anim.frames, anim.fcount);
 	else
 		m_animator.setFrames(anim.frames, 1);

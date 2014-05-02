@@ -43,6 +43,9 @@ int Application::execute(int argc, char **argv)
 	if(conf.dispfreq != 0)
 		m_window.setFramerateLimit(conf.dispfreq);
 	m_window.setMouseCursorVisible(false);
+#ifdef NDEBUG
+	m_window.setKeyRepeatEnabled(false);
+#endif
 
 	//Load base resources
 	ResourceManager::getInstance().loadSection(ResourceSection::Base);

@@ -12,7 +12,7 @@ static constexpr GraphTileInfo WALL_INFO[WALL_INFO_SIZE] =
 	//FIRST_WALL_APPEARANCE + ...
 	//1
 	{Resource::BASE_WALLS_TEX, 1, {
-		{0.f, 0.f, 120.f, 191.f, 60.f, 161.f}
+		{0.f, 0.f, 120.f, 191.f, 0.f, 161.f}
 	}},
 };
 

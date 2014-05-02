@@ -1,7 +1,7 @@
 #ifndef TILE_HPP_INCLUDED
 #define TILE_HPP_INCLUDED
 
-#include "SFML/Network.hpp"
+#include "BinaryFile.hpp"
 
 struct Tile
 {
@@ -14,7 +14,7 @@ struct Tile
 	}
 };
 
-sf::Packet &operator>>(sf::Packet &packet, Tile &tile);
-sf::Packet &operator<<(sf::Packet &packet, const Tile &tile);
+BinaryFile &operator>>(BinaryFile &file, Tile &tile);
+BinaryFile &operator<<(BinaryFile &file, const Tile &tile);
 
 #endif // TILE_HPP_INCLUDED
