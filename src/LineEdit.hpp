@@ -1,6 +1,7 @@
 #ifndef LINEEDIT_HPP_INCLUDED
 #define LINEEDIT_HPP_INCLUDED
 
+#include <functional>
 #include "Widget.hpp"
 
 class LineEdit : public Widget

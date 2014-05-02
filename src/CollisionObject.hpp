@@ -1,6 +1,7 @@
 #ifndef COLLISIONOBJECT_HPP_INCLUDED
 #define COLLISIONOBJECT_HPP_INCLUDED
 
+#include <functional>
 #include <SFML/System.hpp>
 
 class CollisionManager;

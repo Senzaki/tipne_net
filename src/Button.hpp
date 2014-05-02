@@ -1,6 +1,7 @@
 #ifndef BUTTON_HPP_INCLUDED
 #define BUTTON_HPP_INCLUDED
 
+#include <functional>
 #include "Widget.hpp"
 
 class Button: public Widget
