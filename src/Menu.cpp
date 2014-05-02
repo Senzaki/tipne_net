@@ -204,7 +204,7 @@ void Menu::showHostMenu()
 		udpport->setString(oss.str());
 	}
 	std::ostringstream oss;
-	oss << Config::getInstance().max_players;
+	oss << (int)Config::getInstance().max_players;
 	maxplayers->setString(oss.str());
 
 	//Set widgets position
