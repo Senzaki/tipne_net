@@ -55,35 +55,28 @@ BinaryFile &BinaryFile::operator<<(sf::Uint8 n)
 BinaryFile &BinaryFile::operator<<(sf::Int16 n)
 {
 	sf::Int16 e = htons(n);
-	m_file.write((char *)(&e), sizeof(e));
+	m_file.write(reinterpret_cast<const char *>(&e), sizeof(e));
 	return *this;
 }
 
 BinaryFile &BinaryFile::operator<<(sf::Uint16 n)
 {
 	sf::Uint16 e = htons(n);
-	m_file.write((char *)(&e), sizeof(e));
+	m_file.write(reinterpret_cast<const char *>(&e), sizeof(e));
 	return *this;
 }
 
 BinaryFile &BinaryFile::operator<<(sf::Int32 n)
 {
 	sf::Int32 e = htonl(n);
-	m_file.write((char *)(&e), sizeof(e));
+	m_file.write(reinterpret_cast<const char *>(&e), sizeof(e));
 	return *this;
 }
 
 BinaryFile &BinaryFile::operator<<(sf::Uint32 n)
 {
 	sf::Uint32 e = htonl(n);
-	m_file.write((char *)(&e), sizeof(e));
-	return *this;
-}
-
-BinaryFile &BinaryFile::operator<<(float n)
-{
-	sf::Uint32 e = htonl(*((sf::Uint32 *)(&n)));
-	m_file.write((char *)(&e), sizeof(e));
+	m_file.write(reinterpret_cast<const char *>(&e), sizeof(e));
 	return *this;
 }
 
@@ -107,38 +100,29 @@ BinaryFile &BinaryFile::operator>>(sf::Uint8 &n)
 
 BinaryFile &BinaryFile::operator>>(sf::Int16 &n)
 {
-	m_file.read((char *)(&n), sizeof(n));
+	m_file.read(reinterpret_cast<char *>(&n), sizeof(n));
 	n = ntohs(n);
 	return *this;
 }
 
 BinaryFile &BinaryFile::operator>>(sf::Uint16 &n)
 {
-	m_file.read((char *)(&n), sizeof(n));
+	m_file.read(reinterpret_cast<char *>(&n), sizeof(n));
 	n = ntohs(n);
 	return *this;
 }
 
 BinaryFile &BinaryFile::operator>>(sf::Int32 &n)
 {
-	m_file.read((char *)(&n), sizeof(n));
+	m_file.read(reinterpret_cast<char *>(&n), sizeof(n));
 	n = ntohl(n);
 	return *this;
 }
 
 BinaryFile &BinaryFile::operator>>(sf::Uint32 &n)
 {
-	m_file.read((char *)(&n), sizeof(n));
+	m_file.read(reinterpret_cast<char *>(&n), sizeof(n));
 	n = ntohl(n);
-	return *this;
-}
-
-BinaryFile &BinaryFile::operator>>(float &n)
-{
-	sf::Uint32 e;
-	m_file.read((char *)(&e), sizeof(e));
-	e = ntohl(e);
-	n = *(float *)(&e);
 	return *this;
 }
 

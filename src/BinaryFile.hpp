@@ -22,7 +22,6 @@ class BinaryFile
 	BinaryFile &operator<<(sf::Uint16 n);
 	BinaryFile &operator<<(sf::Int32 n);
 	BinaryFile &operator<<(sf::Uint32 n);
-	BinaryFile &operator<<(float n);
 	BinaryFile &operator<<(const char *str);
 
 	BinaryFile &operator>>(sf::Int8 &n);
@@ -31,7 +30,6 @@ class BinaryFile
 	BinaryFile &operator>>(sf::Uint16 &n);
 	BinaryFile &operator>>(sf::Int32 &n);
 	BinaryFile &operator>>(sf::Uint32 &n);
-	BinaryFile &operator>>(float &n);
 	BinaryFile &operator>>(std::string &str);
 
 	private:
