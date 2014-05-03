@@ -2,6 +2,8 @@
 #include "Translator.hpp"
 #include "Config.hpp"
 #include <sstream>
+#include <algorithm>
+#include <iostream>
 
 OptionsMenu::OptionsMenu(Widget *parent, std::function<void()> callback):
 	Widget(parent),
@@ -13,12 +15,13 @@ OptionsMenu::OptionsMenu(Widget *parent, std::function<void()> callback):
 	m_lang(new Label(this)),
 	m_cancel(new Button(this, tr("cancel"), callback)),
 	m_save(new Button(this, tr("save"), std::bind(&OptionsMenu::saveOptions, this))),
-	m_curvmode(0)
+	m_curvmode(0),
+	m_curlang(0)
 {
 	setSize(getParent()->getSize());
 	getAvailablesVideoModes();
 
-	//TEMP (create a function in Config.hpp to read the names in a file)
+	//TEMP
 	m_langs.push_back("en");
 	m_langs.push_back("fr");
 
@@ -69,6 +72,7 @@ void OptionsMenu::setWidgetsPosition()
 
 void OptionsMenu::setDefaultValues()
 {
+	//Values of lineedits set as values of config
 	m_name->setString(Config::getInstance().name);
 	m_fullscreen->setChecked(Config::getInstance().fullscreen);
 	m_vsync->setChecked(Config::getInstance().vsync);
@@ -76,6 +80,20 @@ void OptionsMenu::setDefaultValues()
 	oss << Config::getInstance().width << "x" << Config::getInstance().height;
 	m_videomode->setString(oss.str());
 	m_lang->setString(tr(Config::getInstance().lang));
+
+	//Define m_curlang
+	while(Config::getInstance().lang != m_langs[m_curlang] && m_curlang < (int)m_langs.size() - 1)
+	{
+		++m_curlang;
+	}
+
+	//Define m_curvmode
+	while((Config::getInstance().width != m_vmodes[m_curvmode].width || Config::getInstance().height != m_vmodes[m_curvmode].height) && m_curvmode < (int)m_vmodes.size())
+	{
+		++m_curvmode;
+	}
+	if(m_curvmode == (int)m_vmodes.size())
+		m_curvmode = 0;
 }
 
 void OptionsMenu::saveOptions()
@@ -95,7 +113,8 @@ void OptionsMenu::saveOptions()
 
 void OptionsMenu::changeVideoMode(int direction)
 {
-	m_curvmode = (m_curvmode + direction) % m_vmodes.size();
+	if(!((m_curvmode == 0 && direction == -1) || (m_curvmode == (int)m_vmodes.size() - 1 && direction == 1)))
+		m_curvmode += direction;
 	std::ostringstream oss;
 	oss.str("");
 	oss << m_vmodes[m_curvmode].width << "x" << m_vmodes[m_curvmode].height;
@@ -105,16 +124,25 @@ void OptionsMenu::changeVideoMode(int direction)
 
 void OptionsMenu::changeLanguage(int direction)
 {
-	m_curlang = (m_curlang + direction) % m_langs.size();
+
+	if(m_curlang == 0 && direction == -1)
+		m_curlang = m_langs.size() - 1;
+	else if(m_curlang == (int)m_langs.size() - 1 && direction == 1)
+		m_curlang = 0;
+	else
+		m_curlang += direction;
 	m_lang->setString(tr(m_langs[m_curlang]));
 }
 
 void OptionsMenu::getAvailablesVideoModes()
 {
 	std::vector<sf::VideoMode> modes = sf::VideoMode::getFullscreenModes();
+	//Get availables video modes
 	for(unsigned int i = 0 ; i < modes.size() ; ++i)
 	{
-		if(modes[i].width >= 800 && modes[i].height >= 600)
+		if(modes[i].width >= 800 && modes[i].height >= 600 && modes[i].bitsPerPixel == 32)
 			m_vmodes.push_back(modes[i]);
 	}
+	//Sort videomodes
+	std::sort(m_vmodes.begin(), m_vmodes.end());
 }

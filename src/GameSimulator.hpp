@@ -14,7 +14,7 @@
 class GameSimulator
 {
 	public:
-	GameSimulator(bool collisions);
+	GameSimulator(bool fullsimulator, float interpolationtime);
 	virtual ~GameSimulator();
 
 	GameSimulator(const GameSimulator &) = delete;
@@ -57,15 +57,19 @@ class GameSimulator
 	Character *getOwnCharacter();
 	bool setOwnCharacter(sf::Uint16 id);
 
+
+
 	virtual bool loadMap(const std::string &name);
 
 	sf::Uint8 m_ownid;
 
 	private:
+	float m_interpolationtime;
+	bool m_fullsimulator;
+
 	std::unordered_map<sf::Uint8, Player> m_players;
 	Map m_map;
 	CollisionManager *m_colmgr;
-	bool m_collisions;
 
 	std::unordered_map<sf::Uint16, Character> m_characters;
 	Character *m_owncharacter;

@@ -1,6 +1,7 @@
 #include "DefaultCollisionManager.hpp"
 #include <cfloat>
 #include <cmath>
+#include <algorithm>
 #include <iostream>
 
 static const float STEP_TIME = 1.f / 200.f;
@@ -132,6 +133,19 @@ void DefaultCollisionManager::updateObject(CollisionObject *object)
 				m_tilescontent[j * m_mapwidth + i].emplace_back(object, p);
 		}
 	}
+}
+
+void DefaultCollisionManager::getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects)
+{
+	for(const std::pair<CollisionObject *, sf::Vector2f> &object : m_tilescontent[y * m_mapwidth + x])
+		objects.emplace_back(object.first);
+	const std::vector<sf::Vector2u> &visibletiles = m_map.getTilesVisibleFrom(x, y);
+	for(unsigned int i = 0; i < visibletiles.size(); i++)
+	{
+		for(const std::pair<CollisionObject *, sf::Vector2f> &object : m_tilescontent[visibletiles[i].y * m_mapwidth + visibletiles[i].x])
+			objects.emplace_back(object.first);
+	}
+	std::unique(objects.begin(), objects.end());
 }
 
 void DefaultCollisionManager::handleCollisions()

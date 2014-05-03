@@ -9,7 +9,7 @@ static const sf::Time CONNECTION_INFO_MAX_TIME = sf::seconds(10.f);
 //TODO: Check each received value (e.g. Does the id exist ? Is it different of NO_CHARACTER_ID ?)
 
 ClientSimulator::ClientSimulator():
-	GameSimulator(false),
+	GameSimulator(false, DEFAULT_INTERPOLATION_TIME),
 	m_thread(nullptr),
 	m_thrrunning(false),
 	m_udpmgr(*this)
@@ -245,8 +245,6 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 	{
 		if(!character.loadFromPacket(packet))
 			return false;
-		character.setFullySimulated(false);
-		character.setInterpolationTime(DEFAULT_INTERPOLATION_TIME);
 		if(!addCharacter(std::move(character)))
 			return false;
 	}
@@ -353,6 +351,8 @@ bool ClientSimulator::onNewCharacterPacket(sf::Packet &packet)
 	Character character;
 	if(!character.loadFromPacket(packet))
 		return false;
+	character.setInterpolationTime(DEFAULT_INTERPOLATION_TIME);
+	character.setFullySimulated(false);
 	addCharacter(std::move(character));
 	return true;
 }
