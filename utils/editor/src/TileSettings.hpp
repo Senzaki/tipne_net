@@ -15,6 +15,7 @@ class TileSettings : public Widget
 	TileSettings(Widget *parent = nullptr);
 	virtual ~TileSettings();
 	void setTile(Tile tile);
+	Tile getUpdatedTile();
 
 	private:
 	Label *m_label, *m_label2;

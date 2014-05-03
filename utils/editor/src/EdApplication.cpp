@@ -4,6 +4,7 @@
 #include "ResourceManager.hpp"
 #include <SFML/Graphics.hpp>
 #include "BasisChange.hpp"
+#include <iostream>
 
 EdApplication::EdApplication() : m_window(sf::VideoMode(1024, 768), "Editor Window", sf::Style::Close), m_guimgr(m_window)
 {
@@ -24,7 +25,8 @@ int EdApplication::execute(int argc, char **argv)
 	m_map.load("default");
 	m_dmap.setMap(m_map);
 	m_tsettings = new TileSettings(m_guimgr.getTopWidget());
-	sf::Vector2f tilecoords;
+	sf::Vector2f tilecoords(0.f, 0.f);
+	//Tile *curtile;
 
 	//Create the view
 	m_rect.top = 0;
@@ -56,32 +58,40 @@ int EdApplication::execute(int argc, char **argv)
 					break;
 
 				case sf::Event::KeyPressed:
-					m_guimgr.onKeyPressed(evt.key);
-					if(evt.key.code == sf::Keyboard::Escape)
-						m_running = false;
-					else if(evt.key.code == sf::Keyboard::Up)
+					if(not(m_guimgr.onKeyPressed(evt.key)))
 					{
-						view.move(0, -1 * view.getSize().y / 2); //moves the camera up by half the height of the window
-						m_rect.top -= view.getSize().y / 2;
-						frame.move(0, -1 * view.getSize().y / 2);
-					}
-					else if(evt.key.code == sf::Keyboard::Down)
-					{
-						view.move(0, view.getSize().y / 2); //moves the camera down by half the height of the window
-						m_rect.top += view.getSize().y / 2;
-						frame.move(0, view.getSize().y / 2);
-					}
-					else if((evt.key.code == sf::Keyboard::Left)and(not(m_guimgr.onKeyPressed(evt.key))))
-					{
-						view.move(-1 * view.getSize().x / 2, 0); //moves the camera left by half the width of the window
-						m_rect.left -= view.getSize().x / 2;
-						frame.move(-1 * view.getSize().x / 2, 0);
-					}
-					else if((evt.key.code == sf::Keyboard::Right)and(not(m_guimgr.onKeyPressed(evt.key))))
-					{
-						view.move(view.getSize().x / 2, 0); //moves the camera right by half the width of the window
-						m_rect.left += view.getSize().x / 2;
-						frame.move(view.getSize().x / 2, 0);
+						if(evt.key.code == sf::Keyboard::Escape)
+							m_running = false;
+						else if(evt.key.code == sf::Keyboard::Up)
+						{
+							view.move(0, -1 * view.getSize().y / 2); //moves the camera up by half the height of the window
+							m_rect.top -= view.getSize().y / 2;
+							frame.move(0, -1 * view.getSize().y / 2);
+						}
+						else if(evt.key.code == sf::Keyboard::Down)
+						{
+							view.move(0, view.getSize().y / 2); //moves the camera down by half the height of the window
+							m_rect.top += view.getSize().y / 2;
+							frame.move(0, view.getSize().y / 2);
+						}
+						else if(evt.key.code == sf::Keyboard::Left)
+						{
+							view.move(-1 * view.getSize().x / 2, 0); //moves the camera left by half the width of the window
+							m_rect.left -= view.getSize().x / 2;
+							frame.move(-1 * view.getSize().x / 2, 0);
+						}
+						else if(evt.key.code == sf::Keyboard::Right)
+						{
+							view.move(view.getSize().x / 2, 0); //moves the camera right by half the width of the window
+							m_rect.left += view.getSize().x / 2;
+							frame.move(view.getSize().x / 2, 0);
+						}
+						else if(evt.key.code == sf::Keyboard::Return)
+						{
+							//Tile curtile;
+							m_map.setTile(tilecoords.x, tilecoords.y, m_tsettings->getUpdatedTile());
+							m_dmap.setMap(m_map);
+						}
 					}
 					break;
 
@@ -94,10 +104,15 @@ int EdApplication::execute(int argc, char **argv)
 					break;
 
 				case sf::Event::MouseButtonPressed:
-					m_guimgr.onMouseButtonPressed(evt.mouseButton);
-					tilecoords = BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top);
-					tilecoords += sf::Vector2f(0.5f, 0.5f);
-					m_tsettings->setTile(m_map.getTile(tilecoords.x, tilecoords.y));
+					if(!m_guimgr.onMouseButtonPressed(evt.mouseButton))
+					{
+						if((BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).x > 0) && (BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).y > 0)) //This condition is to be sure the user clicked on a tile
+						{
+							tilecoords = BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top);
+							std::cout << tilecoords.x << std::endl;
+							m_tsettings->setTile(m_map.getTile(tilecoords.x, tilecoords.y)); //Will show the informations about the selected tile
+						}
+					}
 					break;
 
 				case sf::Event::MouseButtonReleased:
@@ -118,7 +133,16 @@ int EdApplication::execute(int argc, char **argv)
 		}
 		m_window.clear(sf::Color::Black);
 		m_window.setView(view);
-		m_dmap.draw(m_window, m_rect);
+
+		std::list<DrawableEntity *> todraw;
+		//Draw the map & add map entities to thez list
+		m_dmap.draw(m_window, m_rect, todraw);
+		//Sort the entities by depth
+		todraw.sort(DrawableEntity::isDepthLower);
+		//Draw all the entities
+		for(DrawableEntity *entity : todraw)
+			entity->draw(m_window);
+
 		m_window.draw(frame);
 		m_guimgr.update(0.1f);
 		m_window.setView(m_window.getDefaultView());

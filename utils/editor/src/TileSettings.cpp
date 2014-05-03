@@ -3,6 +3,7 @@
 #include "DecoratedLineEdit.hpp"
 #include "CheckBox.hpp"
 #include <sstream>
+#include <iostream>
 
 TileSettings::TileSettings(Widget *parent) : Widget(parent)
 {
@@ -37,3 +38,20 @@ void TileSettings::setTile(Tile tile)
 	string = oss.str();
 	m_appearence->setString(string);
 }
+
+
+Tile TileSettings::getUpdatedTile()
+{
+	Tile tile;
+	std::istringstream iss;
+	sf::Uint16 code;
+	iss.str(this->m_appearence->getString());
+	iss >> std::hex >> code;
+
+	std::cout << code;
+	tile.appearance = code;
+
+	tile.passable = this->m_passable->isChecked();
+	return tile;
+}
+
