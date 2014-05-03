@@ -29,6 +29,7 @@ class Map
 	const Tile &getTile(unsigned int x, unsigned int y) const;
 	const Tile &getTileByHash(unsigned int xy) const; //Retrieve it passing y * size.x + x
 	const sf::Vector2u &getSize() const;
+	const std::vector<sf::Vector2u> &getTilesVisibleFrom(unsigned int x, unsigned int y) const;
 
 	operator bool() const;
 
@@ -37,8 +38,10 @@ class Map
 	bool save(const std::string &name);
 
 	private:
+	bool m_loaded;
 	std::string m_name;
 	std::vector<Tile> m_tiles;
+	std::vector<std::vector<sf::Vector2u>> m_visibilitymap;
 	sf::Vector2u m_size;
 };
 

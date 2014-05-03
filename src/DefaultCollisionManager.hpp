@@ -14,6 +14,7 @@ class DefaultCollisionManager : public CollisionManager
 	DefaultCollisionManager &operator=(const DefaultCollisionManager &) = delete;
 
 	virtual void update(float etime);
+	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects);
 
 	private:
 	void updateObject(CollisionObject *object);//Returns true when out of bounds

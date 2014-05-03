@@ -4,10 +4,11 @@
 #include "DefaultCollisionManager.hpp"
 #include "DummyCollisionManager.hpp"
 
-GameSimulator::GameSimulator(bool collisions):
+GameSimulator::GameSimulator(bool fullsimulator, float interpolationtime):
 	m_ownid(NEUTRAL_PLAYER),
+	m_interpolationtime(interpolationtime),
+	m_fullsimulator(fullsimulator),
 	m_colmgr(nullptr),
-	m_collisions(collisions),
 	m_owncharacter(nullptr),
 	m_statelistener(nullptr)
 {
@@ -135,16 +136,19 @@ Character *GameSimulator::addCharacter(Character &&character)
 #endif
 		return nullptr;
 	}
-	added.first->second.setSimulator(this);
+	Character &addedcharacter = added.first->second;
+	addedcharacter.setFullySimulated(m_fullsimulator);
+	addedcharacter.setInterpolationTime(m_interpolationtime);
+	addedcharacter.setSimulator(this);
 	//Add it to the collision manager
-	added.first->second.setCollisionManager(m_colmgr);
+	addedcharacter.setCollisionManager(m_colmgr);
 	//Tell the listener if required
 	if(m_statelistener)
 		m_statelistener->onNewCharacter(m_characters[id]);
 #ifndef NDEBUG
 	std::cout << "[DEBUG]New character. Id : " << (int)id << "." << std::endl;
 #endif
-	return &added.first->second;
+	return &addedcharacter;
 }
 
 bool GameSimulator::removeCharacter(sf::Uint16 id)
@@ -243,10 +247,7 @@ bool GameSimulator::loadMap(const std::string &name)
 	{
 		//Reload the collision manager if necessary
 		delete m_colmgr;
-		if(m_collisions)
-			m_colmgr = new DefaultCollisionManager(m_map);
-		else
-			m_colmgr = new DefaultCollisionManager(m_map);
+		m_colmgr = new DefaultCollisionManager(m_map);
 		for(std::pair<const sf::Uint16, Character> &character : m_characters)
 			character.second.setCollisionManager(m_colmgr);
 		if(m_statelistener)
