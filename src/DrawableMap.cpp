@@ -44,6 +44,7 @@ void DrawableMap::draw(sf::RenderWindow &window, const sf::FloatRect &seen, std:
 bool DrawableMap::setMap(const Map &map)
 {
 	assert(map);
+	m_chunks.clear();
 	//Compute the number of chunks
 	const unsigned int maxi = (map.getSize().x - 1) / CHUNK_SIZE + 1;
 	const unsigned int maxj = (map.getSize().y - 1) / CHUNK_SIZE + 1;
