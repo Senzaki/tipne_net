@@ -10,6 +10,7 @@ EdApplication::EdApplication() : m_window(sf::VideoMode(1024, 768), "Editor Wind
 {
 	ResourceManager::getInstance().loadSection(ResourceSection::Base);
 	ResourceManager::getInstance().loadSection(ResourceSection::Map);
+	m_window.setFramerateLimit(60);
 }
 
 EdApplication &EdApplication::getInstance()
@@ -22,11 +23,16 @@ int EdApplication::execute(int argc, char **argv)
 {
 	sf::Event evt;
 	m_running = true;
-	m_map.load("default");
+
+	//Load the map
+	std::string loadname;
+	std::cout << "Write the name of the map you want to open :" << std::endl;
+	std::cin >> loadname;
+	m_map.load(loadname);
 	m_dmap.setMap(m_map);
+
 	m_tsettings = new TileSettings(m_guimgr.getTopWidget());
 	sf::Vector2f tilecoords(0.f, 0.f);
-	//Tile *curtile;
 
 	//Create the view
 	m_rect.top = 0;
@@ -88,9 +94,15 @@ int EdApplication::execute(int argc, char **argv)
 						}
 						else if(evt.key.code == sf::Keyboard::Return)
 						{
-							//Tile curtile;
 							m_map.setTile(tilecoords.x, tilecoords.y, m_tsettings->getUpdatedTile());
 							m_dmap.setMap(m_map);
+						}
+						else if(evt.key.code == sf::Keyboard::S)
+						{
+							std::string savename(" ");
+							std::cout << "write a name for this map :" << std::endl;
+							std::cin >> savename;
+							m_map.save(savename);
 						}
 					}
 					break;
@@ -106,11 +118,18 @@ int EdApplication::execute(int argc, char **argv)
 				case sf::Event::MouseButtonPressed:
 					if(!m_guimgr.onMouseButtonPressed(evt.mouseButton))
 					{
-						if((BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).x > 0) && (BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).y > 0)) //This condition is to be sure the user clicked on a tile
+						if(evt.mouseButton.button == sf::Mouse::Left)
+							if((BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).x > 0) && (BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).y > 0)) //This condition is to be sure the user clicked on a tile
+							{
+								tilecoords = BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top);
+								m_tsettings->setTile(m_map.getTile(tilecoords.x, tilecoords.y)); //Will show the informations about the selected tile
+							}
+						if(evt.mouseButton.button == sf::Mouse::Right)
 						{
+							//m_map.setTile(BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).x, BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).y, m_tsettings->getUpdatedTile());
 							tilecoords = BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top);
-							std::cout << tilecoords.x << std::endl;
-							m_tsettings->setTile(m_map.getTile(tilecoords.x, tilecoords.y)); //Will show the informations about the selected tile
+							m_map.setTile(tilecoords.x, tilecoords.y, m_tsettings->getUpdatedTile());
+							m_dmap.setMap(m_map);
 						}
 					}
 					break;
