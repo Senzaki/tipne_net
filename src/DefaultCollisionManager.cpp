@@ -135,7 +135,7 @@ void DefaultCollisionManager::updateObject(CollisionObject *object)
 	}
 }
 
-void DefaultCollisionManager::getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects)
+void DefaultCollisionManager::getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) const
 {
 	for(const std::pair<CollisionObject *, sf::Vector2f> &object : m_tilescontent[y * m_mapwidth + x])
 		objects.emplace_back(object.first);

@@ -50,6 +50,7 @@ class Character
 	void update(float etime);
 
 	void setDirection(sf::Vector2f direction);
+	sf::Vector2f getDirection() const;
 
 	void setPosition(float x, float y);//Uses interpolation
 	void forcePosition(float x, float y);//Does not use interpolation

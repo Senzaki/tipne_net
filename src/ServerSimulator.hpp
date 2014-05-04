@@ -12,13 +12,11 @@ class ServerSimulator : public GameSimulator
 	virtual ~ServerSimulator();
 
 	virtual bool update(float etime);
-	void buildSnapshotPacket(sf::Packet &packet);
+	void buildSnapshotPacket(sf::Packet &packet, sf::Uint8 playerid);
 
 	virtual bool loadMap(const std::string &mapname);
 	bool startNetThread(unsigned short tcpport, unsigned short udpport, sf::Uint8 maxplayers);
 	void stopNetThread();
-
-	virtual void onCharacterSpeedChanged(Character &character, const sf::Vector2f &speed);
 
 	void disconnectPlayer(sf::Uint8 id, sf::Uint8 reason);
 
@@ -36,8 +34,9 @@ class ServerSimulator : public GameSimulator
 	bool onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet &packet);
 
 	virtual bool removeCharacter(sf::Uint16 id);
-
 	bool playerNameExists(const std::string &name) const;
+
+	void updateVisibility();
 
 	std::thread *m_thread;
 	std::atomic<bool> m_thrrunning;

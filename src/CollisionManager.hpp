@@ -25,7 +25,7 @@ class CollisionManager
 	void detach(CollisionObject *object);
 
 	virtual void update(float etime) = 0;
-	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) = 0;//objects should be empty
+	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) const = 0;//objects should be empty
 
 	protected:
 	void notifyCollision(CollisionObject *a, CollisionObject *b);

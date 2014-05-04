@@ -25,6 +25,7 @@ class DrawableTilesGroup
 	void update(float etime);
 	void draw(sf::RenderWindow &window);
 	std::list<DrawableWall> &getWalls();
+	void setTileVisible(unsigned int localx, unsigned int localy);
 
 	private:
 	struct TileSet
@@ -33,6 +34,9 @@ class DrawableTilesGroup
 		sf::VertexArray vertices;
 	};
 	std::vector<TileSet> m_tilesets;
+	std::vector<bool> m_visibility;
+	std::vector<std::tuple<sf::VertexArray *, unsigned int, float>> m_verticesinfo;
+	unsigned int m_width;
 	std::list<DrawableWall> m_walls;
 };
 

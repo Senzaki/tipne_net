@@ -40,8 +40,6 @@ class GameSimulator
 	//Override to prevent full-authority (e.g. in a client, only send a request)
 	virtual void selfSetDirection(const sf::Vector2f &direction);
 
-	virtual void onCharacterSpeedChanged(Character &character, const sf::Vector2f &direction) { }
-
 	protected:
 	template<typename... Args>
 	inline Player *addPlayer(Args &&...args);
@@ -57,11 +55,12 @@ class GameSimulator
 	Character *getOwnCharacter();
 	bool setOwnCharacter(sf::Uint16 id);
 
-
+	void getObjectsVisibleFrom(Character *viewer, std::list<CollisionObject *> &visible);
 
 	virtual bool loadMap(const std::string &name);
 
 	sf::Uint8 m_ownid;
+	SimulatorStateListener *m_statelistener;
 
 	private:
 	float m_interpolationtime;
@@ -73,8 +72,6 @@ class GameSimulator
 
 	std::unordered_map<sf::Uint16, Character> m_characters;
 	Character *m_owncharacter;
-
-	SimulatorStateListener *m_statelistener;
 };
 
 #include "GameSimulator.inl"

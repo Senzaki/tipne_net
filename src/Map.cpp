@@ -1,5 +1,6 @@
 #include "Map.hpp"
 #include "BinaryFile.hpp"
+#include <algorithm>
 #include <iostream>
 
 static const std::string MAP_PREFIX = "data/maps/";
@@ -85,7 +86,8 @@ bool Map::load(const std::string &name)
 				std::cerr << "Error while loading map file " << filename << " : Visibility map data section incomplete." << std::endl;
 				return false;
 			}
-			m_visibilitymap[i].resize(visibletilescount);
+			m_visibilitymap[i].resize(visibletilescount + 1);
+			m_visibilitymap[i][visibletilescount] = sf::Vector2u(i % m_size.x, i / m_size.x);
 			for(unsigned int j = 0; j < visibletilescount; j++)
 			{
 				if(!(file >> x >> y))
@@ -95,6 +97,7 @@ bool Map::load(const std::string &name)
 				}
 				m_visibilitymap[i][j] = sf::Vector2u(x, y);
 			}
+			std::unique(m_visibilitymap[i].begin(), m_visibilitymap[i].end());
 		}
 	}
 

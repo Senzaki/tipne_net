@@ -3,6 +3,9 @@
 #include "BasisChange.hpp"
 #include <iostream>
 
+static const float LIGHT_CHANGE_SPEED = 200.f;
+static const float MIN_LIGHT = 100.f;
+
 //Index is Tile::appearance
 static const unsigned int TILE_INFO_SIZE = 0xf;
 static constexpr GraphTileInfo TILE_INFO[TILE_INFO_SIZE] =
@@ -126,12 +129,14 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 {
 	const unsigned int right = std::min(map.getSize().x, rect.left + rect.width);
 	const unsigned int bottom = std::min(map.getSize().y, rect.top + rect.height);
-	const unsigned int width = right - rect.left;
+	m_width = right - rect.left;
 	const unsigned int height = bottom - rect.top;
-	const unsigned int depths = width + height - 1;
+	const unsigned int depths = m_width + height - 1;
+	m_visibility.resize(m_width * height, false);
+	m_verticesinfo.resize(m_width * height, std::make_tuple(nullptr, 0, 255.f));
 	//Fill an array with the tiles
 	std::vector<TileSortInfo> tiles;
-	tiles.reserve(width * height);
+	tiles.reserve(m_width * height);
 	for(unsigned int y = rect.top; y < bottom; y++)
 	{
 		for(unsigned int x = rect.left; x < right; x++)
@@ -159,16 +164,16 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 
 	//Put the tiles into tilesets that correspond to their (reverse) drawing order (reserve an arbitrary size for the array, we can assume that the tilesets will contain at least two tiles on average)
 	std::vector<std::list<std::pair<const GraphTileInfo *, sf::Vector2u>>> sortedtiles;
-	sortedtiles.reserve(width * height / 2);
+	sortedtiles.reserve(m_width * height / 2);
 	//Iterate through the whole array to put the tiles into the hash table according to their texture (depth by depth)
 	for(unsigned int d = 0; d < depths; d++)
 	{
 		const unsigned int xmin = (d < height) ? 0 : d - height + 1;
-		const unsigned int xmax = std::min(d + 1, width);
+		const unsigned int xmax = std::min(d + 1, m_width);
 		for(unsigned int x = xmin; x < xmax; x++)
 		{
 			const unsigned int y = x + height - 1 - d;
-			TileSortInfo &sortinf = tiles[x + y * width];
+			TileSortInfo &sortinf = tiles[x + y * m_width];
 			//If the tile isn't in a tileset yet, create a new tileset
 			if(!sortinf.added)
 			{
@@ -180,7 +185,7 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 				for(unsigned int x2 = x + 1; x2 < xmax; x2++)
 				{
 					const unsigned int y2 = x2 + height - 1 - d;
-					TileSortInfo &sortinf2 = tiles[x2 + y2 * width];
+					TileSortInfo &sortinf2 = tiles[x2 + y2 * m_width];
 					if(!sortinf2.added && sortinf2.texture == sortinf.texture)
 					{
 						sortinf2.added = true;
@@ -189,7 +194,7 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 				}
 				//Add all the other possible tiles to this tileset
 				if(d + 1 < depths)
-					sortFurtherTiles(tiles, d + 1, depths, height, width, sortinf.texture, sortedtiles);
+					sortFurtherTiles(tiles, d + 1, depths, height, m_width, sortinf.texture, sortedtiles);
 			}
 		}
 	}
@@ -241,6 +246,8 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 			va[j].position.y = top + frame.height;
 			va[j].texCoords.x = frame.x;
 			va[j].texCoords.y = frame.y + frame.height;
+			//Add tileset info
+			m_verticesinfo[(tile.second.y - rect.top) * m_width + (tile.second.x - rect.left)] = std::make_tuple(&va, j, 255.f);
 		}
 	}
 
@@ -249,7 +256,34 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 
 void DrawableTilesGroup::update(float etime)
 {
-
+	for(unsigned int t = 0; t < m_visibility.size(); t++)
+	{
+		if(!std::get<0>(m_verticesinfo[t]))
+			continue;
+		//Get the tile info (vertices & light)
+		sf::VertexArray &va = *std::get<0>(m_verticesinfo[t]);
+		unsigned int firstv = std::get<1>(m_verticesinfo[t]);
+		float &light = std::get<2>(m_verticesinfo[t]);
+		//If the tile is visible, increase its tile
+		if(m_visibility[t])
+		{
+			m_visibility[t] = false;
+			light += LIGHT_CHANGE_SPEED * etime;
+			if(light > 255.f)
+				light = 255.f;
+		}
+		//If it's not, decrease the light
+		else
+		{
+			light -= LIGHT_CHANGE_SPEED * etime;
+			if(light < MIN_LIGHT)
+				light = MIN_LIGHT;
+		}
+		//Apply the light
+		sf::Color color(light, light, light);
+		for(unsigned i = 0; i < 4; i++)
+			va[firstv + i].color = color;
+	}
 }
 
 void DrawableTilesGroup::draw(sf::RenderWindow &window)
@@ -261,4 +295,9 @@ void DrawableTilesGroup::draw(sf::RenderWindow &window)
 std::list<DrawableWall> &DrawableTilesGroup::getWalls()
 {
 	return m_walls;
+}
+
+void DrawableTilesGroup::setTileVisible(unsigned int localx, unsigned int localy)
+{
+	m_visibility[localy * m_width + localx] = true;
 }
