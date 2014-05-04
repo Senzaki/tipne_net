@@ -3,8 +3,8 @@
 #include "BasisChange.hpp"
 #include <iostream>
 
-static const float LIGHT_CHANGE_SPEED = 200.f;
-static const float MIN_LIGHT = 100.f;
+static const float LIGHT_CHANGE_SPEED = 300.f;
+static const float MIN_LIGHT = 50.f;
 
 //Index is Tile::appearance
 static const unsigned int TILE_INFO_SIZE = 0xf;
@@ -134,6 +134,7 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 	const unsigned int depths = m_width + height - 1;
 	m_visibility.resize(m_width * height, false);
 	m_verticesinfo.resize(m_width * height, std::make_tuple(nullptr, 0, 255.f));
+	m_wallsongrid.resize(m_width * height);
 	//Fill an array with the tiles
 	std::vector<TileSortInfo> tiles;
 	tiles.reserve(m_width * height);
@@ -158,6 +159,7 @@ bool DrawableTilesGroup::loadTiles(const Map &map, const sf::Rect<unsigned int> 
 				//It is a wall, so it is already added !
 				tiles.push_back({tile, true, sf::Vector2u(x, y)});
 				m_walls.emplace_back(sf::Vector2u(x, y), tile->appearance);
+				m_wallsongrid[(y - rect.top) * m_width + (x - rect.left)].emplace_back(&m_walls.back());
 			}
 		}
 	}
@@ -258,11 +260,7 @@ void DrawableTilesGroup::update(float etime)
 {
 	for(unsigned int t = 0; t < m_visibility.size(); t++)
 	{
-		if(!std::get<0>(m_verticesinfo[t]))
-			continue;
 		//Get the tile info (vertices & light)
-		sf::VertexArray &va = *std::get<0>(m_verticesinfo[t]);
-		unsigned int firstv = std::get<1>(m_verticesinfo[t]);
 		float &light = std::get<2>(m_verticesinfo[t]);
 		//If the tile is visible, increase its tile
 		if(m_visibility[t])
@@ -281,8 +279,15 @@ void DrawableTilesGroup::update(float etime)
 		}
 		//Apply the light
 		sf::Color color(light, light, light);
-		for(unsigned i = 0; i < 4; i++)
-			va[firstv + i].color = color;
+		if(std::get<0>(m_verticesinfo[t]))
+		{
+			sf::VertexArray &va = *std::get<0>(m_verticesinfo[t]);
+			unsigned int firstv = std::get<1>(m_verticesinfo[t]);
+			for(unsigned i = 0; i < 4; i++)
+				va[firstv + i].color = color;
+		}
+		for(DrawableWall *wall : m_wallsongrid[t])
+			wall->setLight(color);
 	}
 }
 

@@ -38,6 +38,7 @@ class DrawableTilesGroup
 	std::vector<std::tuple<sf::VertexArray *, unsigned int, float>> m_verticesinfo;
 	unsigned int m_width;
 	std::list<DrawableWall> m_walls;
+	std::vector<std::list<DrawableWall *>> m_wallsongrid;
 };
 
 #endif // DRAWABLETILESGROUP_HPP_INCLUDED

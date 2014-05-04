@@ -40,6 +40,11 @@ DrawableWall::~DrawableWall()
 
 }
 
+void DrawableWall::setLight(const sf::Color &color)
+{
+	m_sprite.setColor(color);
+}
+
 float DrawableWall::getDepth() const
 {
 	return m_depth;
