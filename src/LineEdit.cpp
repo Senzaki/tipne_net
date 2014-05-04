@@ -8,6 +8,7 @@ static constexpr const unsigned int LINEEDIT_HEIGHT = 15;
 LineEdit::LineEdit(Widget *parent, float width, std::function<void(std::string)> callback):
 	Widget(parent),
 	m_inputison(false),
+	m_drawcursor(false),
 	m_maxchar(0),
 	m_positioncursor(0),
 	m_width(width),
@@ -58,8 +59,24 @@ std::string LineEdit::getString() const
 void LineEdit::draw(sf::RenderWindow &window)
 {
 	window.draw(m_text);
-	if(m_inputison)
+	if(m_drawcursor)
 		window.draw(m_cursor);
+}
+
+void LineEdit::update(float etime)
+{
+	static float time(0);
+	if(m_inputison)
+	{
+		time += etime;
+		if(time > 0.5)
+		{
+			m_drawcursor = !m_drawcursor;
+			time = 0;
+		}
+	}
+	else
+		m_drawcursor = false;
 }
 
 void LineEdit::onPositionChanged()

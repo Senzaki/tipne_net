@@ -17,6 +17,7 @@ class LineEdit : public Widget
 	std::string getString() const;
 
 	virtual void draw(sf::RenderWindow &window);
+	virtual void update(float etime);
 
 	protected:
 	virtual void onPositionChanged();
@@ -27,6 +28,7 @@ class LineEdit : public Widget
 	private:
 	void updateCursor();
 	bool m_inputison;
+	bool m_drawcursor;
 	unsigned int m_maxchar; //0 if not needed
 	unsigned int m_positioncursor;
 	float m_width;
