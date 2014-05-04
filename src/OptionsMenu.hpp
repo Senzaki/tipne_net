@@ -31,6 +31,7 @@ class OptionsMenu : public Widget
 	void setWidgetsPosition();
 	void setDefaultValues();
 	void saveOptions();
+	void cancel();
 	void getAvailablesVideoModes();
 	void changeVideoMode(int direction);
 	void changeLanguage(int direction);

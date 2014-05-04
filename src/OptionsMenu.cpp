@@ -13,7 +13,7 @@ OptionsMenu::OptionsMenu(Widget *parent, std::function<void()> callback):
 	m_fullscreen(new CheckBox(this)),
 	m_videomode(new Label(this)),
 	m_lang(new Label(this)),
-	m_cancel(new Button(this, tr("cancel"), callback)),
+	m_cancel(new Button(this, tr("cancel"), std::bind(&OptionsMenu::cancel, this))),
 	m_save(new Button(this, tr("save"), std::bind(&OptionsMenu::saveOptions, this))),
 	m_curvmode(0),
 	m_curlang(0)
@@ -24,6 +24,7 @@ OptionsMenu::OptionsMenu(Widget *parent, std::function<void()> callback):
 	//TEMP
 	m_langs.push_back("en");
 	m_langs.push_back("fr");
+
 
 	//Labels
 	m_labels[OPTIONS_NAME] = new Label(this, tr("name"));
@@ -50,7 +51,7 @@ OptionsMenu::~OptionsMenu()
 
 void OptionsMenu::setWidgetsPosition()
 {
-	float interval = (getSize().y - 200.f) / OPTIONS_LABEL_COUNT;
+	const float interval = (getSize().y - 200.f) / OPTIONS_LABEL_COUNT;
 	for (int i = 0 ; i < OPTIONS_LABEL_COUNT ; i++)
 		m_labels[i]->setPosition((getSize().x - m_labels[i]->getSize().x) / 2.f - getSize().x / 4.f, 100.f + i * interval);
 
@@ -79,7 +80,7 @@ void OptionsMenu::setDefaultValues()
 	std::ostringstream oss;
 	oss << Config::getInstance().width << "x" << Config::getInstance().height;
 	m_videomode->setString(oss.str());
-	m_lang->setString(tr(Config::getInstance().lang));
+	m_lang->setString(tr("language_name"));
 
 	//Define m_curlang
 	while(Config::getInstance().lang != m_langs[m_curlang] && m_curlang < (int)m_langs.size() - 1)
@@ -111,6 +112,17 @@ void OptionsMenu::saveOptions()
 	}
 }
 
+void OptionsMenu::cancel()
+{
+	//Reload the adequate packages of translation
+	Translator::getInstance().loadPackage("base");
+	Translator::getInstance().loadPackage("menu");
+	if(m_callback)
+	{
+		m_callback();
+	}
+}
+
 void OptionsMenu::changeVideoMode(int direction)
 {
 	if(!((m_curvmode == 0 && direction == -1) || (m_curvmode == (int)m_vmodes.size() - 1 && direction == 1)))
@@ -124,14 +136,37 @@ void OptionsMenu::changeVideoMode(int direction)
 
 void OptionsMenu::changeLanguage(int direction)
 {
-
 	if(m_curlang == 0 && direction == -1)
 		m_curlang = m_langs.size() - 1;
 	else if(m_curlang == (int)m_langs.size() - 1 && direction == 1)
 		m_curlang = 0;
 	else
 		m_curlang += direction;
-	m_lang->setString(tr(m_langs[m_curlang]));
+	//Temp string to keep the lang if the save button is not pressed
+	std::string temp(Config::getInstance().lang);
+	Config::getInstance().lang = m_langs[m_curlang];
+
+	//Load the new packages
+	Translator::getInstance().loadPackage("base");
+	Translator::getInstance().loadPackage("menu");
+
+	//update strings
+	m_lang->setString(tr("language_name"));
+	m_labels[OPTIONS_NAME]->setString(tr("name"));
+	m_labels[OPTIONS_VIDEOMODE]->setString(tr("videomode"));
+	m_labels[OPTIONS_VSYNC]->setString(tr("vsync"));
+	m_labels[OPTIONS_FULLSCREEN]->setString(tr("fullscreen"));
+	m_labels[OPTIONS_LANG]->setString(tr("lang"));
+	m_save->setText(tr("save"));
+	m_cancel->setText(tr("cancel"));
+
+	//move the buttons to avoid a display bug
+	const float interval = (getSize().y - 200.f) / OPTIONS_LABEL_COUNT;
+	m_save->setPosition(getSize().x / 3.f, getSize().y - interval);
+	m_cancel->setPosition(2 * getSize().x / 3.f, getSize().y - interval);
+
+	//Reset the language
+	Config::getInstance().lang = temp;
 }
 
 void OptionsMenu::getAvailablesVideoModes()
