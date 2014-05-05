@@ -4,6 +4,7 @@
 #include "Map.hpp"
 #include "Character.hpp"
 #include "Player.hpp"
+#include <list>
 
 class SimulatorStateListener
 {
@@ -14,6 +15,7 @@ class SimulatorStateListener
 	virtual void onNewCharacter(Character &character) { }
 	virtual void onCharacterRemoved(Character &character) { }
 	virtual void onMapLoaded(const Map &map) { }
+	virtual void onVisibleEntitiesChanged(std::list<sf::Uint16> &&characters) { }
 };
 
 #endif // SIMULATORSTATELISTENER_HPP_INCLUDED

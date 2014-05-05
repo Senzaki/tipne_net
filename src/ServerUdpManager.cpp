@@ -47,8 +47,13 @@ void ServerUdpManager::update(float etime)
 	{
 		m_lastsnapshot = 0.f;
 		sf::Packet packet;
-		m_simulator.buildSnapshotPacket(packet);
-		sendToAll(packet);
+		//Build & send a snapshot to each player
+		for(const std::pair<PlayerInfo, sf::Uint8> &player : m_playersinfo)
+		{
+			m_simulator.buildSnapshotPacket(packet, player.second);
+			m_socket.send(packet, player.first.address, player.first.port);
+			packet.clear();
+		}
 	}
 
 	//Treat the packets

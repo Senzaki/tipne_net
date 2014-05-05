@@ -31,6 +31,7 @@ class GameScreen : public SimulatorStateListener
 	virtual void onNewCharacter(Character &character);
 	virtual void onCharacterRemoved(Character &character);
 	virtual void onMapLoaded(const Map &map);
+	virtual void onVisibleEntitiesChanged(std::list<sf::Uint16> &&characters);
 
 	private:
 	void updateDirection();
@@ -47,6 +48,7 @@ class GameScreen : public SimulatorStateListener
 	DrawableMap m_map;
 
 	std::unordered_map<sf::Uint16, DrawableCharacter> m_characters;
+	std::list<sf::Uint16> m_visiblecharacters;
 };
 
 #endif // GAMESCREEN_HPP_INCLUDED

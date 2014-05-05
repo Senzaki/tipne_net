@@ -9,7 +9,7 @@ class DrawableWall : public DrawableEntity
 	DrawableWall(const sf::Vector2u &position, sf::Uint16 appearance);
 	virtual ~DrawableWall();
 
-	void update(float etime);
+	void setLight(const sf::Color &color);
 
 	virtual float getDepth() const;
 	virtual bool isContainedIn(const sf::FloatRect &rect) const;

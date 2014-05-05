@@ -39,7 +39,6 @@ bool ServerSimulator::update(float etime)
 	m_udpmgr.update(etime);
 	//Examine network info
 	//First, new connections
-	//m_acceptedplayers.foreach(std::bind(&ServerSimulator::acceptNewPlayer, this, _1));
 	m_acceptedplayers.foreach([this](std::tuple<sf::IpAddress, unsigned short, Player> &newplayer)
 	{
 		acceptNewPlayer(std::get<0>(newplayer), std::get<1>(newplayer), std::get<2>(newplayer));
@@ -59,16 +58,34 @@ bool ServerSimulator::update(float etime)
 	});
 	m_disconnectedplayers.clear();
 
-	return GameSimulator::update(etime);
+	bool rc = GameSimulator::update(etime);
+	updateVisibility();
+	return rc;
 }
 
-void ServerSimulator::buildSnapshotPacket(sf::Packet &packet)
+void ServerSimulator::buildSnapshotPacket(sf::Packet &packet, sf::Uint8 playerid)
 {
-	//Put all the characters info in the packet
-	const std::unordered_map<sf::Uint16, Character> &characters = getCharacters();
-	packet << (sf::Uint8)UdpPacketType::Snapshot << (sf::Uint16)characters.size();
-	for(const std::pair<const sf::Uint16, Character> &character : characters)
-		packet << (sf::Uint16)character.first << (float)character.second.getPosition().x << (float)character.second.getPosition().y;
+	packet << (sf::Uint8)UdpPacketType::Snapshot;
+	Character *viewer = m_playerschars.at(playerid);
+	if(viewer)
+	{
+		//Get visible characters & add them to the packet
+		std::list<CollisionObject *> visible;
+		getObjectsVisibleFrom(viewer, visible);
+		for(CollisionObject *object : visible)
+		{
+			if(object->getEntityType() == CollisionEntityType::Character)
+			{
+				const Character *character = static_cast<const Character *>(object->getEntity());
+				packet << character->getId()
+				       << (float)character->getPosition().x << (float)character->getPosition().y
+				       << (float)character->getDirection().x << (float)character->getDirection().y;
+			}
+		}
+		packet << NO_CHARACTER_ID;//End of packet
+	}
+	else
+		packet << NO_CHARACTER_ID;//End of packet (no content)
 }
 
 bool ServerSimulator::loadMap(const std::string &mapname)
@@ -165,14 +182,6 @@ void ServerSimulator::stopNetThread()
 		});
 		m_receivedpackets.clear();
 	}
-}
-
-void ServerSimulator::onCharacterSpeedChanged(Character &character, const sf::Vector2f &speed)
-{
-	//The "moving state" has changed, tell all the clients.
-	sf::Packet packet;
-	packet << (sf::Uint8)PacketType::SetDirection << (sf::Uint16)character.getId() << (float)speed.x << (float)speed.y;
-	sendToAllPlayers(packet);
 }
 
 void ServerSimulator::netThread()
@@ -595,4 +604,22 @@ bool ServerSimulator::playerNameExists(const std::string &name) const
 			return true;
 	}
 	return false;
+}
+
+void ServerSimulator::updateVisibility()
+{
+	if(!(getOwnCharacter() && m_statelistener))
+		return;
+	std::list<CollisionObject *> visible;
+	std::list<sf::Uint16> characters;
+	//Get visible objects
+	getObjectsVisibleFrom(getOwnCharacter(), visible);
+	//Add the id of each object into a list
+	for(CollisionObject *object : visible)
+	{
+		if(object->getEntityType() == CollisionEntityType::Character)
+			characters.emplace_back(static_cast<Character *>(object->getEntity())->getId());
+	}
+	//Send the list to the state listener
+	m_statelistener->onVisibleEntitiesChanged(std::move(characters));
 }

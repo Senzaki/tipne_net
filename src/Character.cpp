@@ -151,9 +151,12 @@ void Character::setDirection(sf::Vector2f direction)
 		m_direction = direction;
 		if(m_fullysimulated)
 			m_colobj.setSpeed(m_direction * DEFAULT_SPEED);
-		if(m_simulator)
-			m_simulator->onCharacterSpeedChanged(*this, direction);
 	}
+}
+
+sf::Vector2f Character::getDirection() const
+{
+	return m_direction;
 }
 
 void Character::setPosition(float x, float y)

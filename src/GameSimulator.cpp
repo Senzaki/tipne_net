@@ -6,11 +6,11 @@
 
 GameSimulator::GameSimulator(bool fullsimulator, float interpolationtime):
 	m_ownid(NEUTRAL_PLAYER),
+	m_statelistener(nullptr),
 	m_interpolationtime(interpolationtime),
 	m_fullsimulator(fullsimulator),
 	m_colmgr(nullptr),
-	m_owncharacter(nullptr),
-	m_statelistener(nullptr)
+	m_owncharacter(nullptr)
 {
 
 }
@@ -223,6 +223,12 @@ bool GameSimulator::setOwnCharacter(sf::Uint16 id)
 		}
 	}
 	return true;
+}
+
+void GameSimulator::getObjectsVisibleFrom(Character *viewer, std::list<CollisionObject *> &visible)
+{
+	sf::Vector2f pos = viewer->getPosition();
+	m_colmgr->getObjectsVisibleFrom(pos.x, pos.y, visible);
 }
 
 void GameSimulator::setStateListener(SimulatorStateListener *listener)

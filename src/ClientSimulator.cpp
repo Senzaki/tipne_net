@@ -183,33 +183,48 @@ void ClientSimulator::selfSetDirection(const sf::Vector2f &direction)
 
 bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
 {
-	//How many characters ?
-	sf::Uint16 characterscount;
-	if(!(packet >> characterscount))
-	{
-		std::cerr << "Error in snapshot packet1." << std::endl;
-		return false;
-	}
 	//Extract all characters info
 	sf::Uint16 charid;
 	float x, y;
-	for(sf::Uint16 i = 0; i < characterscount; i++)
+	sf::Vector2f direction;
+	std::list<sf::Uint16> visiblechars;
+	//Extract id
+	if(!(packet >> charid))
 	{
-		if(!(packet >> charid >> x >> y))
+		std::cerr << "Error in snapshot packet." << std::endl;
+		return false;
+	}
+	//All characters info until NO_CHARACTED_ID
+	while(charid != NO_CHARACTER_ID)
+	{
+		//Extract info
+		if(!(packet >> x >> y >> direction.x >> direction.y))
 		{
-			std::cerr << "Error in snapshot packet2." << std::endl;
+			std::cerr << "Error in snapshot packet." << std::endl;
 			return false;
 		}
 		try
 		{
 			//Apply modifications to character if it exists
-			getCharacter(charid).setPosition(x, y);
+			Character &character = getCharacter(charid);
+			character.setPosition(x, y);
+			character.setDirection(direction);
+			//Add it to the visible characters list
+			visiblechars.emplace_back(charid);
 		}
 		catch(const std::out_of_range &e)
 		{
 
 		}
+		//Extract next id
+		if(!(packet >> charid))
+		{
+			std::cerr << "Error in snapshot packet." << std::endl;
+			return false;
+		}
 	}
+	if(m_statelistener)
+		m_statelistener->onVisibleEntitiesChanged(std::move(visiblechars));
 	return true;
 }
 

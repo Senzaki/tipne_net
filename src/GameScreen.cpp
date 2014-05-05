@@ -31,15 +31,6 @@ bool GameScreen::update(float etime)
 	//Update the simulator (and return false if the simulation is over)
 	if(m_simulator)
 		toreturn = m_simulator->update(etime);
-	//Update the graphical entities
-	m_map.update(etime, m_seen);
-	for(std::pair<const sf::Uint16, DrawableCharacter> &character : m_characters)
-		character.second.update(etime);
-	return toreturn;
-}
-
-void GameScreen::draw(sf::RenderWindow &window)
-{
 	//Update the camera
 	const Character *player = static_cast<const GameSimulator *>(m_simulator)->getOwnCharacter();
 	if(player)
@@ -48,7 +39,18 @@ void GameScreen::draw(sf::RenderWindow &window)
 		m_camera.setCenter(camcenter);
         m_seen.left = camcenter.x - m_seen.width / 2.f;
         m_seen.top = camcenter.y - m_seen.height / 2.f;
+		m_map.update(etime, true, player->getPosition());
 	}
+	else
+		m_map.update(etime);
+	//Update the graphical entities
+	for(std::pair<const sf::Uint16, DrawableCharacter> &character : m_characters)
+		character.second.update(etime);
+	return toreturn;
+}
+
+void GameScreen::draw(sf::RenderWindow &window)
+{
 	//Save the old view and use the game camera
 	sf::View oldview = window.getView();
 	window.setView(m_camera);
@@ -57,10 +59,18 @@ void GameScreen::draw(sf::RenderWindow &window)
 	//Draw the map & add map entities to thez list
 	m_map.draw(window, m_seen, todraw);
 	//Add the characters to the list
-	for(std::pair<const sf::Uint16, DrawableCharacter> &character : m_characters)
+	for(sf::Uint16 id : m_visiblecharacters)
 	{
-		if(character.second.isContainedIn(m_seen))
-			todraw.emplace_back(&character.second);
+		try
+		{
+			DrawableCharacter *character = &m_characters.at(id);
+			if(character->isContainedIn(m_seen))
+				todraw.emplace_back(character);
+		}
+		catch(const std::out_of_range &)
+		{
+
+		}
 	}
 	//Sort the entities by depth
 	todraw.sort(DrawableEntity::isDepthLower);
@@ -227,4 +237,9 @@ void GameScreen::updateDirection()
 {
 	if(m_simulator)
 		m_simulator->selfSetDirection(BasisChange::pixelToGrid(m_direction));
+}
+
+void GameScreen::onVisibleEntitiesChanged(std::list<sf::Uint16> &&characters)
+{
+	m_visiblecharacters = std::move(characters);
 }
