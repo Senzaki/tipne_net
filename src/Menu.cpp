@@ -148,16 +148,16 @@ void Menu::showConnectMenu()
 	Button *connect = new Button(topwidget, tr("connect"), std::bind(&Menu::connect, this, ipaddress, tcpport, udpport));
 
 	//Set default values in line edits
-	if(Config::getInstance().server_tcpport != DEFAULT_TCP_PORT)
+	if(Config::getInstance().connectto_tcpport != DEFAULT_TCP_PORT)
 	{
 		std::ostringstream oss;
-		oss << Config::getInstance().server_tcpport;
+		oss << Config::getInstance().connectto_tcpport;
 		tcpport->setString(oss.str());
 	}
-	if(Config::getInstance().server_udpport != DEFAULT_UDP_PORT)
+	if(Config::getInstance().connectto_udpport != DEFAULT_UDP_PORT)
 	{
 		std::ostringstream oss;
-		oss << Config::getInstance().server_udpport;
+		oss << Config::getInstance().connectto_udpport;
 		udpport->setString(oss.str());
 	}
 	ipaddress->setString(Config::getInstance().connectto_ip);
