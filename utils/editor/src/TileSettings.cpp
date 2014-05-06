@@ -48,7 +48,6 @@ Tile TileSettings::getUpdatedTile()
 	iss.str(this->m_appearence->getString());
 	iss >> std::hex >> code;
 
-	std::cout << code;
 	tile.appearance = code;
 
 	tile.passable = this->m_passable->isChecked();

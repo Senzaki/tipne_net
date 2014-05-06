@@ -4,7 +4,7 @@
 #include <iostream>
 
 static const float LIGHT_CHANGE_SPEED = 300.f;
-static const float MIN_LIGHT = 50.f;
+static const float MIN_LIGHT = 100.f;
 
 //Index is Tile::appearance
 static const unsigned int TILE_INFO_SIZE = 0xf;

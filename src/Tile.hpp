@@ -12,6 +12,16 @@ struct Tile
 	{
 		return sizeof(sf::Uint8)/*passable*/ + sizeof(sf::Uint16)/*appearance*/;
 	}
+
+	bool operator==(const Tile &other) const
+	{
+		return other.passable == passable && other.appearance == appearance;
+	}
+
+	bool operator!=(const Tile &other) const
+	{
+		return !(*this == other);
+	}
 };
 
 BinaryFile &operator>>(BinaryFile &file, Tile &tile);

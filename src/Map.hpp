@@ -38,6 +38,9 @@ class Map
 	bool save(const std::string &name);
 
 	private:
+	//For the editor
+	void computeVisibilityMap();
+
 	bool m_loaded;
 	std::string m_name;
 	std::vector<Tile> m_tiles;

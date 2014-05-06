@@ -6,7 +6,10 @@
 #include "BasisChange.hpp"
 #include <iostream>
 
-EdApplication::EdApplication() : m_window(sf::VideoMode(1024, 768), "Editor Window", sf::Style::Close), m_guimgr(m_window)
+EdApplication::EdApplication():
+	m_window(sf::VideoMode(1550, 850), "Editor Window", sf::Style::Close),
+	m_guimgr(m_window),
+	m_pasting(false)
 {
 	ResourceManager::getInstance().loadSection(ResourceSection::Base);
 	ResourceManager::getInstance().loadSection(ResourceSection::Map);
@@ -37,8 +40,8 @@ int EdApplication::execute(int argc, char **argv)
 	//Create the view
 	m_rect.top = 0;
 	m_rect.left = 0;
-	m_rect.width = 1024;
-	m_rect.height = 768;
+	m_rect.width = 1550;
+	m_rect.height = 850;
 
 	sf::View view(m_rect);
 
@@ -100,7 +103,7 @@ int EdApplication::execute(int argc, char **argv)
 						else if(evt.key.code == sf::Keyboard::S)
 						{
 							std::string savename(" ");
-							std::cout << "write a name for this map :" << std::endl;
+							std::cout << "Write a name for this map :" << std::endl;
 							std::cin >> savename;
 							m_map.save(savename);
 						}
@@ -119,23 +122,24 @@ int EdApplication::execute(int argc, char **argv)
 					if(!m_guimgr.onMouseButtonPressed(evt.mouseButton))
 					{
 						if(evt.mouseButton.button == sf::Mouse::Left)
+						{
 							if((BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).x > 0) && (BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).y > 0)) //This condition is to be sure the user clicked on a tile
 							{
 								tilecoords = BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top);
 								m_tsettings->setTile(m_map.getTile(tilecoords.x, tilecoords.y)); //Will show the informations about the selected tile
 							}
-						if(evt.mouseButton.button == sf::Mouse::Right)
-						{
-							//m_map.setTile(BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).x, BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top).y, m_tsettings->getUpdatedTile());
-							tilecoords = BasisChange::pixelToGrid(evt.mouseButton.x + m_rect.left, evt.mouseButton.y + m_rect.top);
-							m_map.setTile(tilecoords.x, tilecoords.y, m_tsettings->getUpdatedTile());
-							m_dmap.setMap(m_map);
 						}
+						else if(evt.mouseButton.button == sf::Mouse::Right)
+							m_pasting = true;
 					}
 					break;
 
 				case sf::Event::MouseButtonReleased:
-					m_guimgr.onMouseButtonReleased(evt.mouseButton);
+					if(!m_guimgr.onMouseButtonReleased(evt.mouseButton))
+					{
+						if(evt.mouseButton.button == sf::Mouse::Right)
+							m_pasting = false;
+					}
 					break;
 
 				case sf::Event::MouseMoved:
@@ -150,6 +154,17 @@ int EdApplication::execute(int argc, char **argv)
 					break;
 			}
 		}
+
+		if(m_pasting)
+		{
+			tilecoords = BasisChange::pixelToGrid(sf::Mouse::getPosition(m_window).x + m_rect.left, sf::Mouse::getPosition(m_window).y + m_rect.top);
+			if(m_map.getTile(tilecoords.x, tilecoords.y) != m_tsettings->getUpdatedTile())
+			{
+				m_map.setTile(tilecoords.x, tilecoords.y, m_tsettings->getUpdatedTile());
+				m_dmap.setMap(m_map);
+			}
+		}
+
 		m_window.clear(sf::Color::Black);
 		m_window.setView(view);
 

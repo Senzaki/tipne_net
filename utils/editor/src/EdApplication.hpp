@@ -27,6 +27,7 @@ class EdApplication
 	GUIManager m_guimgr;
 	bool m_running;
 	TileSettings *m_tsettings;
+	bool m_pasting;
 };
 
 #endif // EDAPPLICATION_HPP_INCLUDED

@@ -1,5 +1,6 @@
 #include "Map.hpp"
 #include "BinaryFile.hpp"
+#include "FOVComputer.hpp"
 #include <algorithm>
 #include <iostream>
 
@@ -144,6 +145,7 @@ void Map::setTile(unsigned int x, unsigned int y, const Tile &tile)
 
 bool Map::save(const std::string &name)
 {
+	std::cout << "Saving map..." << std::endl;
 	const std::string filename = MAP_PREFIX + name + MAP_SUFFIX;
 	//Open the map file
 	BinaryFile file(filename.c_str(), std::ios::out);
@@ -152,7 +154,8 @@ bool Map::save(const std::string &name)
 		std::cerr << "Cannot open map file " << filename << " for writing." << std::endl;
 		return false;
 	}
-
+	//Update visibility map
+	computeVisibilityMap();
 	//Append size
 	file << (sf::Uint16)m_size.x << (sf::Uint16)m_size.y;
 	//Append tiles
@@ -170,5 +173,35 @@ bool Map::save(const std::string &name)
 		return false;
 	}
 	file.close();
+	std::cout << "Done." << std::endl;
 	return true;
+}
+
+void Map::computeVisibilityMap()
+{
+	std::cout << "Computing visibility map..." << std::endl;
+	std::list<sf::Vector2u> visibletiles;
+	FOVComputer fov(*this, visibletiles);
+	for(unsigned int i = 0; i < m_size.x; i++)
+	{
+		if(i == m_size.x / 4)
+			std::cout << "25%" << std::endl;
+		if(i == m_size.x / 2)
+			std::cout << "50%" << std::endl;
+		if(i == m_size.x * 3 / 4)
+			std::cout << "75%" << std::endl;
+		for(unsigned int j = 0; j < m_size.y; j++)
+		{
+			//Compute the fov for this tile (will be stored in visibletiles)
+			fov(i, j);
+			//Update the visibility map for this tile
+			std::vector<sf::Vector2u> &visible = m_visibilitymap[j * m_size.x + i];
+			std::vector<sf::Vector2u>().swap(visible);
+			visible.reserve(visibletiles.size());
+			for(const sf::Vector2u &tile : visibletiles)
+				visible.emplace_back(tile);
+			visibletiles.clear();
+		}
+	}
+	std::cout << "100%" << std::endl;
 }

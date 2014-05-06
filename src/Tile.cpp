@@ -10,6 +10,6 @@ BinaryFile &operator>>(BinaryFile &file, Tile &tile)
 
 BinaryFile &operator<<(BinaryFile &file, const Tile &tile)
 {
-	file << tile.passable << tile.appearance;
+	file << (sf::Uint8)tile.passable << (sf::Uint16)tile.appearance;
 	return file;
 }
