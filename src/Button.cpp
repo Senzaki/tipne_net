@@ -2,8 +2,8 @@
 #include "ResourceManager.hpp"
 
 static constexpr const unsigned int BUTTON_FONT_SIZE = 12;
-static constexpr const unsigned int BUTTON_LEFT_BORDER_WIDTH = 5;
-static constexpr const unsigned int BUTTON_RIGHT_BORDER_WIDTH = 5;
+static constexpr const unsigned int BUTTON_LEFT_BORDER_WIDTH = 54;
+static constexpr const unsigned int BUTTON_RIGHT_BORDER_WIDTH = 54;
 
 Button::Button(Widget *parent, std::function<void()> callback):
 	Widget(parent),
@@ -90,7 +90,7 @@ bool Button::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 		m_clicked = true;
 		//Set "clicked" appearance
 		m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_CLICKED_TEX);
-		m_text.setColor(sf::Color::Black);
+		m_text.setColor(sf::Color::White);
 
 		return true;
 	}
@@ -109,7 +109,7 @@ bool Button::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
 		m_clicked = false;
 		//Set "highlighted" appearance
 		m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_HIGHLIGHTED_TEX);
-		m_text.setColor(sf::Color::Black);
+		m_text.setColor(sf::Color::White);
 
 		return true;
 	}
@@ -121,7 +121,7 @@ void Button::onMouseEntered(const sf::Event::MouseMoveEvent &evt)
 	Widget::onMouseEntered(evt);
 	//Set "highlighted" appearance
 	m_rdstates.texture = &ResourceManager::getInstance().getTexture(ResourceSection::Base, Resource::BUTTON_HIGHLIGHTED_TEX);
-	m_text.setColor(sf::Color::Black);
+	m_text.setColor(sf::Color::White);
 }
 
 void Button::onMouseLeft()
