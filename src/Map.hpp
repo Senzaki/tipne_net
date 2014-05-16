@@ -33,6 +33,8 @@ class Map
 
 	operator bool() const;
 
+	static bool isAppearanceLightBlocking(sf::Uint16 appearance);
+
 	//For the editor
 	void setTile(unsigned int x, unsigned int y, const Tile &tile);
 	bool save(const std::string &name);

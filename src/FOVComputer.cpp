@@ -96,7 +96,7 @@ void FOVComputer::castLight(unsigned int row, float startslope, float endslope)
 			if(blocked)
 			{
 				//This one as well ?
-				if(m_map.getTile(curx, cury).appearance >= FIRST_WALL_APPEARANCE)
+				if(Map::isAppearanceLightBlocking(m_map.getTile(curx, cury).appearance))
 				{
 
 					nextstartslope = rslope;
@@ -109,7 +109,7 @@ void FOVComputer::castLight(unsigned int row, float startslope, float endslope)
 				}
 			}
 			//Cell blocking with non-blocking cells before ?
-			else if(m_map.getTile(curx, cury).appearance >= FIRST_WALL_APPEARANCE)
+			else if(Map::isAppearanceLightBlocking(m_map.getTile(curx, cury).appearance))
 			{
 				blocked = true;
 				castLight(distance + 1, startslope, lslope);

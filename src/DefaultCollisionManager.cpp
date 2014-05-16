@@ -137,13 +137,16 @@ void DefaultCollisionManager::updateObject(CollisionObject *object)
 
 void DefaultCollisionManager::getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) const
 {
-	for(const std::pair<CollisionObject *, sf::Vector2f> &object : m_tilescontent[y * m_mapwidth + x])
-		objects.emplace_back(object.first);
+	//Add all the objects in visible tiles
 	const std::vector<sf::Vector2u> &visibletiles = m_map.getTilesVisibleFrom(x, y);
-	for(unsigned int i = 0; i < visibletiles.size(); i++)
+	for(const sf::Vector2u &tilecoords : visibletiles)
 	{
-		for(const std::pair<CollisionObject *, sf::Vector2f> &object : m_tilescontent[visibletiles[i].y * m_mapwidth + visibletiles[i].x])
-			objects.emplace_back(object.first);
+		//Do not add object from light-blocking tiles
+		if(!Map::isAppearanceLightBlocking(m_map.getTile(tilecoords.x, tilecoords.y).appearance))
+		{
+			for(const std::pair<CollisionObject *, sf::Vector2f> &object : m_tilescontent[tilecoords.y * m_mapwidth + tilecoords.x])
+				objects.emplace_back(object.first);
+		}
 	}
 	std::unique(objects.begin(), objects.end());
 }

@@ -81,14 +81,16 @@ bool Map::load(const std::string &name)
 				std::cerr << "Error while loading map file " << filename << " : Tiles data section incomplete." << std::endl;
 				return false;
 			}
-			//Read the visible tiles for this tile
+			//Read the visible tiles count for this tile
 			if(!(file >> visibletilescount))
 			{
 				std::cerr << "Error while loading map file " << filename << " : Visibility map data section incomplete." << std::endl;
 				return false;
 			}
 			m_visibilitymap[i].resize(visibletilescount + 1);
+			//Always add the current tile to the visible tiles
 			m_visibilitymap[i][visibletilescount] = sf::Vector2u(i % m_size.x, i / m_size.x);
+			//Load the visible tiles
 			for(unsigned int j = 0; j < visibletilescount; j++)
 			{
 				if(!(file >> x >> y))
@@ -98,6 +100,7 @@ bool Map::load(const std::string &name)
 				}
 				m_visibilitymap[i][j] = sf::Vector2u(x, y);
 			}
+			//Make sure no tile appears twice in the list
 			std::unique(m_visibilitymap[i].begin(), m_visibilitymap[i].end());
 		}
 	}
@@ -136,6 +139,11 @@ const std::vector<sf::Vector2u> &Map::getTilesVisibleFrom(unsigned int x, unsign
 Map::operator bool() const
 {
 	return m_loaded;
+}
+
+bool Map::isAppearanceLightBlocking(sf::Uint16 appearance)
+{
+	return appearance >= FIRST_WALL_APPEARANCE;
 }
 
 void Map::setTile(unsigned int x, unsigned int y, const Tile &tile)

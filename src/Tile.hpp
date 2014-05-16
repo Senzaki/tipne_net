@@ -3,6 +3,8 @@
 
 #include "BinaryFile.hpp"
 
+static constexpr sf::Uint16 FIRST_WALL_APPEARANCE = 0x100;
+
 struct Tile
 {
 	bool passable;

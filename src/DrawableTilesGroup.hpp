@@ -6,8 +6,6 @@
 #include "Animator.hpp"
 #include <list>
 
-static constexpr sf::Uint16 FIRST_WALL_APPEARANCE = 0x100;
-
 struct GraphTileInfo
 {
 	unsigned int texture;
