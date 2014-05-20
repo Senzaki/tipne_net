@@ -33,7 +33,7 @@ class ServerSimulator : public GameSimulator
 
 	bool onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet &packet);
 
-	virtual bool removeCharacter(sf::Uint16 id);
+	virtual bool removeEntity(sf::Uint16 id);
 	bool playerNameExists(const std::string &name) const;
 
 	void updateVisibility();
@@ -43,7 +43,7 @@ class ServerSimulator : public GameSimulator
 
 	IDCreator<sf::Uint8> m_playersids;//Don't use it in main thread
 	sf::Uint8 m_maxplayers;
-	IDCreator<sf::Uint16> m_charactersids;//Don't use it in child thread
+	IDCreator<sf::Uint16> m_entitiesids;//Don't use it in child thread
 	std::unordered_map<sf::Uint8, Character *> m_playerschars;
 
 	sf::TcpListener m_listener;//Not locked

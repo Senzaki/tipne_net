@@ -6,7 +6,7 @@
 #include <cassert>
 #include "ServerUdpManager.hpp"
 
-//TODO: Check each received value (e.g. Does the id exist ? Is it different from NO_CHARACTER_ID ?)
+//TODO: Check each received value (e.g. Does the id exist ? Is it different from NO_ENTITY_ID ?)
 
 static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 
@@ -17,12 +17,12 @@ ServerSimulator::ServerSimulator(bool pure):
 	m_udpmgr(*this)
 {
 	m_playersids.reserveID(NEUTRAL_PLAYER);
-	m_charactersids.reserveID(NO_CHARACTER_ID);
+	m_entitiesids.reserveID(NO_ENTITY_ID);
 	//If it's not a pure server, add a player (this player)
 	if(!pure)
 	{
 		m_ownid = m_playersids.getNewID();
-		Character *self = addCharacter(m_charactersids.getNewID(), true, 0.f, m_ownid);
+		Character *self = addEntity<Character>(m_entitiesids.getNewID(), true, 0.f, m_ownid);
 		m_playerschars[addPlayer(m_ownid, Config::getInstance().name)->id] = self;
 		setOwnCharacter(self->getId());
 	}
@@ -74,18 +74,21 @@ void ServerSimulator::buildSnapshotPacket(sf::Packet &packet, sf::Uint8 playerid
 		getObjectsVisibleFrom(viewer, visible);
 		for(CollisionObject *object : visible)
 		{
-			if(object->getEntityType() == CollisionEntityType::Character)
+			if(object->getEntityType() == CollisionEntityType::Entity)
 			{
-				const Character *character = static_cast<const Character *>(object->getEntity());
-				packet << character->getId()
-				       << (float)character->getPosition().x << (float)character->getPosition().y
-				       << (float)character->getDirection().x << (float)character->getDirection().y;
+				const GameEntity *entity = static_cast<const GameEntity *>(object->getEntity());
+				if(const Character *character = reinterpret_cast<const Character *>(entity))
+				{
+					packet << character->getId()
+					       << (float)character->getPosition().x << (float)character->getPosition().y
+					       << (float)character->getDirection().x << (float)character->getDirection().y;
+				}
 			}
 		}
-		packet << NO_CHARACTER_ID;//End of packet
+		packet << NO_ENTITY_ID;//End of packet
 	}
 	else
-		packet << NO_CHARACTER_ID;//End of packet (no content)
+		packet << NO_ENTITY_ID;//End of packet (no content)
 }
 
 bool ServerSimulator::loadMap(const std::string &mapname)
@@ -423,15 +426,15 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 	packet << toaccept;
 	//Map name
 	packet << getMap().getName();
-	//Add all characters
-	const std::unordered_map<sf::Uint16, Character> &characters = getCharacters();
-	packet << (sf::Uint16)(characters.size() + 1);
-	for(const std::pair<const sf::Uint16, Character> &character : characters)
-		character.second.writeToPacket(packet, true);
+	//Add all entities
+	const std::unordered_map<sf::Uint16, GameEntity *> &entities = getEntities();
+	for(const std::pair<const sf::Uint16, GameEntity *> &entity : entities)
+		writeUnknownEntityInitData(entity.second, packet, true);
 	//Also add a character for this player (and tell the client this is his character)
-	Character newcharacter(m_charactersids.getNewID(), true, 0.f, toaccept.id);
-	newcharacter.writeToPacket(packet, false);
-	packet << (sf::Uint16)newcharacter.getId();
+	Character *newcharacter = addEntity<Character>(m_entitiesids.getNewID(), true, 0.f, toaccept.id);
+	writeUnknownEntityInitData(newcharacter, packet, false);
+	packet << (sf::Uint8)EntityType::None;//End of entities list
+	packet << (sf::Uint16)newcharacter->getId();
 	//Try to send it
 	sf::Socket::Status status;
 	if((status = sendToPlayer(toaccept.id, packet)) != sf::Socket::Done)
@@ -446,13 +449,13 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 		m_clientstoremove.emplaceBack(toaccept.id);
 		m_udpmgr.removePlayer(toaccept.id);
 		//Release the id of the character
-		m_charactersids.releaseID(newcharacter.getId());
+		removeEntity(newcharacter->getId());
 		return;
 	}
 	//Tell all the other players about the new character
 	packet.clear();
-	packet << (sf::Uint8)PacketType::NewCharacter;
-	newcharacter.writeToPacket(packet, true);
+	packet << (sf::Uint8)PacketType::NewEntity;
+	writeUnknownEntityInitData(newcharacter, packet, true);
 	sendToAllPlayers(packet);
 	//Tell all the other players a new player connected
 	packet.clear();
@@ -460,7 +463,7 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 	sendToAllPlayers(packet);
 	//Add the player & the character to the simulation
 	assert(!playerExists(toaccept.id));
-	m_playerschars[addPlayer(std::move(toaccept))->id] = addCharacter(std::move(newcharacter));
+	m_playerschars[addPlayer(std::move(toaccept))->id] = newcharacter;
 }
 
 void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &received)
@@ -472,6 +475,7 @@ void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &receiv
 #endif
 		return;
 	}
+	//Get the type of the packet
 	sf::Uint8 type;
 	sf::Packet &packet = *std::get<1>(received);
 	if(!(packet >> type))
@@ -481,6 +485,7 @@ void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &receiv
 		return;
 	}
 
+	//Handle the packet depending on its type
 	bool success = false;
 	switch(type)
 	{
@@ -492,6 +497,7 @@ void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &receiv
 			std::cerr << "Invalid packet type." << std::endl;
 			break;
 	}
+	//Not successful, disconnect the player...
 	if(!success)
 	{
 		std::cerr << "Invalid packet data. Disconnecting client." << std::endl;
@@ -507,20 +513,20 @@ void ServerSimulator::disconnectPlayer(sf::Uint8 id, sf::Uint8 reason)
 	{
 		m_udpmgr.removePlayer(id);
 		sf::Packet packet;
-		//Remove the characters that need to be removed
-		packet << (sf::Uint8)PacketType::RemoveCharacters;
+		//Remove the entities that need to be removed
+		packet << (sf::Uint8)PacketType::RemoveEntities;
 		bool removed = false;
-		const std::unordered_map<sf::Uint16, Character> &characters = getCharacters();
-		auto it = characters.begin();
-		while(it != characters.end())
+		const std::unordered_map<sf::Uint16, GameEntity *> &entities = getEntities();
+		auto it = entities.begin();
+		while(it != entities.end())
 		{
-			if(it->second.getOwner() == id)
+			if(it->second->getOwner() == id)
 			{
-				//Save the id and increment the iterator (so that the iterator isn't invalid after removing the character)
+				//Save the id and increment the iterator (so that the iterator isn't invalid after removing the entity)
 				sf::Uint16 remid = it->first;
 				it++;
-				removeCharacter(remid);
-				//Add the removed character id to the packet
+				removeEntity(remid);
+				//Add the removed entity id to the packet
 				packet << remid;
 				removed = true;
 			}
@@ -529,8 +535,8 @@ void ServerSimulator::disconnectPlayer(sf::Uint8 id, sf::Uint8 reason)
 		}
 		if(removed)
 		{
-			//Tell all the other players about the removed characters
-			packet << (sf::Uint16)NO_CHARACTER_ID;
+			//Tell all the other players about the removed entities
+			packet << (sf::Uint16)NO_ENTITY_ID;
 			sendToAllPlayers(packet);
 		}
 		//Tell all the other players about the disconnection
@@ -576,23 +582,19 @@ bool ServerSimulator::onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet 
 	return true;
 }
 
-bool ServerSimulator::removeCharacter(sf::Uint16 id)
+bool ServerSimulator::removeEntity(sf::Uint16 id)
 {
-	if(GameSimulator::removeCharacter(id))
+	//If the entity is a character played by a player, also remove the reference to it
+	auto it = m_playerschars.begin();
+	while(it != m_playerschars.end())
 	{
-		//If the character is played by a player, also remove the reference to it
-		auto it = m_playerschars.begin();
-		while(it != m_playerschars.end())
-		{
-			if(it->second->getId() == id)
-				it = m_playerschars.erase(it);
-			else
-				it++;
-		}
-		m_charactersids.releaseID(id);
-		return true;
+		if(it->second->getId() == id)
+			it = m_playerschars.erase(it);
+		else
+			it++;
 	}
-	return false;
+	m_entitiesids.releaseID(id);
+	return GameSimulator::removeEntity(id);
 }
 
 bool ServerSimulator::playerNameExists(const std::string &name) const
@@ -611,15 +613,15 @@ void ServerSimulator::updateVisibility()
 	if(!(getOwnCharacter() && m_statelistener))
 		return;
 	std::list<CollisionObject *> visible;
-	std::list<sf::Uint16> characters;
+	std::list<sf::Uint16> entities;
 	//Get visible objects
 	getObjectsVisibleFrom(getOwnCharacter(), visible);
 	//Add the id of each object into a list
 	for(CollisionObject *object : visible)
 	{
-		if(object->getEntityType() == CollisionEntityType::Character)
-			characters.emplace_back(static_cast<Character *>(object->getEntity())->getId());
+		if(object->getEntityType() == CollisionEntityType::Entity)
+			entities.emplace_back(static_cast<GameEntity *>(object->getEntity())->getId());
 	}
 	//Send the list to the state listener
-	m_statelistener->onVisibleEntitiesChanged(std::move(characters));
+	m_statelistener->onVisibleEntitiesChanged(std::move(entities));
 }

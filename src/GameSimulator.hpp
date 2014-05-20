@@ -28,9 +28,8 @@ class GameSimulator
 	Player &getPlayer(sf::Uint8 id);//Throws std::out_of_range if no player corresponds to this id.
 	bool playerExists(sf::Uint8 id) const;
 
-	const Character &getCharacter(sf::Uint16 id) const;//Throws std::out_of_range if no player corresponds to this id.
-	Character &getCharacter(sf::Uint16 id);//Throws std::out_of_range if no player corresponds to this id.
-	bool characterExists(sf::Uint16 id);
+	const GameEntity *getEntity(sf::Uint16 id) const;//Returns nullptr if no entity corresponds to this id.
+	GameEntity *getEntity(sf::Uint16 id);//Returns nullptr if no entity corresponds to this id.
 
 	sf::Uint8 getOwnId() const;//Will return NEUTRAL_PLAYER if no id
 	const Character *getOwnCharacter() const;
@@ -47,11 +46,11 @@ class GameSimulator
 	virtual bool removePlayer(sf::Uint8 id, sf::Uint8 reason = (sf::Uint8)DisconnectionReason::Left);
 	const std::unordered_map<sf::Uint8, Player> &getPlayers() const;
 
-	template<typename... Args>
-	inline Character *addCharacter(Args &&...args);
-	Character *addCharacter(Character &&character);
-	virtual bool removeCharacter(sf::Uint16 id);
-	const std::unordered_map<sf::Uint16, Character> &getCharacters() const;
+	template<typename EntityType, typename... Args>
+	EntityType *addEntity(Args &&...args);
+	virtual bool removeEntity(sf::Uint16 id);
+	const std::unordered_map<sf::Uint16, GameEntity *> &getEntities() const;
+
 	Character *getOwnCharacter();
 	bool setOwnCharacter(sf::Uint16 id);
 
@@ -59,10 +58,20 @@ class GameSimulator
 
 	virtual bool loadMap(const std::string &name);
 
+	GameEntity *addUnknownNetworkEntity(sf::Uint8 entitytype, sf::Packet &packet);
+	//Forbid implicit conversion
+	template<typename T>
+	GameEntity *addUnknownNetworkEntity(T entitytype, sf::Packet &packet) = delete;
+	static void writeUnknownEntityInitData(GameEntity *entity, sf::Packet &packet, bool hideserverinfo);
+	Character *addNetworkCharacter(sf::Packet &packet);
+	static void writeCharacterInitData(Character *character, sf::Packet &packet, bool hideserverinfo);
+
 	sf::Uint8 m_ownid;
 	SimulatorStateListener *m_statelistener;
 
 	private:
+	bool addEntity(GameEntity *entity);
+
 	float m_interpolationtime;
 	bool m_fullsimulator;
 
@@ -70,7 +79,7 @@ class GameSimulator
 	Map m_map;
 	CollisionManager *m_colmgr;
 
-	std::unordered_map<sf::Uint16, Character> m_characters;
+	std::unordered_map<sf::Uint16, GameEntity *> m_entities;
 	Character *m_owncharacter;
 };
 

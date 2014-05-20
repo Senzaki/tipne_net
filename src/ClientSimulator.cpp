@@ -6,7 +6,7 @@ static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 static const sf::Time CONNECTION_MAX_TIME = sf::seconds(7.f);
 static const sf::Time CONNECTION_INFO_MAX_TIME = sf::seconds(10.f);
 
-//TODO: Check each received value (e.g. Does the id exist ? Is it different of NO_CHARACTER_ID ?)
+//TODO: Check each received value (e.g. Does the id exist ? Is it different of NO_ENTITY_ID ?)
 
 ClientSimulator::ClientSimulator():
 	GameSimulator(false, DEFAULT_INTERPOLATION_TIME),
@@ -195,7 +195,7 @@ bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
 		return false;
 	}
 	//All characters info until NO_CHARACTED_ID
-	while(charid != NO_CHARACTER_ID)
+	while(charid != NO_ENTITY_ID)
 	{
 		//Extract info
 		if(!(packet >> x >> y >> direction.x >> direction.y))
@@ -203,18 +203,13 @@ bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
 			std::cerr << "Error in snapshot packet." << std::endl;
 			return false;
 		}
-		try
+		//Apply modifications to character if it exists
+		if(Character *character = dynamic_cast<Character *>(getEntity(charid)))
 		{
-			//Apply modifications to character if it exists
-			Character &character = getCharacter(charid);
-			character.setPosition(x, y);
-			character.setDirection(direction);
+			character->setPosition(x, y);
+			character->setDirection(direction);
 			//Add it to the visible characters list
 			visiblechars.emplace_back(charid);
-		}
-		catch(const std::out_of_range &e)
-		{
-
 		}
 		//Extract next id
 		if(!(packet >> charid))
@@ -251,25 +246,23 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 		return false;
 	if(!loadMap(mapname))
 		return false;
-	//Get the characters
-	sf::Uint16 characterscount;
-	if(!(packet >> characterscount))
+	//Get the entities
+	sf::Uint8 entitytype;
+	if(!(packet >> entitytype))
 		return false;
-	Character character;
-	for(sf::Uint16 i = 0; i < characterscount; i++)
+	while(entitytype != (sf::Uint8)EntityType::None)
 	{
-		if(!character.loadFromPacket(packet))
+		if(!addUnknownNetworkEntity(entitytype, packet))
 			return false;
-		if(!addCharacter(std::move(character)))
+		if(!(packet >> entitytype))
 			return false;
 	}
+	//Get the associated character
 	sf::Uint16 charid;
-	packet >> charid;
-	if(charid != NO_CHARACTER_ID)
-	{
-		if(!setOwnCharacter(charid))
-			return false;
-	}
+	if(!(packet >> charid))
+		return false;
+	if(!setOwnCharacter(charid))
+		return false;
 	return true;
 }
 
@@ -298,12 +291,12 @@ bool ClientSimulator::parseReceivedPacket(sf::Packet &packet)
 			success = onMapPacket(packet);
 			break;
 
-		case (sf::Uint8)PacketType::NewCharacter:
-			success = onNewCharacterPacket(packet);
+		case (sf::Uint8)PacketType::NewEntity:
+			success = onNewEntityPacket(packet);
 			break;
 
-		case (sf::Uint8)PacketType::RemoveCharacters:
-			success = onRemoveCharactersPacket(packet);
+		case (sf::Uint8)PacketType::RemoveEntities:
+			success = onRemoveEntitiesPacket(packet);
 			break;
 
 		case (sf::Uint8)PacketType::SetDirection:
@@ -360,30 +353,32 @@ bool ClientSimulator::onMapPacket(sf::Packet &packet)
 	return true;
 }
 
-bool ClientSimulator::onNewCharacterPacket(sf::Packet &packet)
+bool ClientSimulator::onNewEntityPacket(sf::Packet &packet)
 {
-	//Extract new player data
-	Character character;
-	if(!character.loadFromPacket(packet))
+	//Extract new entity data
+	sf::Uint8 enttype;
+	if(!(packet >> enttype))
 		return false;
-	character.setInterpolationTime(DEFAULT_INTERPOLATION_TIME);
-	character.setFullySimulated(false);
-	addCharacter(std::move(character));
+	GameEntity *entity = addUnknownNetworkEntity(enttype, packet);
+	if(!entity)
+		return false;
+	entity->setInterpolationTime(DEFAULT_INTERPOLATION_TIME);
+	entity->setFullySimulated(false);
 	return true;
 }
 
-bool ClientSimulator::onRemoveCharactersPacket(sf::Packet &packet)
+bool ClientSimulator::onRemoveEntitiesPacket(sf::Packet &packet)
 {
-	//Treat all the characters until NO_CHARACTER_ID is received
-	sf::Uint16 charid;
-	while((packet >> charid))
+	//Treat all the entities until NO_ENTITY_ID is received
+	sf::Uint16 entid;
+	while((packet >> entid))
 	{
-		if(charid == NO_CHARACTER_ID)
+		if(entid == NO_ENTITY_ID)
 			return true;
-		if(!removeCharacter(charid))
+		if(!removeEntity(entid))
 			return false;
 	}
-	//Error in packet, NO_CHARACTER_ID not reached
+	//Error in packet, NO_ENTITY_ID not reached
 	return false;
 }
 
@@ -394,16 +389,14 @@ bool ClientSimulator::onSetDirectionPacket(sf::Packet &packet)
 	//Which character ? What direction ?
 	if(!(packet >> charid >> direction.x >> direction.y))
 		return false;
-	try
-	{
-		getCharacter(charid).setDirection(direction);
-	}
-	catch(const std::out_of_range &)
+	Character *character = reinterpret_cast<Character*>(getEntity(charid));
+	if(!character)
 	{
 		//The character does not exist.
 		std::cerr << "No character corresponds to id " << (int)charid << "." << std::endl;
 		return false;
 	}
+	character->setDirection(direction);
 	return true;
 }
 

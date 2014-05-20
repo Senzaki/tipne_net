@@ -2,6 +2,7 @@
 #include "Application.hpp"
 #include "KeyMap.hpp"
 #include "BasisChange.hpp"
+#include "Character.hpp"
 
 GameScreen::GameScreen(float vratio, float xyratio, GameSimulator *simulator):
 	m_camera(sf::FloatRect(-100.f, -DEFAULT_SCREEN_HEIGHT / 2, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
@@ -218,14 +219,18 @@ void GameScreen::onPlayerLeft(Player &player, sf::Uint8 reason)
 
 }
 
-void GameScreen::onNewCharacter(Character &character)
+void GameScreen::onNewEntity(GameEntity *entity)
 {
-	m_characters.emplace(character.getId(), character);
+	//If it is a player, add a drawable player
+	if(Character *character = dynamic_cast<Character *>(entity))
+		m_characters.emplace(character->getId(), *character);
 }
 
-void GameScreen::onCharacterRemoved(Character &character)
+void GameScreen::onEntityRemoved(GameEntity *entity)
 {
-	m_characters.erase(character.getId());
+	//If it is a player, remove the associated drawable player
+	if(Character *character = dynamic_cast<Character *>(entity))
+		m_characters.erase(character->getId());
 }
 
 void GameScreen::onMapLoaded(const Map &map)

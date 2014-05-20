@@ -17,14 +17,16 @@ GameSimulator::GameSimulator(bool fullsimulator, float interpolationtime):
 
 GameSimulator::~GameSimulator()
 {
+	for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
+		delete entity.second;
 	delete m_colmgr;
 }
 
 bool GameSimulator::update(float etime)
 {
 	m_colmgr->update(etime);
-	for(std::pair<const sf::Uint16, Character> &character : m_characters)
-		character.second.update(etime);
+	for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
+		entity.second->update(etime);
 	return true;
 }
 
@@ -120,80 +122,89 @@ bool GameSimulator::playerExists(sf::Uint8 id) const
 	return m_players.count(id) != 0;
 }
 
-Character *GameSimulator::addCharacter(Character &&character)
+bool GameSimulator::addEntity(GameEntity *entity)
 {
-	sf::Uint16 id = character.getId();
+	sf::Uint16 id = entity->getId();
 
-	assert(id != NO_CHARACTER_ID);
+	assert(id != NO_ENTITY_ID);
 
-	auto added = m_characters.emplace(id, std::move(character));
+	auto added = m_entities.emplace(id, entity);
 
 	if(!added.second)
 	{
-		//Player id already exists
+		//Entity id already exists
 #ifndef NDEBUG
-		std::cerr << "[DEBUG]Cannot create new character. Id " << (int)id << " already reserved." << std::endl;
+		std::cerr << "[DEBUG]Cannot create new entity. Id " << (int)id << " already reserved." << std::endl;
 #endif
 		return nullptr;
 	}
-	Character &addedcharacter = added.first->second;
-	addedcharacter.setFullySimulated(m_fullsimulator);
-	addedcharacter.setInterpolationTime(m_interpolationtime);
-	addedcharacter.setSimulator(this);
+	entity->setFullySimulated(m_fullsimulator);
+	entity->setInterpolationTime(m_interpolationtime);
+	entity->setSimulator(this);
 	//Add it to the collision manager
-	addedcharacter.setCollisionManager(m_colmgr);
+	entity->setCollisionManager(m_colmgr);
 	//Tell the listener if required
 	if(m_statelistener)
-		m_statelistener->onNewCharacter(m_characters[id]);
+		m_statelistener->onNewEntity(entity);
 #ifndef NDEBUG
-	std::cout << "[DEBUG]New character. Id : " << (int)id << "." << std::endl;
+	std::cout << "[DEBUG]New Entity. Id : " << (int)id << "." << std::endl;
 #endif
-	return &addedcharacter;
+	return entity;
 }
 
-bool GameSimulator::removeCharacter(sf::Uint16 id)
+bool GameSimulator::removeEntity(sf::Uint16 id)
 {
-	assert(id != NO_CHARACTER_ID);
+	assert(id != NO_ENTITY_ID);
 
-	auto it = m_characters.find(id);
-	if(it == m_characters.end())
+	auto it = m_entities.find(id);
+	if(it == m_entities.end())
 	{
 #ifndef NDEBUG
-	std::cout << "[DEBUG]Cannot remove character. Character with id " << (int)id << " does not exist." << std::endl;
+	std::cout << "[DEBUG]Cannot remove entity. Entity with id " << (int)id << " does not exist." << std::endl;
 #endif
 		return false;
 	}
 
 #ifndef NDEBUG
-	std::cout << "[DEBUG]Removing character. Id : " << (int)id << "." << std::endl;
+	std::cout << "[DEBUG]Removing entity. Id : " << (int)id << "." << std::endl;
 #endif
 
 	//Tell the listener if required
 	if(m_statelistener)
-		m_statelistener->onCharacterRemoved(it->second);
-	//Remove the character from the table
-	m_characters.erase(it);
+		m_statelistener->onEntityRemoved(it->second);
+	//Remove the entity from the table
+	delete it->second;
+	m_entities.erase(it);
 	return true;
 }
 
-const Character &GameSimulator::getCharacter(sf::Uint16 id) const
+const GameEntity *GameSimulator::getEntity(sf::Uint16 id) const
 {
-	return m_characters.at(id);
+	try
+	{
+		return m_entities.at(id);
+	}
+	catch(const std::out_of_range &)
+	{
+		return nullptr;
+	}
 }
 
-Character &GameSimulator::getCharacter(sf::Uint16 id)
+GameEntity *GameSimulator::getEntity(sf::Uint16 id)
 {
-	return m_characters.at(id);
+	try
+	{
+		return m_entities.at(id);
+	}
+	catch(const std::out_of_range &)
+	{
+		return nullptr;
+	}
 }
 
-const std::unordered_map<sf::Uint16, Character> &GameSimulator::getCharacters() const
+const std::unordered_map<sf::Uint16, GameEntity *> &GameSimulator::getEntities() const
 {
-	return m_characters;
-}
-
-bool GameSimulator::characterExists(sf::Uint16 id)
-{
-	return m_characters.count(id) != 0;
+	return m_entities;
 }
 
 Character *GameSimulator::getOwnCharacter()
@@ -208,19 +219,13 @@ const Character *GameSimulator::getOwnCharacter() const
 
 bool GameSimulator::setOwnCharacter(sf::Uint16 id)
 {
-	if(id == NO_CHARACTER_ID)
+	if(id == NO_ENTITY_ID)
 		m_owncharacter = nullptr;
 	else
 	{
 		//Try to get the character, or return false if this id does not exist
-		try
-		{
-			m_owncharacter = &m_characters.at(id);
-		}
-		catch(const std::out_of_range &)
-		{
-			return false;
-		}
+		m_owncharacter = reinterpret_cast<Character *>(getEntity(id));
+		return m_owncharacter;
 	}
 	return true;
 }
@@ -242,8 +247,8 @@ void GameSimulator::setStateListener(SimulatorStateListener *listener)
 			listener->onMapLoaded(m_map);
 		for(std::pair<const sf::Uint8, Player> &player : m_players)
 			listener->onNewPlayer(player.second);
-		for(std::pair<const sf::Uint16, Character> &character : m_characters)
-			listener->onNewCharacter(character.second);
+		for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
+			listener->onNewEntity(entity.second);
 	}
 }
 
@@ -254,11 +259,74 @@ bool GameSimulator::loadMap(const std::string &name)
 		//Reload the collision manager if necessary
 		delete m_colmgr;
 		m_colmgr = new DefaultCollisionManager(m_map);
-		for(std::pair<const sf::Uint16, Character> &character : m_characters)
-			character.second.setCollisionManager(m_colmgr);
+		for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
+			entity.second->setCollisionManager(m_colmgr);
 		if(m_statelistener)
 			m_statelistener->onMapLoaded(m_map);
 		return true;
 	}
 	return false;
+}
+
+GameEntity *GameSimulator::addUnknownNetworkEntity(sf::Uint8 entitytype, sf::Packet &packet)
+{
+	//Which type of entity was received ?
+	switch(entitytype)
+	{
+		case (sf::Uint8)EntityType::Character:
+			return addNetworkCharacter(packet);
+
+		default:
+			break;
+	}
+	return nullptr;
+}
+
+void GameSimulator::writeUnknownEntityInitData(GameEntity *entity, sf::Packet &packet, bool hideserverinfo)
+{
+	if(Character *character = dynamic_cast<Character *>(entity))
+	{
+		//It is a character, add its data to the packet
+		packet << (sf::Uint8)EntityType::Character;
+		writeCharacterInitData(character, packet, hideserverinfo);
+	}
+	else
+	{
+		//Unknown entity type
+#ifndef NDEBUG
+		std::cout << "[DEBUG]Warning : Cannot add entity of unknown type to packet." << std::endl;
+#endif
+	}
+}
+
+Character *GameSimulator::addNetworkCharacter(sf::Packet &packet)
+{
+	float x, y;
+	sf::Uint16 id;
+	sf::Uint8 owner;
+	sf::Uint8 state;
+	//Extract the data
+	packet >> id >> owner >> x >> y >> state;
+	//Can the state be safely casted to State enum type ?
+	if(state >= (sf::Uint8)Character::State::Count)
+		return nullptr;
+	//Add the character and initialize it
+	Character *character = addEntity<Character>(static_cast<Character::State>(state), id);
+	if(character)
+	{
+		character->forcePosition(x, y);
+		character->setOwner(owner);
+	}
+	return character;
+}
+
+void GameSimulator::writeCharacterInitData(Character *character, sf::Packet &packet, bool hideserverinfo)
+{
+	//Write the character data into the packet
+	const sf::Vector2f position = character->getPosition();
+	packet << (sf::Uint16)character->getId()
+	       << (sf::Uint8)(hideserverinfo ? NEUTRAL_PLAYER : character->getOwner())
+	       << position.x
+	       << position.y
+	       << (sf::Uint8)character->getState();
 }

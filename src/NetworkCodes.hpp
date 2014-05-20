@@ -13,8 +13,8 @@ enum class PacketType : sf::Uint8
 	NewPlayer = 0,
 	Disconnection,
 	Map,
-	NewCharacter,
-	RemoveCharacters,
+	NewEntity,
+	RemoveEntities,
 	SetDirection
 };
 
@@ -30,6 +30,12 @@ enum class DisconnectionReason : sf::Uint8
 	Error,
 	Kicked,
 	Timeout
+};
+
+enum class EntityType : sf::Uint8
+{
+	None = 0,
+	Character
 };
 
 const float DEFAULT_SNAPSHOT_TIME = 0.05f;

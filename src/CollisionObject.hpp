@@ -13,7 +13,7 @@ enum class CollisionEntityType
 	None, //nullptr
 	Bound, //nullptr
 	Wall, //nullptr
-	Character //Cast to Character *
+	Entity //Cast to GameEntity *
 };
 
 class CollisionObject

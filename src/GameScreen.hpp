@@ -28,8 +28,8 @@ class GameScreen : public SimulatorStateListener
 	//Simulator events
 	virtual void onNewPlayer(Player &player);
 	virtual void onPlayerLeft(Player &player, sf::Uint8 reason);
-	virtual void onNewCharacter(Character &character);
-	virtual void onCharacterRemoved(Character &character);
+	virtual void onNewEntity(GameEntity *entity);
+	virtual void onEntityRemoved(GameEntity *entity);
 	virtual void onMapLoaded(const Map &map);
 	virtual void onVisibleEntitiesChanged(std::list<sf::Uint16> &&characters);
 
