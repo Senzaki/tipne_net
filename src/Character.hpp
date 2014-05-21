@@ -20,9 +20,9 @@ class Character : public GameEntity
 	};
 
 	template <typename... EntityArgs>
-	Character(State state, EntityArgs ...args);
+	Character(State state, EntityArgs &&...args);
 	template <typename... EntityArgs>
-	Character(EntityArgs ...args);
+	Character(EntityArgs &&...args);
 	virtual ~Character();
 
 	Character(const Character &) = delete;

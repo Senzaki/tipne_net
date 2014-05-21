@@ -1,5 +1,5 @@
 template <typename... EntityArgs>
-Character::Character(EntityArgs ...args):
+Character::Character(EntityArgs &&...args):
 	GameEntity(args...),
 	m_state(State::Ghost),
 	m_listener(nullptr)
@@ -8,7 +8,7 @@ Character::Character(EntityArgs ...args):
 }
 
 template <typename... EntityArgs>
-Character::Character(State state, EntityArgs ...args):
+Character::Character(State state, EntityArgs &&...args):
 	GameEntity(args...),
 	m_state(state),
 	m_listener(nullptr)
