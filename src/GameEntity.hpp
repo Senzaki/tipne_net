@@ -35,6 +35,7 @@ class GameEntity
 	inline void setPosition(float x, float y);//Uses interpolation
 	inline void forcePosition(float x, float y);//Does not use interpolation
 	inline sf::Vector2f getPosition() const;
+	virtual void onCollision(CollisionObject *other) { }
 
 	inline unsigned int getLastSnapshotId() const;
 	inline void setLastSnapshotId(unsigned int id);

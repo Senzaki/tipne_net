@@ -5,22 +5,22 @@
 #include <SFML/System.hpp>
 
 class CollisionManager;
+class GameEntity;
 
 constexpr const float CLIENT_INTERPOLATION_TIME = 0.1f;
 
 enum class CollisionEntityType
 {
-	None, //nullptr
-	Bound, //nullptr
-	Wall, //nullptr
-	Entity //Cast to GameEntity *
+	None, //entity = nullptr
+	Bound, //entity = nullptr
+	Wall, //entity = nullptr
+	Entity
 };
 
 class CollisionObject
 {
 	public:
-	CollisionObject(CollisionEntityType enttype, void *entity, float interpolationtime = 0.f);
-	CollisionObject(CollisionObject &&other);
+	CollisionObject(CollisionEntityType enttype, GameEntity *entity, float interpolationtime = 0.f);
 	~CollisionObject();
 
 	CollisionObject(const CollisionObject &) = delete;
@@ -38,11 +38,10 @@ class CollisionObject
 	sf::Vector2f getSpeed() const;
 
 	CollisionEntityType getEntityType() const;
-	void setEntity(void *entity);
-	void *getEntity();
+	void setEntity(GameEntity *entity);
+	GameEntity *getEntity();
 	bool isSensor() const;
 	void setSensor(bool sensor);
-	void setCollisionCallback(const std::function<void(CollisionObject *)> &callback);
 
 	CollisionManager *getCollisionManager();
 
@@ -56,9 +55,8 @@ class CollisionObject
 
 	private:
 	CollisionEntityType m_enttype;
-	void *m_entity;
+	GameEntity *m_entity;
 	bool m_sensor;
-	std::function<void(CollisionObject *)> m_callback;
 
 	sf::Vector2f m_start;
 	sf::Vector2f m_direction;

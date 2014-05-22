@@ -2,7 +2,7 @@
 #include "CollisionManager.hpp"
 #include <cassert>
 
-CollisionObject::CollisionObject(CollisionEntityType enttype, void *entity, float interpolationtime):
+CollisionObject::CollisionObject(CollisionEntityType enttype, GameEntity *entity, float interpolationtime):
 	m_enttype(enttype),
 	m_entity(entity),
 	m_sensor(false),
@@ -11,29 +11,6 @@ CollisionObject::CollisionObject(CollisionEntityType enttype, void *entity, floa
 	m_colmgr(nullptr)
 {
 
-}
-
-CollisionObject::CollisionObject(CollisionObject &&other):
-	m_enttype(other.m_enttype),
-	m_entity(other.m_entity),
-	m_sensor(other.m_sensor),
-	m_start(other.m_start),
-	m_direction(other.m_direction),
-	m_position(other.m_position),
-	m_desired(other.m_desired),
-	m_maxtime(other.m_maxtime),
-	m_time(other.m_time),
-	m_radius(other.m_radius),
-	m_colmgr(nullptr)
-{
-	other.m_entity = nullptr;
-	//Swap the collision objects in the collision manager
-	CollisionManager *mgr = other.m_colmgr;
-	if(mgr)
-	{
-		mgr->detach(&other);
-		mgr->attach(this);
-	}
 }
 
 CollisionObject::~CollisionObject()
@@ -126,12 +103,12 @@ CollisionEntityType CollisionObject::getEntityType() const
 	return m_enttype;
 }
 
-void CollisionObject::setEntity(void *entity)
+void CollisionObject::setEntity(GameEntity *entity)
 {
 	m_entity = entity;
 }
 
-void *CollisionObject::getEntity()
+GameEntity *CollisionObject::getEntity()
 {
 	return m_entity;
 }

@@ -1,4 +1,5 @@
 #include "CollisionManager.hpp"
+#include "GameEntity.hpp"
 #include <cassert>
 
 CollisionManager::CollisionManager(const Map &map):
@@ -37,10 +38,10 @@ void CollisionManager::detach(CollisionObject *object)
 
 void CollisionManager::notifyCollision(CollisionObject *a, CollisionObject *b)
 {
-	if(a->m_callback)
-		a->m_callback(b);
-	if(b->m_callback)
-		b->m_callback(a);
+	if(a->m_entity)
+		a->m_entity->onCollision(b);
+	if(b->m_entity)
+		b->m_entity->onCollision(a);
 }
 
 void CollisionManager::addCorrection(CollisionObject *obj, const sf::Vector2f &correction)
