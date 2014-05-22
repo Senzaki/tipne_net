@@ -33,8 +33,8 @@ OptionsMenu::OptionsMenu(Widget *parent, std::function<void()> callback):
 	m_labels[OPTIONS_FULLSCREEN] = new Label(this, tr("fullscreen"));
 	m_labels[OPTIONS_LANG] = new Label(this, tr("lang"));
 
-	std::string left = " < ";
-	std::string right = " > ";
+	std::string left = "<";
+	std::string right = ">";
 	m_videomodebuttons[0] = new Button(this, left, std::bind(&OptionsMenu::changeVideoMode, this, -1));
 	m_videomodebuttons[1] = new Button(this, right, std::bind(&OptionsMenu::changeVideoMode, this, 1));
 	m_langbuttons[0] = new Button(this, left, std::bind(&OptionsMenu::changeLanguage, this, -1));
@@ -52,8 +52,9 @@ OptionsMenu::~OptionsMenu()
 void OptionsMenu::setWidgetsPosition()
 {
 	const float interval = (getSize().y - 200.f) / OPTIONS_LABEL_COUNT;
+	const float space = 40.f;
 	for (int i = 0 ; i < OPTIONS_LABEL_COUNT ; i++)
-		m_labels[i]->setPosition((getSize().x - m_labels[i]->getSize().x) / 2.f - getSize().x / 4.f, 100.f + i * interval);
+		m_labels[i]->setPosition(space, 100.f + i * interval);
 
 	//Postitions of options
 	m_name->setPosition((getSize().x - m_name->getSize().x) / 2.f, m_labels[OPTIONS_NAME]->getAbsolutePosition().y);
@@ -67,8 +68,8 @@ void OptionsMenu::setWidgetsPosition()
 	m_langbuttons[0]->setPosition(m_lang->getPosition().x - m_langbuttons[0]->getSize().x - 10.f, m_lang->getPosition().y - m_langbuttons[0]->getSize().y / 2.f);
 	m_videomodebuttons[1]->setPosition(m_videomode->getPosition().x + m_videomode->getSize().x + 10.f, m_videomode->getPosition().y - m_videomodebuttons[1]->getSize().y / 2.f);
 	m_langbuttons[1]->setPosition(m_lang->getPosition().x + m_lang->getSize().x + 10.f, m_lang->getPosition().y - m_langbuttons[1]->getSize().y / 2.f);
-	m_save->setPosition(getSize().x / 3.f, getSize().y - interval);
-	m_cancel->setPosition(2 * getSize().x / 3.f, getSize().y - interval);
+	m_save->setPosition(getSize().x / 3.f - m_save->getSize().x / 2.f, getSize().y - interval);
+	m_cancel->setPosition(2 * getSize().x / 3.f - m_cancel->getSize().x / 2.f, getSize().y - interval);
 }
 
 void OptionsMenu::setDefaultValues()
@@ -162,8 +163,8 @@ void OptionsMenu::changeLanguage(int direction)
 
 	//move the buttons to avoid a display bug
 	const float interval = (getSize().y - 200.f) / OPTIONS_LABEL_COUNT;
-	m_save->setPosition(getSize().x / 3.f, getSize().y - interval);
-	m_cancel->setPosition(2 * getSize().x / 3.f, getSize().y - interval);
+	m_save->setPosition(getSize().x / 3.f - m_save->getSize().x / 2.f, getSize().y - interval);
+	m_cancel->setPosition(2 * getSize().x / 3.f - m_cancel->getSize().x / 2.f, getSize().y - interval);
 
 	//Reset the language
 	Config::getInstance().lang = temp;
