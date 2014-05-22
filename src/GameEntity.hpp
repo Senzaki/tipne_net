@@ -36,6 +36,9 @@ class GameEntity
 	inline void forcePosition(float x, float y);//Does not use interpolation
 	inline sf::Vector2f getPosition() const;
 
+	inline unsigned int getLastSnapshotId() const;
+	inline void setLastSnapshotId(unsigned int id);
+
 	protected:
 	CollisionObject m_colobj;
 	bool m_fullysimulated;
@@ -44,6 +47,7 @@ class GameEntity
 	private:
 	sf::Uint16 m_id;
 	sf::Uint8 m_owner;
+	unsigned int m_lastsnapshot;
 };
 
 #include "GameEntity.inl"

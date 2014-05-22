@@ -12,6 +12,7 @@ ClientSimulator::ClientSimulator():
 	GameSimulator(false, DEFAULT_INTERPOLATION_TIME),
 	m_thread(nullptr),
 	m_thrrunning(false),
+	m_snapshotid(0),
 	m_udpmgr(*this)
 {
 
@@ -206,7 +207,11 @@ bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
 		//Apply modifications to character if it exists
 		if(Character *character = dynamic_cast<Character *>(getEntity(charid)))
 		{
-			character->setPosition(x, y);
+			//If the character was not visible during last snapshot, force its position
+			if(character->getLastSnapshotId() != m_snapshotid - 1 || character->getLastSnapshotId() != m_snapshotid)
+				character->forcePosition(x, y);
+			else
+				character->setPosition(x, y);
 			character->setDirection(direction);
 			//Add it to the visible characters list
 			visiblechars.emplace_back(charid);
@@ -220,6 +225,7 @@ bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
 	}
 	if(m_statelistener)
 		m_statelistener->onVisibleEntitiesChanged(std::move(visiblechars));
+	m_snapshotid++;
 	return true;
 }
 
