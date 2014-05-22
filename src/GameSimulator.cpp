@@ -27,6 +27,9 @@ bool GameSimulator::update(float etime)
 	m_colmgr->update(etime);
 	for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
 		entity.second->update(etime);
+	//Remove all entities that need to be removed
+	for(sf::Uint16 id : m_enttoremove)
+		removeEntity(id);
 	return true;
 }
 
@@ -140,7 +143,6 @@ bool GameSimulator::addEntity(GameEntity *entity)
 	}
 	entity->setFullySimulated(m_fullsimulator);
 	entity->setInterpolationTime(m_interpolationtime);
-	entity->setSimulator(this);
 	//Add it to the collision manager
 	entity->setCollisionManager(m_colmgr);
 	//Tell the listener if required
@@ -176,6 +178,11 @@ bool GameSimulator::removeEntity(sf::Uint16 id)
 	delete it->second;
 	m_entities.erase(it);
 	return true;
+}
+
+void GameSimulator::removeEntityLater(sf::Uint16 id)
+{
+	m_enttoremove.emplace_back(id);
 }
 
 const GameEntity *GameSimulator::getEntity(sf::Uint16 id) const
@@ -311,7 +318,7 @@ Character *GameSimulator::addNetworkCharacter(sf::Packet &packet)
 	if(state >= (sf::Uint8)Character::State::Count)
 		return nullptr;
 	//Add the character and initialize it
-	Character *character = addEntity<Character>(static_cast<Character::State>(state), id);
+	Character *character = addEntity<Character>(static_cast<Character::State>(state), *this, id);
 	if(character)
 	{
 		character->forcePosition(x, y);

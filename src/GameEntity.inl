@@ -35,11 +35,6 @@ float GameEntity::getInterpolationTime() const
 	return m_colobj.getInterpolationTime();
 }
 
-void GameEntity::setSimulator(GameSimulator *simulator)
-{
-	m_simulator = simulator;
-}
-
 void GameEntity::setCollisionManager(CollisionManager *colmgr)
 {
 	//Remove the former collision manager (if any)

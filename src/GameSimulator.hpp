@@ -31,6 +31,11 @@ class GameSimulator
 	const GameEntity *getEntity(sf::Uint16 id) const;//Returns nullptr if no entity corresponds to this id.
 	GameEntity *getEntity(sf::Uint16 id);//Returns nullptr if no entity corresponds to this id.
 
+	template<typename EntityType, typename... Args>
+	EntityType *addEntity(Args &&...args);
+	virtual bool removeEntity(sf::Uint16 id);
+	void removeEntityLater(sf::Uint16 id);
+
 	sf::Uint8 getOwnId() const;//Will return NEUTRAL_PLAYER if no id
 	const Character *getOwnCharacter() const;
 
@@ -46,9 +51,6 @@ class GameSimulator
 	virtual bool removePlayer(sf::Uint8 id, sf::Uint8 reason = (sf::Uint8)DisconnectionReason::Left);
 	const std::unordered_map<sf::Uint8, Player> &getPlayers() const;
 
-	template<typename EntityType, typename... Args>
-	EntityType *addEntity(Args &&...args);
-	virtual bool removeEntity(sf::Uint16 id);
 	const std::unordered_map<sf::Uint16, GameEntity *> &getEntities() const;
 
 	Character *getOwnCharacter();
@@ -81,6 +83,7 @@ class GameSimulator
 
 	std::unordered_map<sf::Uint16, GameEntity *> m_entities;
 	Character *m_owncharacter;
+	std::list<sf::Uint16> m_enttoremove;
 };
 
 #include "GameSimulator.inl"

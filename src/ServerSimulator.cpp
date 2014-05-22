@@ -22,7 +22,7 @@ ServerSimulator::ServerSimulator(bool pure):
 	if(!pure)
 	{
 		m_ownid = m_playersids.getNewID();
-		Character *self = addEntity<Character>(m_entitiesids.getNewID(), true, 0.f, m_ownid);
+		Character *self = addEntity<Character>(*this, m_entitiesids.getNewID(), true, 0.f, m_ownid);
 		m_playerschars[addPlayer(m_ownid, Config::getInstance().name)->id] = self;
 		setOwnCharacter(self->getId());
 	}
@@ -431,7 +431,7 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 	for(const std::pair<const sf::Uint16, GameEntity *> &entity : entities)
 		writeUnknownEntityInitData(entity.second, packet, true);
 	//Also add a character for this player (and tell the client this is his character)
-	Character *newcharacter = addEntity<Character>(m_entitiesids.getNewID(), true, 0.f, toaccept.id);
+	Character *newcharacter = addEntity<Character>(*this, m_entitiesids.getNewID(), true, 0.f, toaccept.id);
 	writeUnknownEntityInitData(newcharacter, packet, false);
 	packet << (sf::Uint8)EntityType::None;//End of entities list
 	packet << (sf::Uint16)newcharacter->getId();

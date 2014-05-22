@@ -11,7 +11,7 @@ constexpr const sf::Uint16 NO_ENTITY_ID = 0;
 class GameEntity
 {
 	public:
-	GameEntity(sf::Uint16 id, bool fullysimulated = true, float interpolationtime = 0.f, sf::Uint8 owner = NEUTRAL_PLAYER, sf::Vector2f position = sf::Vector2f());
+	GameEntity(GameSimulator &simulator, sf::Uint16 id, bool fullysimulated = true, float interpolationtime = 0.f, sf::Uint8 owner = NEUTRAL_PLAYER, sf::Vector2f position = sf::Vector2f());
 	virtual ~GameEntity();
 
 	GameEntity(const GameEntity &) = delete;
@@ -29,7 +29,6 @@ class GameEntity
 	inline bool isFullySimulated() const;
 	inline void setInterpolationTime(float interpolationtime);
 	inline float getInterpolationTime() const;
-	inline void setSimulator(GameSimulator *simulator);
 
 	inline void setCollisionManager(CollisionManager *colmgr);
 	inline void setPosition(float x, float y);//Uses interpolation
@@ -43,7 +42,7 @@ class GameEntity
 	protected:
 	CollisionObject m_colobj;
 	bool m_fullysimulated;
-	GameSimulator *m_simulator;
+	GameSimulator &m_simulator;
 
 	private:
 	sf::Uint16 m_id;
