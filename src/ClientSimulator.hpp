@@ -38,6 +38,8 @@ class ClientSimulator : public GameSimulator
 	std::thread *m_thread;
 	std::atomic<bool> m_thrrunning;
 
+	unsigned int m_snapshotid;
+
 	SafeSocket<sf::TcpSocket> m_server;
 	ClientUdpManager m_udpmgr;
 	SafeList<sf::Packet *> m_receivedpackets;//Write : child. Read : main.

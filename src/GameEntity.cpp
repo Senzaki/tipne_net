@@ -5,7 +5,8 @@ GameEntity::GameEntity(sf::Uint16 id, bool fullysimulated, float interpolationti
 	m_fullysimulated(fullysimulated),
 	m_simulator(nullptr),
 	m_id(id),
-	m_owner(owner)
+	m_owner(owner),
+	m_lastsnapshot(10)//To prevent interpolation when the game starts
 {
 
 }

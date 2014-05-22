@@ -64,3 +64,13 @@ sf::Vector2f GameEntity::getPosition() const
 {
 	return m_colobj.getPosition();
 }
+
+unsigned int GameEntity::getLastSnapshotId() const
+{
+	return m_lastsnapshot;
+}
+
+void GameEntity::setLastSnapshotId(unsigned int id)
+{
+	m_lastsnapshot = id;
+}
