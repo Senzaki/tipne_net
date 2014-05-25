@@ -22,7 +22,8 @@ ServerSimulator::ServerSimulator(bool pure):
 	if(!pure)
 	{
 		m_ownid = m_playersids.getNewID();
-		Character *self = addEntity<Character>(*this, m_entitiesids.getNewID(), true, 0.f, m_ownid);
+		Character *self = addEntity<Character>(*this, m_entitiesids.getNewID());
+		self->setOwner(m_ownid);
 		m_playerschars[addPlayer(m_ownid, Config::getInstance().name)->id] = self;
 		setOwnCharacter(self->getId());
 	}
@@ -76,19 +77,17 @@ void ServerSimulator::buildSnapshotPacket(sf::Packet &packet, sf::Uint8 playerid
 		{
 			if(object->getEntityType() == CollisionEntityType::Entity)
 			{
+				//Add general entity data
 				const GameEntity *entity = static_cast<const GameEntity *>(object->getEntity());
-				if(const Character *character = reinterpret_cast<const Character *>(entity))
-				{
-					packet << character->getId()
-					       << (float)character->getPosition().x << (float)character->getPosition().y
-					       << (float)character->getDirection().x << (float)character->getDirection().y;
-				}
+				packet << entity->getId()
+				       << (float)entity->getPosition().x << (float)entity->getPosition().y;
+				//Add data specific to the entity type
+				if(const Character *character = dynamic_cast<const Character *>(entity))
+					packet << (float)character->getDirection().x << (float)character->getDirection().y;
 			}
 		}
-		packet << NO_ENTITY_ID;//End of packet
 	}
-	else
-		packet << NO_ENTITY_ID;//End of packet (no content)
+	packet << NO_ENTITY_ID;//End of packet
 }
 
 bool ServerSimulator::loadMap(const std::string &mapname)
@@ -379,6 +378,53 @@ int ServerSimulator::receiveNewPackets(sf::Uint8 id, SafeSocket<sf::TcpSocket> &
 	return (int)DisconnectionReason::Left;
 }
 
+void ServerSimulator::selfCastSpell(const Spell &spell)
+{
+	Character *character = getOwnCharacter();
+	if(!character)
+	{
+#ifndef NDEBUG
+		std::cerr << "[DEBUG]selfCastSpell() function called, but no character exists for self." << std::endl;
+#endif
+		return;
+	}
+	if(!spell.castSpell(*this, m_entitiesids, character))
+	{
+#ifndef NEDBUG
+		std::cerr << "[DEBUG]selfCastSpell() function called, but spell casting error." << std::endl;
+#endif
+		return;
+	}
+}
+
+void ServerSimulator::onEntityAdded(GameEntity *entity)
+{
+	//Tell all the clients
+	sf::Packet packet;
+	packet << (sf::Uint8)PacketType::NewEntity;
+	if(writeEntityInitData(entity, packet, true))
+		sendToAllPlayers(packet);
+}
+
+void ServerSimulator::onEntityRemoved(GameEntity *entity)
+{
+	//If the entity is a character played by a player, also remove the reference to it
+	auto it = m_playerschars.begin();
+	while(it != m_playerschars.end())
+	{
+		if(it->second->getId() == entity->getId())
+			it = m_playerschars.erase(it);
+		else
+			it++;
+	}
+	m_entitiesids.releaseID(entity->getId());
+
+	//Tell all the clients
+	sf::Packet packet;
+	packet << (sf::Uint8)PacketType::RemoveEntity << (sf::Uint16)entity->getId();
+	sendToAllPlayers(packet);
+}
+
 void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned short port, Player &toaccept)
 {
 	sf::Packet packet;
@@ -416,28 +462,37 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 	}
 	toaccept.name = std::move(newname);
 
+	assert(!playerExists(toaccept.id));
+	//Tell all the other players a new player connected
+	packet.clear();
+	packet << (sf::Uint8)PacketType::NewPlayer << toaccept;
+	sendToAllPlayers(packet);
+	//Add the character to the simulation
+	Character *newcharacter = addEntity<Character>(*this, m_entitiesids.getNewID());
+	//Add the player to the simulation
+	Player *newplayer = addPlayer(std::move(toaccept));
+	m_playerschars[newplayer->id] = newcharacter;
+	newcharacter->setOwner(newplayer->id);
+
 	//Put the current state into a packet
 	packet.clear();
 	const std::unordered_map<sf::Uint8, Player> &players = getPlayers();
-	packet << (sf::Uint8)ConnectionStatus::Accepted << (sf::Uint8)(players.size() + 1) << toaccept.id;
-	//List of players = all players + new player
+	packet << (sf::Uint8)ConnectionStatus::Accepted << (sf::Uint8)players.size() << newplayer->id;
+	//List of players
 	for(const std::pair<const sf::Uint8, Player> &player : players)
 		packet << player.second;
-	packet << toaccept;
 	//Map name
 	packet << getMap().getName();
 	//Add all entities
 	const std::unordered_map<sf::Uint16, GameEntity *> &entities = getEntities();
 	for(const std::pair<const sf::Uint16, GameEntity *> &entity : entities)
-		writeUnknownEntityInitData(entity.second, packet, true);
-	//Also add a character for this player (and tell the client this is his character)
-	Character *newcharacter = addEntity<Character>(*this, m_entitiesids.getNewID(), true, 0.f, toaccept.id);
-	writeUnknownEntityInitData(newcharacter, packet, false);
-	packet << (sf::Uint8)EntityType::None;//End of entities list
+		writeEntityInitData(entity.second, packet, true);
+	packet << (sf::Uint8)EntityType::None;
+	//Tell the client this is his character
 	packet << (sf::Uint16)newcharacter->getId();
 	//Try to send it
 	sf::Socket::Status status;
-	if((status = sendToPlayer(toaccept.id, packet)) != sf::Socket::Done)
+	if((status = sendToPlayer(newplayer->id, packet)) != sf::Socket::Done)
 	{
 		if(status == sf::Socket::Disconnected)
 			std::cerr << "A new client disconnected before connection data could be sent." << std::endl;
@@ -446,24 +501,9 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 		else if(status == sf::Socket::NotReady)
 			std::cerr << "Cannot accept client : socket buffer is full." << std::endl;//Impossible, right ?
 		//On error, remove the new client
-		m_clientstoremove.emplaceBack(toaccept.id);
-		m_udpmgr.removePlayer(toaccept.id);
-		//Release the id of the character
-		removeEntity(newcharacter->getId());
+		disconnectPlayer(newplayer->id, (sf::Uint8)DisconnectionReason::Error);
 		return;
 	}
-	//Tell all the other players about the new character
-	packet.clear();
-	packet << (sf::Uint8)PacketType::NewEntity;
-	writeUnknownEntityInitData(newcharacter, packet, true);
-	sendToAllPlayers(packet);
-	//Tell all the other players a new player connected
-	packet.clear();
-	packet << (sf::Uint8)PacketType::NewPlayer << toaccept;
-	sendToAllPlayers(packet);
-	//Add the player & the character to the simulation
-	assert(!playerExists(toaccept.id));
-	m_playerschars[addPlayer(std::move(toaccept))->id] = newcharacter;
 }
 
 void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &received)
@@ -490,7 +530,11 @@ void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &receiv
 	switch(type)
 	{
 		case (sf::Uint8)PacketType::SetDirection:
-			success = onSetDirectionPacketReceived(std::get<0>(received), *std::get<1>(received));
+			success = onSetDirectionPacketReceived(std::get<0>(received), packet);
+			break;
+
+		case (sf::Uint8)PacketType::CastSpell:
+			success = onCastSpellPacketReceived(std::get<0>(received), packet);
 			break;
 
 		default:
@@ -512,10 +556,7 @@ void ServerSimulator::disconnectPlayer(sf::Uint8 id, sf::Uint8 reason)
 	if(removePlayer(id, reason))
 	{
 		m_udpmgr.removePlayer(id);
-		sf::Packet packet;
 		//Remove the entities that need to be removed
-		packet << (sf::Uint8)PacketType::RemoveEntities;
-		bool removed = false;
 		const std::unordered_map<sf::Uint16, GameEntity *> &entities = getEntities();
 		auto it = entities.begin();
 		while(it != entities.end())
@@ -526,21 +567,12 @@ void ServerSimulator::disconnectPlayer(sf::Uint8 id, sf::Uint8 reason)
 				sf::Uint16 remid = it->first;
 				it++;
 				removeEntity(remid);
-				//Add the removed entity id to the packet
-				packet << remid;
-				removed = true;
 			}
 			else
 				it++;
 		}
-		if(removed)
-		{
-			//Tell all the other players about the removed entities
-			packet << (sf::Uint16)NO_ENTITY_ID;
-			sendToAllPlayers(packet);
-		}
 		//Tell all the other players about the disconnection
-		packet.clear();
+		sf::Packet packet;
 		packet << (sf::Uint8)PacketType::Disconnection << id << reason;
 		sendToAllPlayers(packet);
 	}
@@ -568,7 +600,8 @@ void ServerSimulator::sendToAllPlayers(sf::Packet &packet)
 bool ServerSimulator::onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet &packet)
 {
 	sf::Vector2f direction;
-	packet >> direction.x >> direction.y;
+	if(!(packet >> direction.x >> direction.y))
+		return false;
 	try
 	{
 		m_playerschars.at(sender)->setDirection(direction);
@@ -576,25 +609,59 @@ bool ServerSimulator::onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet 
 	catch(const std::out_of_range &)
 	{
 		//No character for player
-		std::cerr << "No character associated to player " << (int)sender << ". Discarding packet." << std::endl;
+#ifndef NDEBUG
+		std::cerr << "[DEBUG]No character associated to player " << (int)sender << ". Discarding packet." << std::endl;
+#endif
 		return true;//It is not because of the packet, do not disconnect the client
 	}
 	return true;
 }
 
-bool ServerSimulator::removeEntity(sf::Uint16 id)
+bool ServerSimulator::onCastSpellPacketReceived(sf::Uint8 sender, sf::Packet &packet)
 {
-	//If the entity is a character played by a player, also remove the reference to it
-	auto it = m_playerschars.begin();
-	while(it != m_playerschars.end())
+	sf::Uint8 state;
+	sf::Uint8 id;
+	if(!(packet >> state >> id))
+		return false;
+	Character *character;
+	try
 	{
-		if(it->second->getId() == id)
-			it = m_playerschars.erase(it);
-		else
-			it++;
+		character = m_playerschars.at(sender);
 	}
-	m_entitiesids.releaseID(id);
-	return GameSimulator::removeEntity(id);
+	catch(const std::out_of_range &)
+	{
+		//No character for player
+#ifndef NDEBUG
+		std::cerr << "[DEBUG]No character associated to player " << (int)sender << ". Discarding packet." << std::endl;
+#endif
+		return true;//It is not because of the packet, do not disconnect the client
+	}
+	if(state >= (sf::Uint8)Character::State::Count)
+	{
+#ifndef NDEBUG
+		std::cerr << "[DEBUG]Invalid character state identifier for spell." << std::endl;
+#endif
+		return false;
+	}
+	Spell spell;
+	spell.id = id;
+	spell.state = static_cast<Character::State>(state);
+	//Read additionnal spell characteristics
+	switch(spell.getAssociatedType())
+	{
+		case Spell::Type::None:
+#ifndef NDEBUG
+			std::cerr << "[DEBUG]Spell does not exist." << std::endl;
+#endif
+			return false;
+
+		case Spell::Type::LineSpell:
+			if(!(packet >> spell.targetpoint.x >> spell.targetpoint.y))
+				return false;
+			break;
+	}
+	spell.castSpell(*this, m_entitiesids, character);
+	return true;
 }
 
 bool ServerSimulator::playerNameExists(const std::string &name) const

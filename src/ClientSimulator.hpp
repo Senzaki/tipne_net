@@ -19,6 +19,7 @@ class ClientSimulator : public GameSimulator
 	bool isConnected() const;
 
 	virtual void selfSetDirection(const sf::Vector2f &direction);
+	virtual void selfCastSpell(const Spell &spell);
 
 	bool onSnapshotReceived(sf::Packet &packet);
 
@@ -29,8 +30,7 @@ class ClientSimulator : public GameSimulator
 	bool onDisconnectionPacket(sf::Packet &packet);
 	bool onMapPacket(sf::Packet &packet);
 	bool onNewEntityPacket(sf::Packet &packet);
-	bool onRemoveEntitiesPacket(sf::Packet &packet);
-	bool onSetDirectionPacket(sf::Packet &packet);
+	bool onRemoveEntityPacket(sf::Packet &packet);
 
 	void netThread();
 	bool receivePackets();

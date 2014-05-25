@@ -45,7 +45,8 @@ DefaultCollisionManager::DefaultCollisionManager(const Map &map):
 	m_mapwidth(map.getSize().x),
 	m_tilescontent(map.getSize().x * map.getSize().y + 4), //Last cell = out of bounds
 	m_boundsobject(CollisionEntityType::Bound, nullptr),
-	m_wallobject(CollisionEntityType::Wall, nullptr)
+	m_wallobject(CollisionEntityType::Wall, nullptr),
+	m_needsrehash(true)
 {
 	for(unsigned int i = 0; i < 4; i++)
 		m_boundsindex[i] = m_tilescontent.size() - 1 - i;
@@ -64,18 +65,20 @@ void DefaultCollisionManager::update(float etime)
 		//Clear hash
 		for(std::list<std::pair<CollisionObject *, sf::Vector2f>> &cell : m_tilescontent)
 			cell.clear();
+		m_needsrehash = false;
 		//Move the objects and put them in the hash
 		for(CollisionObject *object : m_objects)
-			updateObject(object);
+		{
+			object->updatePosition(STEP_TIME);
+			rehashObject(object);
+		}
 		handleCollisions();
 		m_remainingtime -= STEP_TIME;
 	}
 }
 
-void DefaultCollisionManager::updateObject(CollisionObject *object)
+void DefaultCollisionManager::rehashObject(CollisionObject *object)
 {
-	//Update position
-	object->updatePosition(STEP_TIME);
 	//Compute bounds
 	const sf::Vector2f position = object->getPosition();
 	const float radius = object->getRadius();
@@ -135,8 +138,17 @@ void DefaultCollisionManager::updateObject(CollisionObject *object)
 	}
 }
 
-void DefaultCollisionManager::getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) const
+void DefaultCollisionManager::getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects)
 {
+	//Rehash if needed
+	if(m_needsrehash)
+	{
+		for(std::list<std::pair<CollisionObject *, sf::Vector2f>> &cell : m_tilescontent)
+			cell.clear();
+		for(CollisionObject *object : m_objects)
+			rehashObject(object);
+		m_needsrehash = false;
+	}
 	//Add all the objects in visible tiles
 	const std::vector<sf::Vector2u> &visibletiles = m_map.getTilesVisibleFrom(x, y);
 	for(const sf::Vector2u &tilecoords : visibletiles)
@@ -149,6 +161,11 @@ void DefaultCollisionManager::getObjectsVisibleFrom(unsigned int x, unsigned int
 		}
 	}
 	std::unique(objects.begin(), objects.end());
+}
+
+void DefaultCollisionManager::onObjectRemoved(CollisionObject *object)
+{
+	m_needsrehash = true;
 }
 
 void DefaultCollisionManager::handleCollisions()

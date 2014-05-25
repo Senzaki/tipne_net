@@ -11,6 +11,7 @@ enum class KeyAction
 	Right,
 	Up,
 	Down,
+	Spell1,
 	Count
 };
 

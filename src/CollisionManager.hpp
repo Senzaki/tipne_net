@@ -25,9 +25,11 @@ class CollisionManager
 	void detach(CollisionObject *object);
 
 	virtual void update(float etime) = 0;
-	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) const = 0;//objects should be empty
+	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) = 0;//objects should be empty
 
 	protected:
+	virtual void onObjectRemoved(CollisionObject *object) { }
+
 	void notifyCollision(CollisionObject *a, CollisionObject *b);
 	void addCorrection(CollisionObject *obj, const sf::Vector2f &correction);
 	void applyCorrection(CollisionObject *obj, float correctionfactor);

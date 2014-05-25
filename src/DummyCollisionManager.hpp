@@ -13,7 +13,7 @@ class DummyCollisionManager : public CollisionManager
 	DummyCollisionManager &operator=(const DummyCollisionManager &) = delete;
 
 	virtual void update(float etime);
-	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) const;//Warning : very stupid : returns everything !
+	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects);//Warning : very stupid : returns everything !
 };
 
 #endif // DUMMYCOLLISIONMANAGER_HPP_INCLUDED

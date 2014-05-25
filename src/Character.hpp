@@ -19,10 +19,7 @@ class Character : public GameEntity
 		Count
 	};
 
-	template <typename... EntityArgs>
-	Character(State state, EntityArgs &&...args);
-	template <typename... EntityArgs>
-	Character(EntityArgs &&...args);
+	Character(GameSimulator &simulator, sf::Uint16 id, State state = State::Ghost);
 	virtual ~Character();
 
 	Character(const Character &) = delete;
@@ -44,7 +41,5 @@ class Character : public GameEntity
 
 	CharacterStateListener *m_listener;
 };
-
-#include "Character.inl"
 
 #endif // CHARACTER_HPP_INCLUDED

@@ -579,6 +579,7 @@ void KeyMap::initActionNames()
 	m_actionnames[(int)KeyAction::Right] = "action_right";
 	m_actionnames[(int)KeyAction::Up] = "action_up";
 	m_actionnames[(int)KeyAction::Down] = "action_down";
+	m_actionnames[(int)KeyAction::Spell1] = "action_spell1";
 
 	//Create reverse lookup table
 	for(unsigned int i = 0; i < (unsigned int)KeyAction::Count; i++)

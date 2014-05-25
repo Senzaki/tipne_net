@@ -21,7 +21,7 @@ GameAppState::~GameAppState()
 {
 	ResourceManager &rsmgr = ResourceManager::getInstance();
 	rsmgr.unloadSection(ResourceSection::Map);
-	rsmgr.unloadSection(ResourceSection::Characters);
+	rsmgr.unloadSection(ResourceSection::Game);
 	delete m_simulator;
 }
 
@@ -32,7 +32,7 @@ void GameAppState::load()
 	//Load all textures & fonts
 	ResourceManager &rsmgr = ResourceManager::getInstance();
 	rsmgr.loadSection(ResourceSection::Map);
-	rsmgr.loadSection(ResourceSection::Characters);
+	rsmgr.loadSection(ResourceSection::Game);
 	m_cursor.setTexture(rsmgr.getTexture(ResourceSection::Base, Resource::CURSOR_TEX));
 
 	//We can now attach the GameScreen to the GameSimulator
@@ -91,19 +91,20 @@ void GameAppState::onKeyReleased(const sf::Event::KeyEvent &evt)
 
 void GameAppState::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 {
-	m_guimgr.onMouseButtonPressed(evt);
-	sf::Vector2f camcoords(evt.x / m_vratio, evt.y / m_vratio);
+	if(!m_guimgr.onMouseButtonPressed(evt))
+		m_gscr.onMouseButtonPressed(evt);
 }
 
 void GameAppState::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
 {
-	m_guimgr.onMouseButtonReleased(evt);
-	sf::Vector2f camcoords(evt.x / m_vratio, evt.y / m_vratio);
+	if(!m_guimgr.onMouseButtonReleased(evt))
+		m_gscr.onMouseButtonReleased(evt);
 }
 
 void GameAppState::onMouseMoved(const sf::Event::MouseMoveEvent &evt)
 {
 	m_guimgr.onMouseMoved(evt);
+	m_gscr.onMouseMoved(evt);
 	sf::Vector2f camcoords(evt.x / m_vratio, evt.y / m_vratio);
 	//Cursor is displayed in camera coords, but mouse coordinates are given in window coordinates
 	m_cursor.setPosition(camcoords);

@@ -50,9 +50,19 @@ void GameEntity::setPosition(float x, float y)
 	m_colobj.setPosition(x, y);
 }
 
+void GameEntity::setPosition(const sf::Vector2f &pos)
+{
+	m_colobj.setPosition(pos.x, pos.y);
+}
+
 void GameEntity::forcePosition(float x, float y)
 {
 	m_colobj.forcePosition(x, y);
+}
+
+void GameEntity::forcePosition(const sf::Vector2f &pos)
+{
+	m_colobj.forcePosition(pos.x, pos.y);
 }
 
 sf::Vector2f GameEntity::getPosition() const

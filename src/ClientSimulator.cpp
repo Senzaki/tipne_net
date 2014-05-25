@@ -182,49 +182,76 @@ void ClientSimulator::selfSetDirection(const sf::Vector2f &direction)
 	m_server.send(packet);
 }
 
+void ClientSimulator::selfCastSpell(const Spell &spell)
+{
+	sf::Packet packet;
+	packet << (sf::Uint8)PacketType::CastSpell << (sf::Uint8)spell.state << (sf::Uint8)spell.id;
+	//Add additionnal spell characteristics
+	switch(spell.getAssociatedType())
+	{
+		case Spell::Type::None:
+			return;
+
+		case Spell::Type::LineSpell:
+			packet << spell.targetpoint.x << spell.targetpoint.y;
+	}
+	m_server.send(packet);
+}
+
 bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
 {
-	//Extract all characters info
-	sf::Uint16 charid;
+	//Extract all entities info
+	sf::Uint16 entid;
 	float x, y;
 	sf::Vector2f direction;
-	std::list<sf::Uint16> visiblechars;
+	std::list<sf::Uint16> visibleents;
 	//Extract id
-	if(!(packet >> charid))
+	if(!(packet >> entid))
 	{
 		std::cerr << "Error in snapshot packet." << std::endl;
 		return false;
 	}
-	//All characters info until NO_CHARACTED_ID
-	while(charid != NO_ENTITY_ID)
+	//All entities info until NO_ENTITY_ID
+	while(entid != NO_ENTITY_ID)
 	{
 		//Extract info
-		if(!(packet >> x >> y >> direction.x >> direction.y))
+		if(!(packet >> x >> y))
 		{
 			std::cerr << "Error in snapshot packet." << std::endl;
 			return false;
 		}
-		//Apply modifications to character if it exists
-		if(Character *character = dynamic_cast<Character *>(getEntity(charid)))
+		GameEntity *entity = getEntity(entid);
+		if(entity)
 		{
-			//If the character was not visible during last snapshot, force its position
-			if(character->getLastSnapshotId() != m_snapshotid - 1 || character->getLastSnapshotId() != m_snapshotid)
-				character->forcePosition(x, y);
+			//Apply general position modifications
+			//If the entity was not visible during last snapshot, force its position
+			if(entity->getLastSnapshotId() != m_snapshotid - 1 && entity->getLastSnapshotId() != m_snapshotid)
+				entity->forcePosition(x, y);
 			else
-				character->setPosition(x, y);
-			character->setDirection(direction);
-			//Add it to the visible characters list
-			visiblechars.emplace_back(charid);
+				entity->setPosition(x, y);
+			//Apply modifications depending on the entity type
+			if(Character *character = dynamic_cast<Character *>(entity))
+			{
+				if(!(packet >> direction.x >> direction.y))
+				{
+					std::cerr << "Error in snapshot packet." << std::endl;
+					return false;
+				}
+				character->setDirection(direction);
+			}
+			//Add it to the visible entities list
+			visibleents.emplace_back(entid);
+			entity->setLastSnapshotId(m_snapshotid);
 		}
 		//Extract next id
-		if(!(packet >> charid))
+		if(!(packet >> entid))
 		{
 			std::cerr << "Error in snapshot packet." << std::endl;
 			return false;
 		}
 	}
 	if(m_statelistener)
-		m_statelistener->onVisibleEntitiesChanged(std::move(visiblechars));
+		m_statelistener->onVisibleEntitiesChanged(std::move(visibleents));
 	m_snapshotid++;
 	return true;
 }
@@ -258,7 +285,7 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 		return false;
 	while(entitytype != (sf::Uint8)EntityType::None)
 	{
-		if(!addUnknownNetworkEntity(entitytype, packet))
+		if(!addNetworkEntity(entitytype, packet))
 			return false;
 		if(!(packet >> entitytype))
 			return false;
@@ -301,12 +328,8 @@ bool ClientSimulator::parseReceivedPacket(sf::Packet &packet)
 			success = onNewEntityPacket(packet);
 			break;
 
-		case (sf::Uint8)PacketType::RemoveEntities:
-			success = onRemoveEntitiesPacket(packet);
-			break;
-
-		case (sf::Uint8)PacketType::SetDirection:
-			success = onSetDirectionPacket(packet);
+		case (sf::Uint8)PacketType::RemoveEntity:
+			success = onRemoveEntityPacket(packet);
 			break;
 
 		default:
@@ -365,44 +388,24 @@ bool ClientSimulator::onNewEntityPacket(sf::Packet &packet)
 	sf::Uint8 enttype;
 	if(!(packet >> enttype))
 		return false;
-	GameEntity *entity = addUnknownNetworkEntity(enttype, packet);
-	if(!entity)
-		return false;
-	entity->setInterpolationTime(DEFAULT_INTERPOLATION_TIME);
-	entity->setFullySimulated(false);
-	return true;
+	return addNetworkEntity(enttype, packet);
 }
 
-bool ClientSimulator::onRemoveEntitiesPacket(sf::Packet &packet)
+bool ClientSimulator::onRemoveEntityPacket(sf::Packet &packet)
 {
-	//Treat all the entities until NO_ENTITY_ID is received
+	//Remove the associated entity
 	sf::Uint16 entid;
-	while((packet >> entid))
-	{
-		if(entid == NO_ENTITY_ID)
-			return true;
-		if(!removeEntity(entid))
-			return false;
-	}
-	//Error in packet, NO_ENTITY_ID not reached
-	return false;
-}
-
-bool ClientSimulator::onSetDirectionPacket(sf::Packet &packet)
-{
-	sf::Uint16 charid;
-	sf::Vector2f direction;
-	//Which character ? What direction ?
-	if(!(packet >> charid >> direction.x >> direction.y))
+	if(!(packet >> entid))
 		return false;
-	Character *character = reinterpret_cast<Character*>(getEntity(charid));
-	if(!character)
-	{
-		//The character does not exist.
-		std::cerr << "No character corresponds to id " << (int)charid << "." << std::endl;
+	if(entid == NO_ENTITY_ID)
 		return false;
+	//Even if we cannot remove the entity, return true (the server might have failed to notify the creation of the entity in the first place
+	if(!removeEntity(entid))
+	{
+#ifndef NDEBUG
+		std::cerr << "[DEBUG]Client was told to remove entity " << (int)entid << " but it failed." << std::endl;
+#endif
 	}
-	character->setDirection(direction);
 	return true;
 }
 

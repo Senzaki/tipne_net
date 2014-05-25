@@ -11,7 +11,7 @@ constexpr const sf::Uint16 NO_ENTITY_ID = 0;
 class GameEntity
 {
 	public:
-	GameEntity(GameSimulator &simulator, sf::Uint16 id, bool fullysimulated = true, float interpolationtime = 0.f, sf::Uint8 owner = NEUTRAL_PLAYER, sf::Vector2f position = sf::Vector2f());
+	GameEntity(GameSimulator &simulator, sf::Uint16 id);
 	virtual ~GameEntity();
 
 	GameEntity(const GameEntity &) = delete;
@@ -32,7 +32,9 @@ class GameEntity
 
 	inline void setCollisionManager(CollisionManager *colmgr);
 	inline void setPosition(float x, float y);//Uses interpolation
+	inline void setPosition(const sf::Vector2f &pos);//Uses interpolation
 	inline void forcePosition(float x, float y);//Does not use interpolation
+	inline void forcePosition(const sf::Vector2f &pos);//Does not use interpolation
 	inline sf::Vector2f getPosition() const;
 	virtual void onCollision(CollisionObject *other) { }
 

@@ -6,6 +6,14 @@
 
 static const float DEFAULT_SPEED = 3.f;
 
+Character::Character(GameSimulator &simulator, sf::Uint16 id, State state):
+	GameEntity(simulator, id),
+	m_state(state),
+	m_listener(nullptr)
+{
+	m_colobj.setRadius(DEFAULT_CHARACTER_RADIUS);
+}
+
 Character::~Character()
 {
 

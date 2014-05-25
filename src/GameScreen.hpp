@@ -3,7 +3,7 @@
 
 #include "GameSimulator.hpp"
 #include "DrawableMap.hpp"
-#include "DrawableCharacter.hpp"
+#include "DrawableEntity.hpp"
 
 class GameScreen : public SimulatorStateListener
 {
@@ -31,10 +31,11 @@ class GameScreen : public SimulatorStateListener
 	virtual void onNewEntity(GameEntity *entity);
 	virtual void onEntityRemoved(GameEntity *entity);
 	virtual void onMapLoaded(const Map &map);
-	virtual void onVisibleEntitiesChanged(std::list<sf::Uint16> &&characters);
+	virtual void onVisibleEntitiesChanged(std::list<sf::Uint16> &&entities);
 
 	private:
 	void updateDirection();
+	void startCastingSpell(sf::Uint8 id);
 
 	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)
 	sf::FloatRect m_seen;
@@ -47,8 +48,15 @@ class GameScreen : public SimulatorStateListener
 	GameSimulator *m_simulator;
 	DrawableMap m_map;
 
-	std::unordered_map<sf::Uint16, DrawableCharacter> m_characters;
-	std::list<sf::Uint16> m_visiblecharacters;
+	std::unordered_map<sf::Uint16, DrawableEntity *> m_entities;
+	std::list<sf::Uint16> m_visibleentities;
+
+	enum
+	{
+		Normal,
+		AcquiringTargetPoint
+	} m_curaction;
+	Spell m_curspell;
 };
 
 #endif // GAMESCREEN_HPP_INCLUDED

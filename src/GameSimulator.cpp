@@ -3,6 +3,7 @@
 #include <cassert>
 #include "DefaultCollisionManager.hpp"
 #include "DummyCollisionManager.hpp"
+#include "LineDamageSpell.hpp"
 
 GameSimulator::GameSimulator(bool fullsimulator, float interpolationtime):
 	m_ownid(NEUTRAL_PLAYER),
@@ -30,6 +31,7 @@ bool GameSimulator::update(float etime)
 	//Remove all entities that need to be removed
 	for(sf::Uint16 id : m_enttoremove)
 		removeEntity(id);
+	m_enttoremove.clear();
 	return true;
 }
 
@@ -151,6 +153,7 @@ bool GameSimulator::addEntity(GameEntity *entity)
 #ifndef NDEBUG
 	std::cout << "[DEBUG]New Entity. Id : " << (int)id << "." << std::endl;
 #endif
+	onEntityAdded(entity);
 	return entity;
 }
 
@@ -174,6 +177,7 @@ bool GameSimulator::removeEntity(sf::Uint16 id)
 	//Tell the listener if required
 	if(m_statelistener)
 		m_statelistener->onEntityRemoved(it->second);
+	onEntityRemoved(it->second);
 	//Remove the entity from the table
 	delete it->second;
 	m_entities.erase(it);
@@ -231,7 +235,7 @@ bool GameSimulator::setOwnCharacter(sf::Uint16 id)
 	else
 	{
 		//Try to get the character, or return false if this id does not exist
-		m_owncharacter = reinterpret_cast<Character *>(getEntity(id));
+		m_owncharacter = dynamic_cast<Character *>(getEntity(id));
 		return m_owncharacter;
 	}
 	return true;
@@ -275,7 +279,7 @@ bool GameSimulator::loadMap(const std::string &name)
 	return false;
 }
 
-GameEntity *GameSimulator::addUnknownNetworkEntity(sf::Uint8 entitytype, sf::Packet &packet)
+GameEntity *GameSimulator::addNetworkEntity(sf::Uint8 entitytype, sf::Packet &packet)
 {
 	//Which type of entity was received ?
 	switch(entitytype)
@@ -283,27 +287,35 @@ GameEntity *GameSimulator::addUnknownNetworkEntity(sf::Uint8 entitytype, sf::Pac
 		case (sf::Uint8)EntityType::Character:
 			return addNetworkCharacter(packet);
 
+		case (sf::Uint8)EntityType::LineDamageSpell:
+			return addNetworkLineDamageSpell(packet);
+
 		default:
 			break;
 	}
 	return nullptr;
 }
 
-void GameSimulator::writeUnknownEntityInitData(GameEntity *entity, sf::Packet &packet, bool hideserverinfo)
+bool GameSimulator::writeEntityInitData(GameEntity *entity, sf::Packet &packet, bool hideserverinfo)
 {
+	//Add the init data depending on the type of entity
 	if(Character *character = dynamic_cast<Character *>(entity))
 	{
-		//It is a character, add its data to the packet
 		packet << (sf::Uint8)EntityType::Character;
 		writeCharacterInitData(character, packet, hideserverinfo);
+		return true;
 	}
-	else
+	else if(LineDamageSpell *spell = dynamic_cast<LineDamageSpell *>(entity))
 	{
-		//Unknown entity type
-#ifndef NDEBUG
-		std::cout << "[DEBUG]Warning : Cannot add entity of unknown type to packet." << std::endl;
-#endif
+		packet << (sf::Uint8)EntityType::LineDamageSpell;
+		writeLineDamageSpellInitData(spell, packet, hideserverinfo);
+		return true;
 	}
+	//Unknown entity type
+#ifndef NDEBUG
+	std::cout << "[DEBUG]Warning : Cannot add entity of unknown type to packet." << std::endl;
+#endif
+	return false;
 }
 
 Character *GameSimulator::addNetworkCharacter(sf::Packet &packet)
@@ -313,12 +325,13 @@ Character *GameSimulator::addNetworkCharacter(sf::Packet &packet)
 	sf::Uint8 owner;
 	sf::Uint8 state;
 	//Extract the data
-	packet >> id >> owner >> x >> y >> state;
+	if(!(packet >> id >> owner >> x >> y >> state))
+		return nullptr;
 	//Can the state be safely casted to State enum type ?
 	if(state >= (sf::Uint8)Character::State::Count)
 		return nullptr;
 	//Add the character and initialize it
-	Character *character = addEntity<Character>(static_cast<Character::State>(state), *this, id);
+	Character *character = addEntity<Character>(*this, id, static_cast<Character::State>(state));
 	if(character)
 	{
 		character->forcePosition(x, y);
@@ -336,4 +349,24 @@ void GameSimulator::writeCharacterInitData(Character *character, sf::Packet &pac
 	       << position.x
 	       << position.y
 	       << (sf::Uint8)character->getState();
+}
+
+LineDamageSpell *GameSimulator::addNetworkLineDamageSpell(sf::Packet &packet)
+{
+	sf::Uint16 id;
+	sf::Uint8 owner;
+	sf::Uint16 appearance;
+	if(!(packet >> id >> owner >> appearance))
+		return nullptr;
+	LineDamageSpell *spell = addEntity<LineDamageSpell>(*this, id, appearance, nullptr, 0.f, 0);
+	if(spell)
+		spell->setOwner(owner);
+	return spell;
+}
+
+void GameSimulator::writeLineDamageSpellInitData(LineDamageSpell *spell, sf::Packet &packet, bool hideserverinfo)
+{
+	packet << (sf::Uint16)spell->getId()
+	       << (sf::Uint8)(hideserverinfo ? NEUTRAL_PLAYER : spell->getOwner())
+	       << (sf::Uint16)spell->getAppearance();
 }

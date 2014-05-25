@@ -14,8 +14,9 @@ enum class PacketType : sf::Uint8
 	Disconnection,
 	Map,
 	NewEntity,
-	RemoveEntities,
-	SetDirection
+	RemoveEntity,
+	SetDirection,
+	CastSpell
 };
 
 enum class UdpPacketType : sf::Uint8
@@ -35,7 +36,8 @@ enum class DisconnectionReason : sf::Uint8
 enum class EntityType : sf::Uint8
 {
 	None = 0,
-	Character
+	Character,
+	LineDamageSpell
 };
 
 const float DEFAULT_SNAPSHOT_TIME = 0.05f;

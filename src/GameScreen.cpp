@@ -2,21 +2,24 @@
 #include "Application.hpp"
 #include "KeyMap.hpp"
 #include "BasisChange.hpp"
-#include "Character.hpp"
+#include "DrawableCharacter.hpp"
+#include "DrawableSpellProjectile.hpp"
 
 GameScreen::GameScreen(float vratio, float xyratio, GameSimulator *simulator):
 	m_camera(sf::FloatRect(-100.f, -DEFAULT_SCREEN_HEIGHT / 2, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
 	m_seen(sf::FloatRect(-100.f, -DEFAULT_SCREEN_HEIGHT / 2, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
 	m_vratio(vratio),
 	m_xyratio(xyratio),
-	m_otherdirpressed(false, false)
+	m_otherdirpressed(false, false),
+	m_curaction(Normal)
 {
 	setSimulator(simulator);
 }
 
 GameScreen::~GameScreen()
 {
-
+	for(std::pair<const sf::Uint16, DrawableEntity *> &entity : m_entities)
+		delete entity.second;
 }
 
 void GameScreen::setSimulator(GameSimulator *simulator)
@@ -45,8 +48,8 @@ bool GameScreen::update(float etime)
 	else
 		m_map.update(etime);
 	//Update the graphical entities
-	for(std::pair<const sf::Uint16, DrawableCharacter> &character : m_characters)
-		character.second.update(etime);
+	for(std::pair<const sf::Uint16, DrawableEntity *> &entity : m_entities)
+		entity.second->update(etime);
 	return toreturn;
 }
 
@@ -59,14 +62,14 @@ void GameScreen::draw(sf::RenderWindow &window)
 	std::list<DrawableEntity *> todraw;
 	//Draw the map & add map entities to thez list
 	m_map.draw(window, m_seen, todraw);
-	//Add the characters to the list
-	for(sf::Uint16 id : m_visiblecharacters)
+	//Add the entities to the list
+	for(sf::Uint16 id : m_visibleentities)
 	{
 		try
 		{
-			DrawableCharacter *character = &m_characters.at(id);
-			if(character->isContainedIn(m_seen))
-				todraw.emplace_back(character);
+			DrawableEntity *entity = m_entities.at(id);
+			if(entity->isContainedIn(m_seen))
+				todraw.emplace_back(entity);
 		}
 		catch(const std::out_of_range &)
 		{
@@ -123,6 +126,10 @@ void GameScreen::onKeyPressed(const sf::Event::KeyEvent &evt)
 				m_otherdirpressed.y = true;
 			m_direction.y = GRID_HEIGHT;
 			updateDirection();
+			break;
+
+		case KeyAction::Spell1:
+			startCastingSpell(0);
 			break;
 	}
 }
@@ -191,12 +198,35 @@ void GameScreen::onKeyReleased(const sf::Event::KeyEvent &evt)
 			m_otherdirpressed.y = false;
 			updateDirection();
 			break;
+
+		case KeyAction::Spell1:
+			break;
 	}
 }
 
 void GameScreen::onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt)
 {
+	const sf::Vector2f worldpixelpos(m_seen.left + evt.x / m_vratio, m_seen.top + evt.y / m_vratio);
+	switch(m_curaction)
+	{
+		case Normal:
+			return;
 
+		case AcquiringTargetPoint:
+			if(evt.button == sf::Mouse::Left)
+			{
+				//Compute targeted point
+				m_curspell.targetpoint.x = BasisChange::pixelToGridX(worldpixelpos);
+				m_curspell.targetpoint.y = BasisChange::pixelToGridY(worldpixelpos);
+				if(m_simulator)
+					m_simulator->selfCastSpell(m_curspell);
+				//Spell was casted, back to normal interface
+				m_curaction = Normal;
+			}
+			else if(evt.button == sf::Mouse::Right)//Spell casting cancelled
+				m_curaction = Normal;
+			break;
+	}
 }
 
 void GameScreen::onMouseButtonReleased(const sf::Event::MouseButtonEvent &evt)
@@ -221,21 +251,32 @@ void GameScreen::onPlayerLeft(Player &player, sf::Uint8 reason)
 
 void GameScreen::onNewEntity(GameEntity *entity)
 {
-	//If it is a player, add a drawable player
+	//Add a drawable entity depending on the type of entity
 	if(Character *character = dynamic_cast<Character *>(entity))
-		m_characters.emplace(character->getId(), *character);
+		m_entities.emplace(character->getId(), new DrawableCharacter(character));
+	else if(SpellProjectile *spell = dynamic_cast<SpellProjectile *>(entity))
+		m_entities.emplace(spell->getId(), new DrawableSpellProjectile(spell));
 }
 
 void GameScreen::onEntityRemoved(GameEntity *entity)
 {
-	//If it is a player, remove the associated drawable player
-	if(Character *character = dynamic_cast<Character *>(entity))
-		m_characters.erase(character->getId());
+	//Remove the associated drawable entity
+	auto it = m_entities.find(entity->getId());
+	if(it != m_entities.end())
+	{
+		delete it->second;
+		m_entities.erase(it);
+	}
 }
 
 void GameScreen::onMapLoaded(const Map &map)
 {
 	m_map.setMap(map);
+}
+
+void GameScreen::onVisibleEntitiesChanged(std::list<sf::Uint16> &&entities)
+{
+	m_visibleentities = std::move(entities);
 }
 
 void GameScreen::updateDirection()
@@ -244,7 +285,32 @@ void GameScreen::updateDirection()
 		m_simulator->selfSetDirection(BasisChange::pixelToGrid(m_direction));
 }
 
-void GameScreen::onVisibleEntitiesChanged(std::list<sf::Uint16> &&characters)
+void GameScreen::startCastingSpell(sf::Uint8 id)
 {
-	m_visiblecharacters = std::move(characters);
+	if(m_simulator)
+	{
+		if(const Character *character = static_cast<const GameSimulator *>(m_simulator)->getOwnCharacter())
+		{
+			Spell spell;
+			spell.state = character->getState();
+			spell.id = id;
+			//If we are currently getting info for the same spell, don't restart
+			if(m_curaction != Normal && spell.isSameSpell(m_curspell))
+				return;
+			Spell::Type type = spell.getAssociatedType();
+			//Don't cancel the current spell if a wrong key is pressed
+			if(type == Spell::Type::None)
+				return;
+			m_curspell = spell;
+			switch(type)
+			{
+				case Spell::Type::None:
+					return;//Impossible
+
+				case Spell::Type::LineSpell:
+					m_curaction = AcquiringTargetPoint;
+					break;
+			}
+		}
+	}
 }

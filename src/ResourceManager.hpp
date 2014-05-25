@@ -9,7 +9,7 @@ enum class ResourceSection : int
 {
 	Base = 0,
 	Map,
-	Characters,
+	Game,
 	Count
 };
 
@@ -40,10 +40,11 @@ namespace Resource
 		MAP_TEXTURES_COUNT
 	};
 
-	enum CharactersTexture
+	enum GameTexture
 	{
 		GHOST_TEX = 0,
-		CHARACTERS_TEXTURES_COUNT
+		BASIC_SPELL,
+		GAME_TEXTURES_COUNT
 	};
 }
 

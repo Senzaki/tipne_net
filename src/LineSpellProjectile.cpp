@@ -1,8 +1,11 @@
 #include "LineSpellProjectile.hpp"
+#include "SpellProjectileStateListener.hpp"
+#include "GameSimulator.hpp"
 
-LineSpellProjectile::LineSpellProjectile(GameSimulator &simulator, sf::Vector2f speed):
-	GameEntity(simulator, NO_ENTITY_ID),//Will never be called
-	m_speed(speed)
+LineSpellProjectile::LineSpellProjectile(GameSimulator &simulator, const sf::Vector2f &speed, const sf::Vector2f &startpos, float range):
+	SpellProjectile(simulator, NO_ENTITY_ID, 0),//Will never be called
+	m_start(startpos),
+	m_rangesq(range * range)
 {
 
 }
@@ -12,21 +15,27 @@ LineSpellProjectile::~LineSpellProjectile()
 
 }
 
-void LineSpellProjectile::setSpeed(float x, float y)
+void LineSpellProjectile::setSpeed(const sf::Vector2f &speed)
 {
-	m_speed.x = x;
-	m_speed.y = y;
+	m_colobj.setSpeed(speed);
 }
 
-const sf::Vector2f &LineSpellProjectile::getSpeed() const
+sf::Vector2f LineSpellProjectile::getSpeed() const
 {
-	return m_speed;
+	return m_colobj.getSpeed();
 }
 
 void LineSpellProjectile::update(float etime)
 {
-	sf::Vector2f position = getPosition();
-	position.x += m_speed.x * etime;
-	position.y += m_speed.y * etime;
-	setPosition(position.x, position.y);
+	if(m_listener)
+		m_listener->onPositionChanged(m_colobj.getPosition());
+	//If the distance is greater than the range, destroy the projectile
+	if(m_rangesq != 0.f * 0.f)
+	{
+		sf::Vector2f position = m_colobj.getPosition();
+		const float dx = position.x - m_start.x;
+		const float dy = position.x - m_start.y;
+		if(dx * dx + dy * dy >= m_rangesq)
+			m_simulator.removeEntityLater(getId());
+	}
 }

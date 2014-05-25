@@ -32,6 +32,7 @@ void CollisionManager::attach(CollisionObject *object)
 void CollisionManager::detach(CollisionObject *object)
 {
 	assert(object->m_colmgr == this);
+	onObjectRemoved(object);
 	m_objects.erase(object);
 	object->m_colmgr = nullptr;
 }

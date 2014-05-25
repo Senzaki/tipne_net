@@ -1,12 +1,12 @@
 #ifndef DAMAGESPELL_HPP_INCLUDED
 #define DAMAGESPELL_HPP_INCLUDED
 
-#include "GameEntity.hpp"
+#include "SpellProjectile.hpp"
 
-class DamageSpell : public virtual GameEntity
+class DamageSpell : public virtual SpellProjectile
 {
 	public:
-	DamageSpell(GameSimulator &simulator, unsigned int damage, bool destroyonhit = true, bool ignorewalls = false);
+	DamageSpell(GameSimulator &simulator, Character *caster, sf::Uint8 damage, bool destroyonhit = true, bool ignorewalls = false);
 	virtual ~DamageSpell();
 
 	DamageSpell(const DamageSpell &) = delete;
@@ -18,6 +18,7 @@ class DamageSpell : public virtual GameEntity
 	virtual void onCollision(CollisionObject *other);
 
 	private:
+	Character *m_caster;
 	sf::Uint8 m_damage;
 	bool m_ignorewalls;
 	bool m_destroy;

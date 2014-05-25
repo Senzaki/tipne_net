@@ -104,7 +104,7 @@ static constexpr CharacterAnimation ANIMATIONS[(int)Character::State::Count][(in
 	},
 };
 
-DrawableCharacter::DrawableCharacter():
+DrawableCharacter::DrawableCharacter(Character *character):
 	m_animator(m_sprite),
 	m_basecircle(sf::TrianglesStrip, BASE_CIRCLE_VERTICES_COUNT * 2),
 	m_direction(IsometricDirection::Down),
@@ -112,7 +112,7 @@ DrawableCharacter::DrawableCharacter():
 	m_state(Character::State::Ghost)
 {
 	//Setup animation
-	m_sprite.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Characters, Resource::GHOST_TEX));
+	m_sprite.setTexture(ResourceManager::getInstance().getTexture(ResourceSection::Game, Resource::GHOST_TEX));
 	m_sprite.setScale(TEMP_SCALE_FACTOR, TEMP_SCALE_FACTOR);
 	resetAnimation();
 	//Setup bound
@@ -120,12 +120,8 @@ DrawableCharacter::DrawableCharacter():
 	m_localbounds.height += 40.f;
 
 	initializeBaseCircle();
-}
 
-DrawableCharacter::DrawableCharacter(Character &character):
-	DrawableCharacter()
-{
-	character.setCharacterStateListener(this);
+	character->setCharacterStateListener(this);
 }
 
 DrawableCharacter::~DrawableCharacter()
@@ -142,11 +138,6 @@ void DrawableCharacter::draw(sf::RenderWindow &window)
 {
 	window.draw(m_basecircle, m_transform);
 	window.draw(m_sprite, m_transform);
-}
-
-sf::Vector2f DrawableCharacter::getPosition() const
-{
-	return m_sprite.getPosition();
 }
 
 float DrawableCharacter::getDepth() const

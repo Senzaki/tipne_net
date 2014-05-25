@@ -20,6 +20,7 @@ class DrawableEntity
 
 	virtual float getDepth() const = 0;//Return the lowest y position (in pixel coordinates)
 	virtual bool isContainedIn(const sf::FloatRect &rect) const = 0;
+	virtual void update(float etime) { }
 	virtual void draw(sf::RenderWindow &window) = 0;
 
 	static inline bool isDepthLower(const DrawableEntity *a, const DrawableEntity *b);

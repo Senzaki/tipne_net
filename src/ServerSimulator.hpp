@@ -26,14 +26,19 @@ class ServerSimulator : public GameSimulator
 	bool receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::SocketSelector &selector); //Returns false if no information was received (true if some data was received or if the client disconnected).
 	int receiveNewPackets(sf::Uint8 id, SafeSocket<sf::TcpSocket> &socket);//Returns -1 if no error, and a DisconnectionReason otherwise
 
+	virtual void selfCastSpell(const Spell &spell);
+
+	virtual void onEntityAdded(GameEntity *entity);
+	virtual void onEntityRemoved(GameEntity *entity);
+
 	void acceptNewPlayer(const sf::IpAddress &address, unsigned short port, Player &toaccept);
 	void parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &received);
 	sf::Socket::Status sendToPlayer(sf::Uint8 id, sf::Packet &packet);
 	void sendToAllPlayers(sf::Packet &packet);
 
 	bool onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet &packet);
+	bool onCastSpellPacketReceived(sf::Uint8 sender, sf::Packet &packet);
 
-	virtual bool removeEntity(sf::Uint16 id);
 	bool playerNameExists(const std::string &name) const;
 
 	void updateVisibility();

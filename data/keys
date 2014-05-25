@@ -2,6 +2,7 @@ scan action_right D
 scan action_left A
 scan action_down S
 scan action_up W
+scan action_spell1 1
 key action_right Right
 key action_left Left
 key action_down Down

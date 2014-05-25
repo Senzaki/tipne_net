@@ -8,8 +8,11 @@
 #include "NetworkCodes.hpp"
 #include "SimulatorStateListener.hpp"
 #include "Map.hpp"
-#include "Character.hpp"
+#include "Spell.hpp"
 #include <list>
+
+class Character;
+class LineDamageSpell;
 
 class GameSimulator
 {
@@ -33,7 +36,7 @@ class GameSimulator
 
 	template<typename EntityType, typename... Args>
 	EntityType *addEntity(Args &&...args);
-	virtual bool removeEntity(sf::Uint16 id);
+	bool removeEntity(sf::Uint16 id);
 	void removeEntityLater(sf::Uint16 id);
 
 	sf::Uint8 getOwnId() const;//Will return NEUTRAL_PLAYER if no id
@@ -43,12 +46,13 @@ class GameSimulator
 
 	//Override to prevent full-authority (e.g. in a client, only send a request)
 	virtual void selfSetDirection(const sf::Vector2f &direction);
+	virtual void selfCastSpell(const Spell &spell) = 0;
 
 	protected:
 	template<typename... Args>
 	inline Player *addPlayer(Args &&...args);
 	Player *addPlayer(Player &&player);
-	virtual bool removePlayer(sf::Uint8 id, sf::Uint8 reason = (sf::Uint8)DisconnectionReason::Left);
+	bool removePlayer(sf::Uint8 id, sf::Uint8 reason = (sf::Uint8)DisconnectionReason::Left);
 	const std::unordered_map<sf::Uint8, Player> &getPlayers() const;
 
 	const std::unordered_map<sf::Uint16, GameEntity *> &getEntities() const;
@@ -60,19 +64,25 @@ class GameSimulator
 
 	virtual bool loadMap(const std::string &name);
 
-	GameEntity *addUnknownNetworkEntity(sf::Uint8 entitytype, sf::Packet &packet);
+	virtual void onEntityAdded(GameEntity *entity) { }
+	virtual void onEntityRemoved(GameEntity *entity) { }
+
+	GameEntity *addNetworkEntity(sf::Uint8 entitytype, sf::Packet &packet);
 	//Forbid implicit conversion
 	template<typename T>
-	GameEntity *addUnknownNetworkEntity(T entitytype, sf::Packet &packet) = delete;
-	static void writeUnknownEntityInitData(GameEntity *entity, sf::Packet &packet, bool hideserverinfo);
-	Character *addNetworkCharacter(sf::Packet &packet);
-	static void writeCharacterInitData(Character *character, sf::Packet &packet, bool hideserverinfo);
+	GameEntity *addNetworkEntity(T entitytype, sf::Packet &packet) = delete;
+	static bool writeEntityInitData(GameEntity *entity, sf::Packet &packet, bool hideserverinfo);
 
 	sf::Uint8 m_ownid;
 	SimulatorStateListener *m_statelistener;
 
 	private:
 	bool addEntity(GameEntity *entity);
+
+	Character *addNetworkCharacter(sf::Packet &packet);
+	static void writeCharacterInitData(Character *character, sf::Packet &packet, bool hideserverinfo);
+	LineDamageSpell *addNetworkLineDamageSpell(sf::Packet &packet);
+	static void writeLineDamageSpellInitData(LineDamageSpell *spell, sf::Packet &packet, bool hideserverinfo);
 
 	float m_interpolationtime;
 	bool m_fullsimulator;

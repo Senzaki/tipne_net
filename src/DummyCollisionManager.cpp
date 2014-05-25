@@ -19,7 +19,7 @@ void DummyCollisionManager::update(float etime)
 		object->updatePosition(etime);
 }
 
-void DummyCollisionManager::getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) const
+void DummyCollisionManager::getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects)
 {
 #ifndef NDEBUG
 	std::cerr << "[DEBUG]Warning : The visibility function of the dummy collision manager should never be used." << std::endl;

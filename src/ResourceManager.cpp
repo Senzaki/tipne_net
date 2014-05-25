@@ -44,13 +44,14 @@ ResourceManager::ResourceManager()
 		sec.tex_files[BASE_WALLS_TEX] = "tiles/walls.png";
 	}
 
-	//Characters
+	//Game
 	{
-		Section &sec = m_sections[(int)ResourceSection::Characters];
-		sec.tex_files.resize(CHARACTERS_TEXTURES_COUNT);
-		sec.textures.resize(CHARACTERS_TEXTURES_COUNT, nullptr);
+		Section &sec = m_sections[(int)ResourceSection::Game];
+		sec.tex_files.resize(GAME_TEXTURES_COUNT);
+		sec.textures.resize(GAME_TEXTURES_COUNT, nullptr);
 
 		sec.tex_files[GHOST_TEX] = "ghost.png";
+		sec.tex_files[BASIC_SPELL] = "spells/basic.png";
 	}
 }
 

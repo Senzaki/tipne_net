@@ -14,10 +14,13 @@ class DefaultCollisionManager : public CollisionManager
 	DefaultCollisionManager &operator=(const DefaultCollisionManager &) = delete;
 
 	virtual void update(float etime);
-	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) const;
+	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects);
+
+	protected:
+	virtual void onObjectRemoved(CollisionObject *object);
 
 	private:
-	void updateObject(CollisionObject *object);//Returns true when out of bounds
+	void rehashObject(CollisionObject *object);
 	void handleCollisions();
 
 	float m_remainingtime;
@@ -34,6 +37,7 @@ class DefaultCollisionManager : public CollisionManager
 	std::vector<std::list<std::pair<CollisionObject *, sf::Vector2f>>> m_tilescontent;
 	CollisionObject m_boundsobject;
 	CollisionObject m_wallobject;
+	bool m_needsrehash;
 };
 
 #endif // DEFAULTCOLLISIONMANAGER_HPP_INCLUDED
