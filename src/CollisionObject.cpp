@@ -174,9 +174,11 @@ void CollisionObject::correctPosition(const sf::Vector2f &position)
 	{
 		m_position.x = position.x;
 		m_position.y = position.y;
+		/*
 		//Continue interpolation from a different start position (disabling it makes the client more accurate, but the displayed data is less stable)
 		//Linear 2-eq system solution
 		m_direction = (m_desired - m_position) / (1.f - m_time / m_maxtime);
 		m_start = m_desired - m_direction;
+		*/
 	}
 }
