@@ -38,7 +38,6 @@ ServerSimulator::~ServerSimulator()
 bool ServerSimulator::update(float etime)
 {
 	using namespace std::placeholders;
-	m_udpmgr.update(etime);
 	//Examine network info
 	//First, new connections
 	m_acceptedplayers.foreach([this](std::tuple<sf::IpAddress, unsigned short, Player> &newplayer)
@@ -63,6 +62,7 @@ bool ServerSimulator::update(float etime)
 	bool rc = GameSimulator::update(etime);
 	updateVisibility();
 	sendGeneralPacket();
+	m_udpmgr.update(etime);
 	return rc;
 }
 
