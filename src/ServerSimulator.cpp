@@ -90,18 +90,6 @@ void ServerSimulator::buildSnapshotPacket(sf::Packet &packet, sf::Uint8 playerid
 	packet << NO_ENTITY_ID;//End of packet
 }
 
-bool ServerSimulator::loadMap(const std::string &mapname)
-{
-	//Try to load the map
-	if(!GameSimulator::loadMap(mapname))
-		return false;
-	//Tell the players the map has changed
-	sf::Packet packet;
-	packet << (sf::Uint8)PacketType::Map << mapname;
-	sendToAllPlayers(packet);
-	return true;
-}
-
 bool ServerSimulator::startNetThread(unsigned short tcpport, unsigned short udpport, sf::Uint8 maxplayers)
 {
 	//If the thread already exists, don't start a new one
@@ -397,6 +385,13 @@ void ServerSimulator::selfCastSpell(const Spell &spell)
 	}
 }
 
+void ServerSimulator::onMapLoaded(const std::string &name)
+{
+	//Tell the players the map has changed
+	sf::Packet packet;
+	packet << (sf::Uint8)PacketType::Map << name;
+	sendToAllPlayers(packet);
+}
 void ServerSimulator::onEntityAdded(GameEntity *entity)
 {
 	//Tell all the clients

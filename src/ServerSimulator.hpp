@@ -14,7 +14,6 @@ class ServerSimulator : public GameSimulator
 	virtual bool update(float etime);
 	void buildSnapshotPacket(sf::Packet &packet, sf::Uint8 playerid);
 
-	virtual bool loadMap(const std::string &mapname);
 	bool startNetThread(unsigned short tcpport, unsigned short udpport, sf::Uint8 maxplayers);
 	void stopNetThread();
 
@@ -28,6 +27,7 @@ class ServerSimulator : public GameSimulator
 
 	virtual void selfCastSpell(const Spell &spell);
 
+	virtual void onMapLoaded(const std::string &name);
 	virtual void onEntityAdded(GameEntity *entity);
 	virtual void onEntityRemoved(GameEntity *entity);
 

@@ -274,6 +274,7 @@ bool GameSimulator::loadMap(const std::string &name)
 			entity.second->setCollisionManager(m_colmgr);
 		if(m_statelistener)
 			m_statelistener->onMapLoaded(m_map);
+		onMapLoaded(name);
 		return true;
 	}
 	return false;

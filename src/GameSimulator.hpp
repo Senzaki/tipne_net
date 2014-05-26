@@ -48,6 +48,8 @@ class GameSimulator
 	virtual void selfSetDirection(const sf::Vector2f &direction);
 	virtual void selfCastSpell(const Spell &spell) = 0;
 
+	bool loadMap(const std::string &name);
+
 	protected:
 	template<typename... Args>
 	inline Player *addPlayer(Args &&...args);
@@ -62,8 +64,7 @@ class GameSimulator
 
 	void getObjectsVisibleFrom(Character *viewer, std::list<CollisionObject *> &visible);
 
-	virtual bool loadMap(const std::string &name);
-
+	virtual void onMapLoaded(const std::string &name) { }
 	virtual void onEntityAdded(GameEntity *entity) { }
 	virtual void onEntityRemoved(GameEntity *entity) { }
 
