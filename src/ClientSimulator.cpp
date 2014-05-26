@@ -200,6 +200,20 @@ void ClientSimulator::selfCastSpell(const Spell &spell)
 
 bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
 {
+	//Extract sequence number, and ignore the snapshot if the sequence number does not match
+	sf::Uint32 snapshotseq;
+	if(!(packet >> snapshotseq))
+	{
+		std::cerr << "Error in snapshot packet." << std::endl;
+		return false;
+	}
+	if(snapshotseq != m_seqnumber)
+	{
+#ifndef NDEBUG
+		std::cout << "[DEBUG]Snapshot ignored because of different sequence number : received " << snapshotseq << ", but expected " << m_seqnumber << '.' << std::endl;
+#endif
+		return true;
+	}
 	//Extract all entities info
 	sf::Uint16 entid;
 	float x, y;
@@ -259,7 +273,7 @@ bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
 bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 {
 	sf::Uint8 playerscount;
-	if(!(packet >> playerscount >> m_ownid))
+	if(!(packet >> m_seqnumber >> playerscount >> m_ownid))
 		return false;
 
 	//Add all the players
@@ -301,6 +315,7 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 
 bool ClientSimulator::parseReceivedPacket(sf::Packet &packet)
 {
+	m_seqnumber++;
 	sf::Uint8 type;
 	while((packet >> type))
 	{
@@ -358,7 +373,8 @@ bool ClientSimulator::onDisconnectionPacket(sf::Packet &packet)
 {
 	//Which player ? For what reason ?
 	sf::Uint8 id;
-	if(!(packet >> id))
+	sf::Uint8 reason;
+	if(!(packet >> id >> reason))
 		return false;
 	if(id == NEUTRAL_PLAYER)
 	{
@@ -366,7 +382,7 @@ bool ClientSimulator::onDisconnectionPacket(sf::Packet &packet)
 		return false;
 	}
 	//Remove it from the game
-	if(!removePlayer(id))
+	if(!removePlayer(id, reason))
 		return false;
 	return true;
 }

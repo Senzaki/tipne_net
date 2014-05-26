@@ -14,7 +14,8 @@ ServerSimulator::ServerSimulator(bool pure):
 	GameSimulator(true, 0.f),
 	m_thread(nullptr),
 	m_thrrunning(false),
-	m_udpmgr(*this)
+	m_udpmgr(*this),
+	m_seqnumber(0)
 {
 	m_playersids.reserveID(NEUTRAL_PLAYER);
 	m_entitiesids.reserveID(NO_ENTITY_ID);
@@ -68,6 +69,7 @@ bool ServerSimulator::update(float etime)
 void ServerSimulator::buildSnapshotPacket(sf::Packet &packet, sf::Uint8 playerid)
 {
 	packet << (sf::Uint8)UdpPacketType::Snapshot;
+	packet << m_seqnumber;
 	Character *viewer = m_playerschars.at(playerid);
 	if(viewer)
 	{
@@ -472,7 +474,7 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 	//Put the current state into a packet
 	packet.clear();
 	const std::unordered_map<sf::Uint8, Player> &players = getPlayers();
-	packet << (sf::Uint8)ConnectionStatus::Accepted << (sf::Uint8)players.size() << newplayer->id;
+	packet << (sf::Uint8)ConnectionStatus::Accepted << m_seqnumber << (sf::Uint8)players.size() << newplayer->id;
 	//List of players
 	for(const std::pair<const sf::Uint8, Player> &player : players)
 		packet << player.second;
@@ -584,6 +586,7 @@ sf::Socket::Status ServerSimulator::sendToPlayer(sf::Uint8 id, sf::Packet &packe
 
 void ServerSimulator::sendToAllPlayers(sf::Packet &packet)
 {
+	m_seqnumber++;
 	const std::unordered_map<sf::Uint8, Player> &players = getPlayers();
 	//Lock m_clientsmutex
 	std::lock_guard<std::mutex> lock(m_clientsmutex);

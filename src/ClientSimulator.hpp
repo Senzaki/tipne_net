@@ -39,6 +39,7 @@ class ClientSimulator : public GameSimulator
 	std::atomic<bool> m_thrrunning;
 
 	unsigned int m_snapshotid;
+	sf::Uint32 m_seqnumber;
 
 	SafeSocket<sf::TcpSocket> m_server;
 	ClientUdpManager m_udpmgr;

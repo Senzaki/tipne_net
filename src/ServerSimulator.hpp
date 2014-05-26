@@ -57,6 +57,7 @@ class ServerSimulator : public GameSimulator
 	std::mutex m_clientsmutex;
 	ServerUdpManager m_udpmgr;
 	sf::Packet m_generalpacket;
+	sf::Uint32 m_seqnumber;
 
 	//Communication between main thread/child thread
 	//Child->Main
