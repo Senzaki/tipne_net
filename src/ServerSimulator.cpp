@@ -61,6 +61,7 @@ bool ServerSimulator::update(float etime)
 
 	bool rc = GameSimulator::update(etime);
 	updateVisibility();
+	sendGeneralPacket();
 	return rc;
 }
 
@@ -388,17 +389,16 @@ void ServerSimulator::selfCastSpell(const Spell &spell)
 void ServerSimulator::onMapLoaded(const std::string &name)
 {
 	//Tell the players the map has changed
-	sf::Packet packet;
-	packet << (sf::Uint8)PacketType::Map << name;
-	sendToAllPlayers(packet);
+	m_generalpacket << (sf::Uint8)PacketType::Map << name;
 }
 void ServerSimulator::onEntityAdded(GameEntity *entity)
 {
 	//Tell all the clients
-	sf::Packet packet;
-	packet << (sf::Uint8)PacketType::NewEntity;
-	if(writeEntityInitData(entity, packet, true))
-		sendToAllPlayers(packet);
+	sf::Packet towrite;
+	towrite << (sf::Uint8)PacketType::NewEntity;
+	//If everything was successfull, add it to the general packet
+	if(writeEntityInitData(entity, towrite, true))
+		m_generalpacket.append(towrite.getData(), towrite.getDataSize());
 }
 
 void ServerSimulator::onEntityRemoved(GameEntity *entity)
@@ -415,9 +415,7 @@ void ServerSimulator::onEntityRemoved(GameEntity *entity)
 	m_entitiesids.releaseID(entity->getId());
 
 	//Tell all the clients
-	sf::Packet packet;
-	packet << (sf::Uint8)PacketType::RemoveEntity << (sf::Uint16)entity->getId();
-	sendToAllPlayers(packet);
+	m_generalpacket << (sf::Uint8)PacketType::RemoveEntity << (sf::Uint16)entity->getId();
 }
 
 void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned short port, Player &toaccept)
@@ -464,6 +462,8 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 	sendToAllPlayers(packet);
 	//Add the character to the simulation
 	Character *newcharacter = addEntity<Character>(*this, m_entitiesids.getNewID());
+	//Send the general packet, the new client should not receive it
+	sendGeneralPacket();
 	//Add the player to the simulation
 	Player *newplayer = addPlayer(std::move(toaccept));
 	m_playerschars[newplayer->id] = newcharacter;
@@ -590,6 +590,16 @@ void ServerSimulator::sendToAllPlayers(sf::Packet &packet)
 	//Send to all
 	for(const std::pair<const sf::Uint8, Player> &player : players)
 		m_clients[player.first].send(packet);
+}
+
+void ServerSimulator::sendGeneralPacket()
+{
+	//Send the messages to all clients
+	if(m_generalpacket.getDataSize() != 0)
+	{
+		sendToAllPlayers(m_generalpacket);
+		m_generalpacket.clear();
+	}
 }
 
 bool ServerSimulator::onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet &packet)

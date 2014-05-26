@@ -302,44 +302,44 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 bool ClientSimulator::parseReceivedPacket(sf::Packet &packet)
 {
 	sf::Uint8 type;
-	if(!(packet >> type))
+	while((packet >> type))
 	{
-		std::cerr << "Error in packet : Invalid packet type. Disconnecting." << std::endl;
-		return false;
+		//Each packet type is handled differently
+		bool success = false;
+		switch(type)
+		{
+			case (sf::Uint8)PacketType::NewPlayer:
+				success = onNewPlayerPacket(packet);
+				break;
+
+			case (sf::Uint8)PacketType::Disconnection:
+				success = onDisconnectionPacket(packet);
+				break;
+
+			case (sf::Uint8)PacketType::Map:
+				success = onMapPacket(packet);
+				break;
+
+			case (sf::Uint8)PacketType::NewEntity:
+				success = onNewEntityPacket(packet);
+				break;
+
+			case (sf::Uint8)PacketType::RemoveEntity:
+				success = onRemoveEntityPacket(packet);
+				break;
+
+			default:
+				std::cerr << "Unknown packet type." << std::endl;
+				break;
+		}
+		if(!success)
+		{
+			std::cerr << "Error in packet : Invalid packet of type " << (int)type << ". Disconnecting." << std::endl;
+			return false;
+		}
 	}
 
-	//Each packet type is handled differently
-	bool success = false;
-	switch(type)
-	{
-		case (sf::Uint8)PacketType::NewPlayer:
-			success = onNewPlayerPacket(packet);
-			break;
-
-		case (sf::Uint8)PacketType::Disconnection:
-			success = onDisconnectionPacket(packet);
-			break;
-
-		case (sf::Uint8)PacketType::Map:
-			success = onMapPacket(packet);
-			break;
-
-		case (sf::Uint8)PacketType::NewEntity:
-			success = onNewEntityPacket(packet);
-			break;
-
-		case (sf::Uint8)PacketType::RemoveEntity:
-			success = onRemoveEntityPacket(packet);
-			break;
-
-		default:
-			std::cerr << "Unknown packet type." << std::endl;
-			break;
-	}
-	if(!success)
-		std::cerr << "Error in packet : Invalid packet of type " << (int)type << ". Disconnecting." << std::endl;
-
-	return success;
+	return true;
 }
 
 bool ClientSimulator::onNewPlayerPacket(sf::Packet &packet)
