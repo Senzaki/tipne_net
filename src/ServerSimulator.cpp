@@ -40,24 +40,21 @@ bool ServerSimulator::update(float etime)
 	using namespace std::placeholders;
 	//Examine network info
 	//First, new connections
-	m_acceptedplayers.foreach([this](std::tuple<sf::IpAddress, unsigned short, Player> &newplayer)
+	m_acceptedplayers.treat([this](std::tuple<sf::IpAddress, unsigned short, Player> &newplayer)
 	{
 		acceptNewPlayer(std::get<0>(newplayer), std::get<1>(newplayer), std::get<2>(newplayer));
 	});
-	m_acceptedplayers.clear();
 	//Then packets
-	m_receivedpackets.foreach([this](std::tuple<sf::Uint8, sf::Packet *> &received)
+	m_receivedpackets.treat([this](std::tuple<sf::Uint8, sf::Packet *> &received)
 	{
 		parseNewPacket(received);
 		delete std::get<1>(received);
 	});
-	m_receivedpackets.clear();
 	//Then disconnections
-	m_disconnectedplayers.foreach([this](std::tuple<sf::Uint8, sf::Uint8> &discoinfo)
+	m_disconnectedplayers.treat([this](std::tuple<sf::Uint8, sf::Uint8> &discoinfo)
 	{
 		disconnectPlayer(std::get<0>(discoinfo), std::get<1>(discoinfo));
 	});
-	m_disconnectedplayers.clear();
 
 	bool rc = GameSimulator::update(etime);
 	updateVisibility();
@@ -169,11 +166,10 @@ void ServerSimulator::stopNetThread()
 		m_thread = nullptr;
 
 		//Delete the remaining packets
-		m_receivedpackets.foreach([](std::tuple<sf::Uint8, sf::Packet *> &received)
+		m_receivedpackets.treat([](std::tuple<sf::Uint8, sf::Packet *> &received)
 		{
 			delete std::get<1>(received);
 		});
-		m_receivedpackets.clear();
 	}
 }
 
@@ -189,13 +185,12 @@ void ServerSimulator::netThread()
 		{//Lock m_clientsmutex
 			std::lock_guard<std::mutex> lock(m_clientsmutex);
 			//Remove clients to be removed
-			m_clientstoremove.foreach([this, &selector](sf::Uint8 torem)
+			m_clientstoremove.treat([this, &selector](sf::Uint8 torem)
 			{
 				m_clients[torem].removeFrom(selector);
 				m_clients.erase(torem);
 				m_playersids.releaseID(torem);
 			});
-			m_clientstoremove.clear();
 		}
 
 		//Wait until new connection, new data or timeout
@@ -592,7 +587,10 @@ void ServerSimulator::sendToAllPlayers(sf::Packet &packet)
 	std::lock_guard<std::mutex> lock(m_clientsmutex);
 	//Send to all
 	for(const std::pair<const sf::Uint8, Player> &player : players)
-		m_clients[player.first].send(packet);
+	{
+		if(player.first != m_ownid)
+			m_clients[player.first].send(packet);
+	}
 }
 
 void ServerSimulator::sendGeneralPacket()

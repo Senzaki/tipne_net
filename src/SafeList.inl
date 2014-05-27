@@ -63,13 +63,6 @@ void SafeList<T>::popBack()
 }
 
 template<typename T>
-void SafeList<T>::clear()
-{
-	std::lock_guard<std::mutex> lock(m_mutex);
-	m_list.clear();
-}
-
-template<typename T>
 bool SafeList<T>::empty()
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
@@ -77,9 +70,10 @@ bool SafeList<T>::empty()
 }
 
 template<typename T>
-void SafeList<T>::foreach(std::function<void(T &)> tocall)
+void SafeList<T>::treat(std::function<void(T &)> tocall)
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	for(T &item : m_list)
 		tocall(item);
+	m_list.clear();
 }

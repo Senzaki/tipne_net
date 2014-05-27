@@ -53,13 +53,12 @@ bool ClientUdpManager::update(float etime)
 		m_lastpacketreceived = 0.f;
 		m_keepaliveinterval = KEEPALIVE_INTERVAL;//Stop connection attempts
 		//Treat the packets
-		m_receivedpackets.foreach([this, &success](sf::Packet *&packet)
+		m_receivedpackets.treat([this, &success](sf::Packet *&packet)
 		{
 			if(success)
 				success = parseReceivedPacket(*packet);
 			delete packet;
 		});
-		m_receivedpackets.clear();
 	}
 
 	return success;
@@ -115,11 +114,10 @@ void ClientUdpManager::stopNetThread()
 		delete m_thread;
 		m_thread = nullptr;
 		//Delete the remaining packets
-		m_receivedpackets.foreach([](sf::Packet *&packet)
+		m_receivedpackets.treat([](sf::Packet *&packet)
 		{
 			delete packet;
 		});
-		m_receivedpackets.clear();
 	}
 }
 

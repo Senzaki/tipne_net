@@ -31,13 +31,12 @@ bool ClientSimulator::update(float etime)
 
 	//Treat packets
 	bool success = true;
-	m_receivedpackets.foreach([this, &success](sf::Packet *&packet)
+	m_receivedpackets.treat([this, &success](sf::Packet *&packet)
 	{
 		if(success)
 			success = parseReceivedPacket(*packet);
 		delete packet;
 	});
-	m_receivedpackets.clear();
 
 	if(!success)
 		return false;
@@ -161,11 +160,10 @@ void ClientSimulator::stopNetThread()
 		m_thread = nullptr;
 
 		//Delete the remaining packets
-		m_receivedpackets.foreach([](sf::Packet *&packet)
+		m_receivedpackets.treat([](sf::Packet *&packet)
 		{
 			delete packet;
 		});
-		m_receivedpackets.clear();
 	}
 }
 

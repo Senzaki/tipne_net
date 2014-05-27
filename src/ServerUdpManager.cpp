@@ -57,7 +57,7 @@ void ServerUdpManager::update(float etime)
 	}
 
 	//Treat the packets
-	m_receivedpackets.foreach([this](std::tuple<sf::IpAddress, unsigned short, sf::Packet *> &packet)
+	m_receivedpackets.treat([this](std::tuple<sf::IpAddress, unsigned short, sf::Packet *> &packet)
 	{
 		sf::Uint8 id = getAssociatedPlayer(std::get<0>(packet), std::get<1>(packet));
 		if(id != NEUTRAL_PLAYER)
@@ -79,8 +79,6 @@ void ServerUdpManager::update(float etime)
 		else
 			it++;
 	}
-
-	m_receivedpackets.clear();
 }
 
 bool ServerUdpManager::startNetThread(unsigned short udpport)
@@ -135,11 +133,10 @@ void ServerUdpManager::stopNetThread()
 		m_thread = nullptr;
 
 		//Delete received packets
-		m_receivedpackets.foreach([](std::tuple<sf::IpAddress, unsigned short, sf::Packet *> &received)
+		m_receivedpackets.treat([](std::tuple<sf::IpAddress, unsigned short, sf::Packet *> &received)
 		{
 			delete std::get<2>(received);
 		});
-		m_receivedpackets.clear();
 	}
 }
 
