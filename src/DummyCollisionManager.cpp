@@ -12,11 +12,11 @@ DummyCollisionManager::~DummyCollisionManager()
 
 }
 
-void DummyCollisionManager::update(float etime)
+void DummyCollisionManager::simulateStep()
 {
 	//Simply update all the positions
 	for(CollisionObject *object : m_objects)
-		object->updatePosition(etime);
+		object->updatePosition(COLLISION_STEP_TIME);
 }
 
 void DummyCollisionManager::getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects)

@@ -3,7 +3,8 @@
 #include <cassert>
 
 CollisionManager::CollisionManager(const Map &map):
-	m_map(map)
+	m_map(map),
+	m_remainingtime(0.f)
 {
 
 }
@@ -35,6 +36,23 @@ void CollisionManager::detach(CollisionObject *object)
 	onObjectRemoved(object);
 	m_objects.erase(object);
 	object->m_colmgr = nullptr;
+}
+
+void CollisionManager::setPostStepCallBack(std::function<void()> callback)
+{
+	m_poststep = callback;
+}
+
+void CollisionManager::update(float etime)
+{
+	m_remainingtime += etime;
+	while(m_remainingtime > COLLISION_STEP_TIME)
+	{
+		simulateStep();
+		if(m_poststep)
+			m_poststep();
+		m_remainingtime -= COLLISION_STEP_TIME;
+	}
 }
 
 void CollisionManager::notifyCollision(CollisionObject *a, CollisionObject *b)

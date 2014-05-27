@@ -12,6 +12,8 @@ Do not add objects that will only be tested for collisions (e.g. non blocking sp
 For blocking spells ("barrier" spells), add it and enable overlap (so that they can still collide with each other).
 */
 
+constexpr float COLLISION_STEP_TIME = 1.f / 200.f;
+
 class CollisionManager
 {
 	public:
@@ -24,17 +26,23 @@ class CollisionManager
 	void attach(CollisionObject *object);
 	void detach(CollisionObject *object);
 
-	virtual void update(float etime) = 0;
+	void setPostStepCallBack(std::function<void()> callback);
+
+	void update(float etime);
 	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects) = 0;//objects should be empty
 
 	protected:
+	virtual void simulateStep() = 0;
 	virtual void onObjectRemoved(CollisionObject *object) { }
 
 	void notifyCollision(CollisionObject *a, CollisionObject *b);
 	void addCorrection(CollisionObject *obj, const sf::Vector2f &correction);
 	void applyCorrection(CollisionObject *obj, float correctionfactor);
+
 	const Map &m_map;
 	std::unordered_set<CollisionObject *> m_objects;
+	float m_remainingtime;
+	std::function<void()> m_poststep;
 };
 
 #endif // COLLISIONMANAGER_HPP_INCLUDED

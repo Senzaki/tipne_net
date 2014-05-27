@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <iostream>
 
-static const float STEP_TIME = 1.f / 200.f;
 static const float CORRECTION_FACTOR = 0.8f;
 
 static inline bool getCircleInTilePenetration(sf::Vector2f position, float radius, float x, float y, sf::Vector2f &p)
@@ -41,7 +40,6 @@ static inline bool getCircleInTilePenetration(sf::Vector2f position, float radiu
 
 DefaultCollisionManager::DefaultCollisionManager(const Map &map):
 	CollisionManager(map),
-	m_remainingtime(0.f),
 	m_mapwidth(map.getSize().x),
 	m_tilescontent(map.getSize().x * map.getSize().y + 4), //Last cell = out of bounds
 	m_boundsobject(CollisionEntityType::Bound, nullptr),
@@ -57,24 +55,19 @@ DefaultCollisionManager::~DefaultCollisionManager()
 
 }
 
-void DefaultCollisionManager::update(float etime)
+void DefaultCollisionManager::simulateStep()
 {
-	m_remainingtime += etime;
-	while(m_remainingtime > STEP_TIME)
+	//Clear hash
+	for(std::list<std::pair<CollisionObject *, sf::Vector2f>> &cell : m_tilescontent)
+		cell.clear();
+	m_needsrehash = false;
+	//Move the objects and put them in the hash
+	for(CollisionObject *object : m_objects)
 	{
-		//Clear hash
-		for(std::list<std::pair<CollisionObject *, sf::Vector2f>> &cell : m_tilescontent)
-			cell.clear();
-		m_needsrehash = false;
-		//Move the objects and put them in the hash
-		for(CollisionObject *object : m_objects)
-		{
-			object->updatePosition(STEP_TIME);
-			rehashObject(object);
-		}
-		handleCollisions();
-		m_remainingtime -= STEP_TIME;
+		object->updatePosition(COLLISION_STEP_TIME);
+		rehashObject(object);
 	}
+	handleCollisions();
 }
 
 void DefaultCollisionManager::rehashObject(CollisionObject *object)

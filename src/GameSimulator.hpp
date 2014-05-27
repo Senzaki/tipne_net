@@ -79,6 +79,7 @@ class GameSimulator
 
 	private:
 	bool addEntity(GameEntity *entity);
+	void removePlannedEntities();
 
 	Character *addNetworkCharacter(sf::Packet &packet);
 	static void writeCharacterInitData(Character *character, sf::Packet &packet, bool hideserverinfo);

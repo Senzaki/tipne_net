@@ -1,6 +1,7 @@
 #include "GameSimulator.hpp"
 #include <iostream>
 #include <cassert>
+#include <functional>
 #include "DefaultCollisionManager.hpp"
 #include "DummyCollisionManager.hpp"
 #include "LineDamageSpell.hpp"
@@ -28,10 +29,6 @@ bool GameSimulator::update(float etime)
 	m_colmgr->update(etime);
 	for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
 		entity.second->update(etime);
-	//Remove all entities that need to be removed
-	for(sf::Uint16 id : m_enttoremove)
-		removeEntity(id);
-	m_enttoremove.clear();
 	return true;
 }
 
@@ -270,6 +267,7 @@ bool GameSimulator::loadMap(const std::string &name)
 		//Reload the collision manager if necessary
 		delete m_colmgr;
 		m_colmgr = new DefaultCollisionManager(m_map);
+		m_colmgr->setPostStepCallBack(std::bind(&GameSimulator::removePlannedEntities, this));
 		for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
 			entity.second->setCollisionManager(m_colmgr);
 		if(m_statelistener)
@@ -278,6 +276,14 @@ bool GameSimulator::loadMap(const std::string &name)
 		return true;
 	}
 	return false;
+}
+
+void GameSimulator::removePlannedEntities()
+{
+	//Remove all entities that need to be removed
+	for(sf::Uint16 id : m_enttoremove)
+		removeEntity(id);
+	m_enttoremove.clear();
 }
 
 GameEntity *GameSimulator::addNetworkEntity(sf::Uint8 entitytype, sf::Packet &packet)

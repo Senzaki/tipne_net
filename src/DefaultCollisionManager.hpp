@@ -13,17 +13,15 @@ class DefaultCollisionManager : public CollisionManager
 	DefaultCollisionManager(const DefaultCollisionManager &) = delete;
 	DefaultCollisionManager &operator=(const DefaultCollisionManager &) = delete;
 
-	virtual void update(float etime);
 	virtual void getObjectsVisibleFrom(unsigned int x, unsigned int y, std::list<CollisionObject *> &objects);
 
 	protected:
+	virtual void simulateStep();
 	virtual void onObjectRemoved(CollisionObject *object);
 
 	private:
 	void rehashObject(CollisionObject *object);
 	void handleCollisions();
-
-	float m_remainingtime;
 
 	unsigned int m_mapwidth;
 	enum
