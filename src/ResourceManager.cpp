@@ -34,6 +34,15 @@ ResourceManager::ResourceManager()
 		sec.font_files[STANDARD_FONT] = "DejaVuSansMono.ttf";
 	}
 
+	//Menu
+	{
+		Section &sec = m_sections[(int)ResourceSection::Menu];
+		sec.tex_files.resize(MENU_TEXTURES_COUNT);
+		sec.textures.resize(MENU_TEXTURES_COUNT, nullptr);
+
+		sec.tex_files[LOGO_TEX] = "logo.png";
+	}
+
 	//Map
 	{
 		Section &sec = m_sections[(int)ResourceSection::Map];
