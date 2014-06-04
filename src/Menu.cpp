@@ -171,8 +171,8 @@ void Menu::showConnectMenu()
 	tcpportlabel->setPosition(tcpport->getPosition().x - tcpportlabel->getSize().x - 25, tcpport->getPosition().y + 10);
 	udpport->setPosition(size.x / 2.f - udpport->getSize().x / 2.f, size.y / 2.f - udpport->getSize().y / 2.f + interval);
 	udpportlabel->setPosition(udpport->getPosition().x - udpportlabel->getSize().x - 25, udpport->getPosition().y + 10);
-	connect->setPosition(size.x / 3.f, size.y - interval);
-	cancel->setPosition(2 * size.x / 3.f, size.y - interval);
+	connect->setPosition(size.x / 3.f - connect->getSize().x / 2.f, size.y - interval);
+	cancel->setPosition(2 * size.x / 3.f - cancel->getSize().x / 2.f, size.y - interval);
 }
 
 void Menu::showHostMenu()
@@ -216,8 +216,8 @@ void Menu::showHostMenu()
 	udpportlabel->setPosition(udpport->getPosition().x - udpportlabel->getSize().x - 25, udpport->getPosition().y);
 	maxplayers->setPosition(size.x / 2.f - maxplayers->getSize().x / 2.f, size.y / 2.f - maxplayers->getSize().y / 2.f + interval);
 	maxplayerslabel->setPosition(maxplayers->getPosition().x - maxplayerslabel->getSize().x - 25, maxplayers->getPosition().y);
-	host->setPosition(size.x / 3.f, size.y - interval);
-	cancel->setPosition(2 * size.x / 3.f, size.y - interval);
+	host->setPosition(size.x / 3.f - host->getSize().x / 2.f, size.y - interval);
+	cancel->setPosition(2 * size.x / 3.f - cancel->getSize().x / 2.f, size.y - interval);
 }
 
 void Menu::connect(DecoratedLineEdit *ipaddrwidget, DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget)
