@@ -5,9 +5,10 @@
 #include <vector>
 #include <string>
 
-enum class ResourceSection : int
+enum class ResourceSection
 {
 	Base = 0,
+	Menu,
 	Map,
 	Game,
 	Count
@@ -31,6 +32,12 @@ namespace Resource
 	{
 		STANDARD_FONT = 0,
 		BASE_FONTS_COUNT
+	};
+
+	enum MenuTexture
+	{
+		LOGO_TEX = 0,
+		MENU_TEXTURES_COUNT
 	};
 
 	enum MapTexture

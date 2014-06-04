@@ -27,7 +27,7 @@ Menu::Menu(sf::RenderWindow &window, float vratio, float xyratio):
 
 Menu::~Menu()
 {
-
+	ResourceManager::getInstance().unloadSection(ResourceSection::Menu);
 }
 
 void Menu::load()
@@ -36,7 +36,10 @@ void Menu::load()
 
 	//Load all textures & fonts
 	ResourceManager &rsmgr = ResourceManager::getInstance();
+	rsmgr.loadSection(ResourceSection::Menu);
 	m_cursor.setTexture(rsmgr.getTexture(ResourceSection::Base, Resource::CURSOR_TEX));
+	m_background.setTexture(rsmgr.getTexture(ResourceSection::Menu, Resource::LOGO_TEX));
+	m_background.setPosition((m_camera.getSize().x - m_background.getLocalBounds().width) / 2.f, (m_camera.getSize().y - m_background.getLocalBounds().height) / 2.f);
 
 	showMainMenu();
 }
@@ -50,6 +53,12 @@ void Menu::update(float etime)
 void Menu::draw()
 {
 	m_window.clear();
+	//Apply the scaling view
+	m_window.setView(m_camera);
+	//Draw background
+	m_window.draw(m_background);
+	//Back to default view
+	m_window.setView(m_window.getDefaultView());
 	//Draw GUI
 	m_guimgr.draw();
 	//Apply the scaling view
