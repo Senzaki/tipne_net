@@ -8,13 +8,12 @@
 
 static void quitApplication(int signal)
 {
-	Application::getInstance().setNextAppState(nullptr, true);
+	Application::getInstance().setNextAppState(nullptr);
 }
 
 Application::Application():
 	m_curstate(nullptr),
-	m_nextstate(nullptr),
-	m_deletestate(false)
+	m_nextstate(nullptr)
 {
 
 }
@@ -51,7 +50,7 @@ int Application::execute(int argc, char **argv)
 	ResourceManager::getInstance().loadSection(ResourceSection::Base);
 
 	//Let's start with the menu
-	setNextAppState(new Menu(m_window, m_window.getSize().y / DEFAULT_SCREEN_HEIGHT, (float)m_window.getSize().x / (float)m_window.getSize().y));
+	setNextAppState(std::make_shared<Menu>(m_window, m_window.getSize().y / DEFAULT_SCREEN_HEIGHT, (float)m_window.getSize().x / (float)m_window.getSize().y));
 	sf::Event evt;
 	sf::Clock clock;
 	float etime;
@@ -118,18 +117,13 @@ int Application::execute(int argc, char **argv)
 			m_curstate->draw();
 			m_window.display();
 		}
-
-		//Delete the state if requested
-		if(m_deletestate)
-			delete m_curstate;
 	}
 
 	return 0;
 }
 
-void Application::setNextAppState(ApplicationState *state, bool deleteold)
+void Application::setNextAppState(const std::shared_ptr<ApplicationState> &state)
 {
 	m_nextstate = state;
-	m_deletestate = deleteold;
 	m_running = false;
 }

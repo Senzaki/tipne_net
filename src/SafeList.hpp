@@ -22,6 +22,7 @@ class SafeList
 	void pushBack(const T &arg);
 	void pushBack(T &&arg);
 	void popBack();
+	void clear();
 	bool empty();
 	void treat(std::function<void(T &)> tocall);
 

@@ -30,7 +30,7 @@ class ServerUdpManager
 	void parseReceivedPacket(sf::Packet &packet, sf::Uint8 id);
 	void sendToAll(sf::Packet &packet);
 
-	std::thread *m_thread;
+	std::unique_ptr<std::thread> m_thread;
 	std::atomic<bool> m_thrrunning;
 	ServerSimulator &m_simulator;
 
@@ -49,7 +49,7 @@ class ServerUdpManager
 	std::unordered_map<sf::Uint8, float> m_lastpacketreceived;
 	float m_lastsnapshot;
 
-	SafeList<std::tuple<sf::IpAddress, unsigned short, sf::Packet *>> m_receivedpackets;
+	SafeList<std::tuple<sf::IpAddress, unsigned short, std::unique_ptr<sf::Packet>>> m_receivedpackets;
 };
 
 #endif // SERVERUDPMANAGER_HPP_INCLUDED

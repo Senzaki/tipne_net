@@ -1,5 +1,6 @@
 #include "ClientSimulator.hpp"
 #include "NetworkCodes.hpp"
+#include "make_unique.hpp"
 #include <iostream>
 
 static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
@@ -31,11 +32,10 @@ bool ClientSimulator::update(float etime)
 
 	//Treat packets
 	bool success = true;
-	m_receivedpackets.treat([this, &success](sf::Packet *&packet)
+	m_receivedpackets.treat([this, &success](std::unique_ptr<sf::Packet> &packet)
 	{
 		if(success)
 			success = parseReceivedPacket(*packet);
-		delete packet;
 	});
 
 	if(!success)
@@ -120,15 +120,14 @@ int ClientSimulator::startNetThread(const sf::IpAddress &serveraddr, unsigned sh
 	try
 	{
 		m_thrrunning = true;
-		m_thread = new std::thread(&ClientSimulator::netThread, this);
+		m_thread = make_unique<std::thread>(&ClientSimulator::netThread, this);
 	}
 	catch(const std::exception &e)
 	{
 		m_thrrunning = false;
 		std::cerr << "Could not start networking thread." << std::endl;
 		std::cerr << e.what() << std::endl;
-		delete m_thread;
-		m_thread = nullptr;
+		m_thread.reset();
 		m_server.disconnect();
 		m_udpmgr.stopNetThread();
 		return -1;
@@ -156,14 +155,10 @@ void ClientSimulator::stopNetThread()
 		}
 
 		//Delete the thread object
-		delete m_thread;
-		m_thread = nullptr;
+		m_thread.reset();
 
 		//Delete the remaining packets
-		m_receivedpackets.treat([](sf::Packet *&packet)
-		{
-			delete packet;
-		});
+		m_receivedpackets.clear();
 	}
 }
 
@@ -430,7 +425,7 @@ void ClientSimulator::netThread()
 
 	while(m_thrrunning)
 	{
-		//Wait until new new data or timeout
+		//Wait until new data or timeout
 		if(selector.wait(SELECTOR_WAIT_TIME))
 			m_thrrunning = receivePackets();
 	}
@@ -441,15 +436,13 @@ void ClientSimulator::netThread()
 bool ClientSimulator::receivePackets()
 {
 	sf::Socket::Status status;
-	sf::Packet *packet = new sf::Packet;
+	auto packet = make_unique<sf::Packet>();
 	//Receive all the packets
 	while((status = m_server.receive(*packet)) == sf::Socket::Done)
 	{
-		m_receivedpackets.emplaceBack(packet);
-		packet = new sf::Packet;
+		m_receivedpackets.emplaceBack(std::move(packet));
+		packet = make_unique<sf::Packet>();
 	}
-	//Delete the last (unused) packet
-	delete packet;
 	//Error, or just no packets left ?
 	if(status == sf::Socket::NotReady)
 		return true;

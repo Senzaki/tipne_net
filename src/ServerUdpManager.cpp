@@ -57,12 +57,11 @@ void ServerUdpManager::update(float etime)
 	}
 
 	//Treat the packets
-	m_receivedpackets.treat([this](std::tuple<sf::IpAddress, unsigned short, sf::Packet *> &packet)
+	m_receivedpackets.treat([this](std::tuple<sf::IpAddress, unsigned short, std::unique_ptr<sf::Packet>> &packet)
 	{
 		sf::Uint8 id = getAssociatedPlayer(std::get<0>(packet), std::get<1>(packet));
 		if(id != NEUTRAL_PLAYER)
 			parseReceivedPacket(*std::get<2>(packet), id);
-		delete std::get<2>(packet);
 	});
 
 	auto it = m_lastpacketreceived.begin();
@@ -99,7 +98,7 @@ bool ServerUdpManager::startNetThread(unsigned short udpport)
 	m_thrrunning = true;
 	try
 	{
-		m_thread = new std::thread(&ServerUdpManager::netThread, this);
+		m_thread = make_unique<std::thread>(&ServerUdpManager::netThread, this);
 	}
 	catch(const std::exception &e)
 	{
@@ -129,14 +128,10 @@ void ServerUdpManager::stopNetThread()
 			std::cerr << "Could not stop UDP networking thread." << std::endl;
 			std::cerr << e.what() << std::endl;
 		}
-		delete m_thread;
-		m_thread = nullptr;
+		m_thread.reset();
 
 		//Delete received packets
-		m_receivedpackets.treat([](std::tuple<sf::IpAddress, unsigned short, sf::Packet *> &received)
-		{
-			delete std::get<2>(received);
-		});
+		m_receivedpackets.clear();
 	}
 }
 
@@ -193,17 +188,15 @@ void ServerUdpManager::netThread()
 void ServerUdpManager::receiveNewPackets()
 {
 	sf::Socket::Status status;
-	sf::Packet *packet = new sf::Packet;
+	auto packet = make_unique<sf::Packet>();
 	sf::IpAddress senderaddr;
 	unsigned short senderport;
 	//Receive all the packets
 	while((status = m_socket.receive(*packet, senderaddr, senderport)) == sf::Socket::Done)
 	{
-		m_receivedpackets.emplaceBack(senderaddr, senderport, packet);
-		packet = new sf::Packet;
+		m_receivedpackets.emplaceBack(senderaddr, senderport, std::move(packet));
+		packet = make_unique<sf::Packet>();
 	}
-	//Delete the last (unused) packet
-	delete packet;
 	//Error, or just no packets left ?
 	if(status == sf::Socket::Error)
 		std::cerr << "Unexpected UDP network error." << std::endl;

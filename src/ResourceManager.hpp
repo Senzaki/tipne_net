@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <string>
+#include <memory>
 
 enum class ResourceSection
 {
@@ -79,8 +80,8 @@ class ResourceManager
 	struct Section
 	{
 		bool loaded;
-		std::vector<sf::Texture *> textures;
-		std::vector<sf::Font *> fonts;
+		std::vector<std::unique_ptr<sf::Texture>> textures;
+		std::vector<std::unique_ptr<sf::Font>> fonts;
 
 		std::vector<std::string> tex_files;
 		std::vector<std::string> font_files;

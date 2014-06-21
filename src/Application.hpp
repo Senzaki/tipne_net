@@ -2,6 +2,7 @@
 #define APPLICATION_HPP_INCLUDED
 
 #include <SFML/Graphics.hpp>
+#include <memory>
 #include "ApplicationState.hpp"
 
 #define DEFAULT_SCREEN_HEIGHT 1080.f //Default max resolution : 1920x1080 (16:9) -> but 1920x1200 won't display correctly :s
@@ -16,16 +17,15 @@ class Application
 
 	int execute(int argc, char **argv);
 
-	void setNextAppState(ApplicationState *state, bool deleteold = true);
+	void setNextAppState(const std::shared_ptr<ApplicationState> &state);
 
 	private:
 	Application();
 
 	sf::RenderWindow m_window;
 
-	ApplicationState *m_curstate;
-	ApplicationState *m_nextstate;
-	bool m_deletestate;
+	std::shared_ptr<ApplicationState> m_curstate;
+	std::shared_ptr<ApplicationState> m_nextstate;
 	bool m_running;
 };
 

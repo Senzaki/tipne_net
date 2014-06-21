@@ -4,6 +4,7 @@
 #include "BasisChange.hpp"
 #include "DrawableCharacter.hpp"
 #include "DrawableSpellProjectile.hpp"
+#include "make_unique.hpp"
 
 GameScreen::GameScreen(float vratio, float xyratio, GameSimulator *simulator):
 	m_camera(sf::FloatRect(-100.f, -DEFAULT_SCREEN_HEIGHT / 2, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
@@ -18,8 +19,7 @@ GameScreen::GameScreen(float vratio, float xyratio, GameSimulator *simulator):
 
 GameScreen::~GameScreen()
 {
-	for(std::pair<const sf::Uint16, DrawableEntity *> &entity : m_entities)
-		delete entity.second;
+
 }
 
 void GameScreen::setSimulator(GameSimulator *simulator)
@@ -48,7 +48,7 @@ bool GameScreen::update(float etime)
 	else
 		m_map.update(etime);
 	//Update the graphical entities
-	for(std::pair<const sf::Uint16, DrawableEntity *> &entity : m_entities)
+	for(std::pair<const sf::Uint16, std::unique_ptr<DrawableEntity>> &entity : m_entities)
 		entity.second->update(etime);
 	return toreturn;
 }
@@ -67,7 +67,7 @@ void GameScreen::draw(sf::RenderWindow &window)
 	{
 		try
 		{
-			DrawableEntity *entity = m_entities.at(id);
+			DrawableEntity *entity = m_entities.at(id).get();
 			if(entity->isContainedIn(m_seen))
 				todraw.emplace_back(entity);
 		}
@@ -253,9 +253,9 @@ void GameScreen::onNewEntity(GameEntity *entity)
 {
 	//Add a drawable entity depending on the type of entity
 	if(Character *character = dynamic_cast<Character *>(entity))
-		m_entities.emplace(character->getId(), new DrawableCharacter(character));
+		m_entities.emplace(character->getId(), make_unique<DrawableCharacter>(character));
 	else if(SpellProjectile *spell = dynamic_cast<SpellProjectile *>(entity))
-		m_entities.emplace(spell->getId(), new DrawableSpellProjectile(spell));
+		m_entities.emplace(spell->getId(), make_unique<DrawableSpellProjectile>(spell));
 }
 
 void GameScreen::onEntityRemoved(GameEntity *entity)
@@ -263,10 +263,7 @@ void GameScreen::onEntityRemoved(GameEntity *entity)
 	//Remove the associated drawable entity
 	auto it = m_entities.find(entity->getId());
 	if(it != m_entities.end())
-	{
-		delete it->second;
 		m_entities.erase(it);
-	}
 }
 
 void GameScreen::onMapLoaded(const Map &map)

@@ -35,7 +35,7 @@ class ClientSimulator : public GameSimulator
 	void netThread();
 	bool receivePackets();
 
-	std::thread *m_thread;
+	std::unique_ptr<std::thread> m_thread;
 	std::atomic<bool> m_thrrunning;
 
 	unsigned int m_snapshotid;
@@ -43,7 +43,7 @@ class ClientSimulator : public GameSimulator
 
 	SafeSocket<sf::TcpSocket> m_server;
 	ClientUdpManager m_udpmgr;
-	SafeList<sf::Packet *> m_receivedpackets;//Write : child. Read : main.
+	SafeList<std::unique_ptr<sf::Packet>> m_receivedpackets;//Write : child. Read : main.
 };
 
 #endif // CLIENTSIMULATOR_HPP_INCLUDED

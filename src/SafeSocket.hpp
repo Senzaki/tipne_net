@@ -3,15 +3,15 @@
 
 #include <SFML/Network.hpp>
 #include <mutex>
+#include <memory>
 
 template<typename SocketType>
 class SafeSocket
 {
 	public:
 	SafeSocket();
-	SafeSocket(SocketType *socket);//socket will be deleted within the destructor
+	SafeSocket(std::unique_ptr<SocketType> &&socket);
 	SafeSocket(SafeSocket<SocketType> &&other);
-	~SafeSocket();
 
 	SafeSocket(const SafeSocket<SocketType> &) = delete;
 	SafeSocket &operator=(const SafeSocket<SocketType> &) = delete;
@@ -34,8 +34,8 @@ class SafeSocket
 	void setBlocking(bool blocking);//Not thread-safe (not really needed)
 
 	private:
-	SocketType *m_socket;
-	std::mutex *m_mutex;
+	std::unique_ptr<SocketType> m_socket;
+	std::mutex m_mutex;
 };
 
 #include "SafeSocket.inl"

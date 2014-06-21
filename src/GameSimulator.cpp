@@ -19,15 +19,13 @@ GameSimulator::GameSimulator(bool fullsimulator, float interpolationtime):
 
 GameSimulator::~GameSimulator()
 {
-	for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
-		delete entity.second;
-	delete m_colmgr;
+
 }
 
 bool GameSimulator::update(float etime)
 {
 	m_colmgr->update(etime);
-	for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
+	for(std::pair<const sf::Uint16, std::unique_ptr<GameEntity>> &entity : m_entities)
 		entity.second->update(etime);
 	return true;
 }
@@ -124,36 +122,6 @@ bool GameSimulator::playerExists(sf::Uint8 id) const
 	return m_players.count(id) != 0;
 }
 
-bool GameSimulator::addEntity(GameEntity *entity)
-{
-	sf::Uint16 id = entity->getId();
-
-	assert(id != NO_ENTITY_ID);
-
-	auto added = m_entities.emplace(id, entity);
-
-	if(!added.second)
-	{
-		//Entity id already exists
-#ifndef NDEBUG
-		std::cerr << "[DEBUG]Cannot create new entity. Id " << (int)id << " already reserved." << std::endl;
-#endif
-		return nullptr;
-	}
-	entity->setFullySimulated(m_fullsimulator);
-	entity->setInterpolationTime(m_interpolationtime);
-	//Add it to the collision manager
-	entity->setCollisionManager(m_colmgr);
-	//Tell the listener if required
-	if(m_statelistener)
-		m_statelistener->onNewEntity(entity);
-#ifndef NDEBUG
-	std::cout << "[DEBUG]New Entity. Id : " << (int)id << "." << std::endl;
-#endif
-	onEntityAdded(entity);
-	return entity;
-}
-
 bool GameSimulator::removeEntity(sf::Uint16 id)
 {
 	assert(id != NO_ENTITY_ID);
@@ -173,10 +141,9 @@ bool GameSimulator::removeEntity(sf::Uint16 id)
 
 	//Tell the listener if required
 	if(m_statelistener)
-		m_statelistener->onEntityRemoved(it->second);
-	onEntityRemoved(it->second);
+		m_statelistener->onEntityRemoved(it->second.get());
+	onEntityRemoved(it->second.get());
 	//Remove the entity from the table
-	delete it->second;
 	m_entities.erase(it);
 	return true;
 }
@@ -190,7 +157,7 @@ const GameEntity *GameSimulator::getEntity(sf::Uint16 id) const
 {
 	try
 	{
-		return m_entities.at(id);
+		return m_entities.at(id).get();
 	}
 	catch(const std::out_of_range &)
 	{
@@ -202,7 +169,7 @@ GameEntity *GameSimulator::getEntity(sf::Uint16 id)
 {
 	try
 	{
-		return m_entities.at(id);
+		return m_entities.at(id).get();
 	}
 	catch(const std::out_of_range &)
 	{
@@ -210,7 +177,7 @@ GameEntity *GameSimulator::getEntity(sf::Uint16 id)
 	}
 }
 
-const std::unordered_map<sf::Uint16, GameEntity *> &GameSimulator::getEntities() const
+const std::unordered_map<sf::Uint16, std::unique_ptr<GameEntity>> &GameSimulator::getEntities() const
 {
 	return m_entities;
 }
@@ -255,8 +222,8 @@ void GameSimulator::setStateListener(SimulatorStateListener *listener)
 			listener->onMapLoaded(m_map);
 		for(std::pair<const sf::Uint8, Player> &player : m_players)
 			listener->onNewPlayer(player.second);
-		for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
-			listener->onNewEntity(entity.second);
+		for(std::pair<const sf::Uint16, std::unique_ptr<GameEntity>> &entity : m_entities)
+			listener->onNewEntity(entity.second.get());
 	}
 }
 
@@ -265,11 +232,10 @@ bool GameSimulator::loadMap(const std::string &name)
 	if(m_map.load(name))
 	{
 		//Reload the collision manager if necessary
-		delete m_colmgr;
-		m_colmgr = new DefaultCollisionManager(m_map);
+		m_colmgr = make_unique<DefaultCollisionManager>(m_map);
 		m_colmgr->setPostStepCallBack(std::bind(&GameSimulator::removePlannedEntities, this));
-		for(std::pair<const sf::Uint16, GameEntity *> &entity : m_entities)
-			entity.second->setCollisionManager(m_colmgr);
+		for(std::pair<const sf::Uint16, std::unique_ptr<GameEntity>> &entity : m_entities)
+			entity.second->setCollisionManager(m_colmgr.get());
 		if(m_statelistener)
 			m_statelistener->onMapLoaded(m_map);
 		onMapLoaded(name);

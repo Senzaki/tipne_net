@@ -27,7 +27,7 @@ class ClientUdpManager
 	void sendPacket(sf::Packet &packet);//Use it to reset the lastpacketsent counter
 	bool parseReceivedPacket(sf::Packet &packet);
 
-	std::thread *m_thread;
+	std::unique_ptr<std::thread> m_thread;
 	std::atomic<bool> m_thrrunning;
 	ClientSimulator &m_simulator;
 
@@ -40,7 +40,7 @@ class ClientUdpManager
 	sf::IpAddress m_address;
 	unsigned short m_port;
 
-	SafeList<sf::Packet *> m_receivedpackets;
+	SafeList<std::unique_ptr<sf::Packet>> m_receivedpackets;
 };
 
 #endif // CLIENTUDPMANAGER_HPP_INCLUDED

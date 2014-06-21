@@ -1,33 +1,25 @@
+#include "make_unique.hpp"
+
 template<typename SocketType>
 SafeSocket<SocketType>::SafeSocket():
-	m_socket(new SocketType()),
-	m_mutex(new std::mutex)
+	m_socket(make_unique<SocketType>())
 {
 
 }
 
 template<typename SocketType>
-SafeSocket<SocketType>::SafeSocket(SocketType *socket):
-	m_socket(socket),
-	m_mutex(new std::mutex)
+SafeSocket<SocketType>::SafeSocket(std::unique_ptr<SocketType> &&socket):
+	m_socket(std::move(socket))
 {
 
 }
 
 template<typename SocketType>
 SafeSocket<SocketType>::SafeSocket(SafeSocket &&other):
-	m_socket(other.m_socket),
-	m_mutex(other.m_mutex)
+	m_socket(std::move(other.m_socket)),
+	m_mutex(std::move(other.m_mutex))
 {
-	other.m_mutex = nullptr;
-	other.m_socket = nullptr;
-}
-
-template<typename SocketType>
-SafeSocket<SocketType>::~SafeSocket()
-{
-	delete m_mutex;
-	delete m_socket;
+	other.m_socket.reset();
 }
 
 template<typename SocketType>
@@ -51,35 +43,35 @@ bool SafeSocket<SocketType>::isReady(sf::SocketSelector &selector) const
 template<typename SocketType>
 sf::Socket::Status SafeSocket<SocketType>::connect(const sf::IpAddress &addr, unsigned short port, sf::Time timeout)
 {
-	std::lock_guard<std::mutex> lock(*m_mutex);
+	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_socket->connect(addr, port, timeout);
 }
 
 template<typename SocketType>
 void SafeSocket<SocketType>::disconnect()
 {
-	std::lock_guard<std::mutex> lock(*m_mutex);
+	std::lock_guard<std::mutex> lock(m_mutex);
 	m_socket->disconnect();
 }
 
 template<typename SocketType>
 sf::Socket::Status SafeSocket<SocketType>::bind(unsigned short port)
 {
-	std::lock_guard<std::mutex> lock(*m_mutex);
+	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_socket->bind(port);
 }
 
 template<typename SocketType>
 void SafeSocket<SocketType>::unbind()
 {
-	std::lock_guard<std::mutex> lock(*m_mutex);
+	std::lock_guard<std::mutex> lock(m_mutex);
 	m_socket->unbind();
 }
 
 template<typename SocketType>
 unsigned short SafeSocket<SocketType>::getLocalPort()
 {
-	std::lock_guard<std::mutex> lock(*m_mutex);
+	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_socket->getLocalPort();
 }
 
@@ -87,7 +79,7 @@ template<typename SocketType>
 template<typename... Args>
 sf::Socket::Status SafeSocket<SocketType>::send(Args &&...args)
 {
-	std::lock_guard<std::mutex> lock(*m_mutex);
+	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_socket->send(args...);
 }
 
@@ -95,7 +87,7 @@ template<typename SocketType>
 template<typename... Args>
 sf::Socket::Status SafeSocket<SocketType>::receive(Args &&...args)
 {
-	std::lock_guard<std::mutex> lock(*m_mutex);
+	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_socket->receive(args...);
 }
 

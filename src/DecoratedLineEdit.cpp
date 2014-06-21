@@ -38,8 +38,7 @@ DecoratedLineEdit::DecoratedLineEdit(Widget *parent, float width, std::function<
 
 DecoratedLineEdit::~DecoratedLineEdit()
 {
-	m_lineedit = nullptr;
-	delete m_lineedit;
+
 }
 
 void DecoratedLineEdit::setMaxChar(unsigned int maxchar)

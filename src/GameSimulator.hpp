@@ -10,6 +10,7 @@
 #include "Map.hpp"
 #include "Spell.hpp"
 #include <list>
+#include <memory>
 
 class Character;
 class LineDamageSpell;
@@ -57,7 +58,7 @@ class GameSimulator
 	bool removePlayer(sf::Uint8 id, sf::Uint8 reason = (sf::Uint8)DisconnectionReason::Left);
 	const std::unordered_map<sf::Uint8, Player> &getPlayers() const;
 
-	const std::unordered_map<sf::Uint16, GameEntity *> &getEntities() const;
+	const std::unordered_map<sf::Uint16, std::unique_ptr<GameEntity>> &getEntities() const;
 
 	Character *getOwnCharacter();
 	bool setOwnCharacter(sf::Uint16 id);
@@ -78,7 +79,6 @@ class GameSimulator
 	SimulatorStateListener *m_statelistener;
 
 	private:
-	bool addEntity(GameEntity *entity);
 	void removePlannedEntities();
 
 	Character *addNetworkCharacter(sf::Packet &packet);
@@ -91,9 +91,9 @@ class GameSimulator
 
 	std::unordered_map<sf::Uint8, Player> m_players;
 	Map m_map;
-	CollisionManager *m_colmgr;
+	std::unique_ptr<CollisionManager> m_colmgr;
 
-	std::unordered_map<sf::Uint16, GameEntity *> m_entities;
+	std::unordered_map<sf::Uint16, std::unique_ptr<GameEntity>> m_entities;
 	Character *m_owncharacter;
 	std::list<sf::Uint16> m_enttoremove;
 };

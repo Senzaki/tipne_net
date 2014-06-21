@@ -127,7 +127,7 @@ void Menu::showMainMenu()
 	buttons[1] = new Button(topwidget, tr("connect"), std::bind(&Menu::showConnectMenu, this));
 	buttons[2] = new Button(topwidget, tr("options"), std::bind(&Menu::showOptions, this));
 	buttons[3] = new Button(topwidget, tr("credits"));
-	buttons[4] = new Button(topwidget, tr("quit"), std::bind(&Application::setNextAppState, &Application::getInstance(), nullptr, true));
+	buttons[4] = new Button(topwidget, tr("quit"), std::bind(&Application::setNextAppState, &Application::getInstance(), nullptr));
 	//Set the appropriate position
 	float interval = (m_window.getSize().y - 100.f) / BUTTONS_COUNT;
 	for(unsigned int i = 0; i < BUTTONS_COUNT; i++)
@@ -258,12 +258,11 @@ void Menu::connect(DecoratedLineEdit *ipaddrwidget, DecoratedLineEdit *tcpportwi
 	Config::getInstance().connectto_udpport = udpport;
 	Config::getInstance().save();
 
-	GameSimulator *simulator = new ClientSimulator();
+	auto simulator = make_unique<ClientSimulator>();
 	int status;
 	//Launch simulator
-	if((status = static_cast<ClientSimulator *>(simulator)->startNetThread(ipaddress, tcpport, udpport, config.name)) != (int)ConnectionStatus::Accepted)
+	if((status = simulator->startNetThread(ipaddress, tcpport, udpport, config.name)) != (int)ConnectionStatus::Accepted)
 	{
-		delete simulator;
 		if(status == (int)ConnectionStatus::GameIsFull)
 			std::cerr << "Unable to join game : game is full." << std::endl;
 		else if(status == (int)ConnectionStatus::WrongAddress)
@@ -273,7 +272,7 @@ void Menu::connect(DecoratedLineEdit *ipaddrwidget, DecoratedLineEdit *tcpportwi
 		return;
 	}
 
-	launchGame(simulator);
+	launchGame(std::move(simulator));
 }
 
 void Menu::host(DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidget, DecoratedLineEdit *maxplayerswidget)
@@ -309,22 +308,20 @@ void Menu::host(DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidg
 	Config::getInstance().server_udpport = udpport;
 	Config::getInstance().save();
 
-	GameSimulator *simulator = new ServerSimulator(false);
+	auto simulator = make_unique<ServerSimulator>(false);
 	//Load map
-	if(!static_cast<ServerSimulator *>(simulator)->loadMap("default"))
+	if(!simulator->loadMap("default"))
 	{
 		std::cerr << "Unable to host game : map cannot be loaded." << std::endl;
-		delete simulator;
 		return;
 	}
 	//Launch simulator
-	if(!static_cast<ServerSimulator *>(simulator)->startNetThread(tcpport, udpport, config.max_players))
+	if(!simulator->startNetThread(tcpport, udpport, config.max_players))
 	{
 		std::cerr << "Unable to host game." << std::endl;
-		delete simulator;
 		return;
 	}
-	launchGame(simulator);
+	launchGame(std::move(simulator));
 }
 
 bool Menu::convertPorts(const std::string &tcpportstr, const std::string &udpportstr, unsigned short &tcpport, unsigned short &udpport)
@@ -354,8 +351,7 @@ bool Menu::convertPorts(const std::string &tcpportstr, const std::string &udppor
 	return true;
 }
 
-void Menu::launchGame(GameSimulator *simulator)
+void Menu::launchGame(std::unique_ptr<GameSimulator> &&simulator)
 {
-	GameAppState *next = new GameAppState(m_window, m_vratio, m_xyratio, simulator);
-	Application::getInstance().setNextAppState(next);
+	Application::getInstance().setNextAppState(std::make_shared<GameAppState>(m_window, m_vratio, m_xyratio, std::move(simulator)));
 }

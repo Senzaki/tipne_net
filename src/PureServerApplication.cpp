@@ -30,7 +30,7 @@ int PureServerApplication::execute(int argc, char **argv)
 	signal(SIGINT, &quitPureServer);
 	signal(SIGTERM, &quitPureServer);
 	//Setup the simulator
-	m_simulator = new ServerSimulator(true);
+	m_simulator = make_unique<ServerSimulator>(true);
 	m_simulator->setStateListener(this);
 
 	//TEMP
@@ -62,8 +62,7 @@ int PureServerApplication::execute(int argc, char **argv)
 		m_simulator->update(etime);
 	}
 
-	delete m_simulator;
-	m_simulator = nullptr;
+	m_simulator.reset();
 
 	return 0;
 }

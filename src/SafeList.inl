@@ -63,6 +63,13 @@ void SafeList<T>::popBack()
 }
 
 template<typename T>
+void SafeList<T>::clear()
+{
+	std::lock_guard<std::mutex> lock(m_mutex);
+	m_list.clear();
+}
+
+template<typename T>
 bool SafeList<T>::empty()
 {
 	std::lock_guard<std::mutex> lock(m_mutex);

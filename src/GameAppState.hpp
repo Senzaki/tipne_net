@@ -9,7 +9,7 @@
 class GameAppState : public ApplicationState
 {
 	public:
-	GameAppState(sf::RenderWindow &window, float vratio, float xyratio, GameSimulator *m_simulator);//The simulator will automatically be freed
+	GameAppState(sf::RenderWindow &window, float vratio, float xyratio, std::unique_ptr<GameSimulator> &&m_simulator);//The simulator will automatically be freed
 	virtual ~GameAppState();
 
 	GameAppState(const GameAppState &) = delete;
@@ -31,7 +31,7 @@ class GameAppState : public ApplicationState
 	void quit();
 
 	sf::RenderWindow &m_window;
-	GameSimulator *m_simulator;
+	std::unique_ptr<GameSimulator> m_simulator;
 	GameScreen m_gscr;
 	GUIManager m_guimgr;
 	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)

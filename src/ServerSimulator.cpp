@@ -45,10 +45,9 @@ bool ServerSimulator::update(float etime)
 		acceptNewPlayer(std::get<0>(newplayer), std::get<1>(newplayer), std::get<2>(newplayer));
 	});
 	//Then packets
-	m_receivedpackets.treat([this](std::tuple<sf::Uint8, sf::Packet *> &received)
+	m_receivedpackets.treat([this](std::tuple<sf::Uint8, std::unique_ptr<sf::Packet>> &received)
 	{
 		parseNewPacket(received);
-		delete std::get<1>(received);
 	});
 	//Then disconnections
 	m_disconnectedplayers.treat([this](std::tuple<sf::Uint8, sf::Uint8> &discoinfo)
@@ -124,7 +123,7 @@ bool ServerSimulator::startNetThread(unsigned short tcpport, unsigned short udpp
 	try
 	{
 		m_thrrunning = true;
-		m_thread = new std::thread(&ServerSimulator::netThread, this);
+		m_thread = make_unique<std::thread>(&ServerSimulator::netThread, this);
 	}
 	catch(const std::exception &e)
 	{
@@ -162,14 +161,10 @@ void ServerSimulator::stopNetThread()
 		}
 
 		//Delete the thread object
-		delete m_thread;
-		m_thread = nullptr;
+		m_thread.reset();
 
 		//Delete the remaining packets
-		m_receivedpackets.treat([](std::tuple<sf::Uint8, sf::Packet *> &received)
-		{
-			delete std::get<1>(received);
-		});
+		m_receivedpackets.clear();
 	}
 }
 
@@ -178,7 +173,7 @@ void ServerSimulator::netThread()
 	sf::SocketSelector selector;
 	selector.add(m_listener);
 
-	std::list<sf::TcpSocket *> newclients;
+	std::list<std::unique_ptr<sf::TcpSocket>> newclients;
 
 	while(m_thrrunning)
 	{
@@ -234,31 +229,27 @@ void ServerSimulator::netThread()
 		}
 	}
 
-	//Delete all the new clients that haven't been accepted yet
-	for(sf::TcpSocket *socket : newclients)
-	{
+	//Disconnect all the new clients that haven't been accepted yet
+	for(std::unique_ptr<sf::TcpSocket> &socket : newclients)
 		socket->disconnect();
-		delete socket;
-	}
 }
 
-void ServerSimulator::acceptNewConnections(std::list<sf::TcpSocket *> &newclients, sf::SocketSelector &selector)
+void ServerSimulator::acceptNewConnections(std::list<std::unique_ptr<sf::TcpSocket>> &newclients, sf::SocketSelector &selector)
 {
-	std::list<sf::TcpSocket *> accepted;
+	std::list<std::unique_ptr<sf::TcpSocket>> accepted;
 	sf::Socket::Status status;
 	//A new client tries to connect
 	do
 	{
-		accepted.emplace_back(new sf::TcpSocket);
+		accepted.emplace_back(make_unique<sf::TcpSocket>());
 	} while((status = m_listener.accept(*accepted.back())) == sf::Socket::Done);
 
 	//Remove the last client client from the list, because status != sf::Socket::Done
-	delete accepted.back();
 	accepted.pop_back();
 	//Add the clients to the newclient list and to the selector
 	if(!accepted.empty())
 	{
-		for(sf::TcpSocket *socket : accepted)
+		for(std::unique_ptr<sf::TcpSocket> &socket : accepted)
 		{
 			selector.add(*socket);
 			socket->setBlocking(false);
@@ -275,7 +266,7 @@ void ServerSimulator::acceptNewConnections(std::list<sf::TcpSocket *> &newclient
 		std::cerr << "Unexpected error while accepting a new client." << std::endl;
 }
 
-bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::SocketSelector &selector)
+bool ServerSimulator::receivePlayerConnectionInfo(std::unique_ptr<sf::TcpSocket> &socket, sf::SocketSelector &selector)
 {
 	sf::Socket::Status status;
 	sf::Packet packet;
@@ -291,7 +282,6 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 			return false; //No data to be received, don't do anything
 		//On error, remove the new client
 		selector.remove(*socket);
-		delete socket;
 		return true;
 	}
 	//Parse player info
@@ -304,7 +294,6 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 		std::cerr << "Invalid connection data received from client." << std::endl;
 		selector.remove(*socket);
 		socket->disconnect();
-		delete socket;
 		return true;
 	}
 	if(port == 0)
@@ -312,7 +301,6 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 		std::cerr << "Invalid connection data received from client (UDP port cannot be 0)." << std::endl;
 		selector.remove(*socket);
 		socket->disconnect();
-		delete socket;
 		return true;
 	}
 	//Get a new ID if possible
@@ -328,31 +316,28 @@ bool ServerSimulator::receivePlayerConnectionInfo(sf::TcpSocket *socket, sf::Soc
 		packet << (sf::Uint8)ConnectionStatus::GameIsFull;
 		socket->send(packet);
 		selector.remove(*socket);
-		delete socket;
 		return true;
 	}
-	//Add it to the playing clients list
 	{//Lock m_clientsmutex
+		//Send the new player to the main thread
+		m_acceptedplayers.emplaceBack(socket->getRemoteAddress(), port, std::move(player));
+		//Add it to the playing clients list
 		std::lock_guard<std::mutex> lock(m_clientsmutex);
-		m_clients.emplace(player.id, socket);
+		m_clients.emplace(player.id, std::move(socket));
 	}
-	//Send the new player to the main thread
-	m_acceptedplayers.emplaceBack(socket->getRemoteAddress(), port, std::move(player));
 	return true;
 }
 
 int ServerSimulator::receiveNewPackets(sf::Uint8 id, SafeSocket<sf::TcpSocket> &socket)
 {
 	sf::Socket::Status status;
-	sf::Packet *packet = new sf::Packet;
+	auto packet = make_unique<sf::Packet>();
 	//Receive all the packets
 	while((status = socket.receive(*packet)) == sf::Socket::Done)
 	{
-		m_receivedpackets.emplaceBack(id, packet);
-		packet = new sf::Packet;
+		m_receivedpackets.emplaceBack(id, std::move(packet));
+		packet = make_unique<sf::Packet>();
 	}
-	//Delete the last (unused) packet
-	delete packet;
 	//Error, or just no packets left ?
 	if(status == sf::Socket::NotReady)
 		return -1;
@@ -476,9 +461,9 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 	//Map name
 	packet << getMap().getName();
 	//Add all entities
-	const std::unordered_map<sf::Uint16, GameEntity *> &entities = getEntities();
-	for(const std::pair<const sf::Uint16, GameEntity *> &entity : entities)
-		writeEntityInitData(entity.second, packet, true);
+	const std::unordered_map<sf::Uint16, std::unique_ptr<GameEntity>> &entities = getEntities();
+	for(const std::pair<const sf::Uint16, std::unique_ptr<GameEntity>> &entity : entities)
+		writeEntityInitData(entity.second.get(), packet, true);
 	packet << (sf::Uint8)EntityType::None;
 	//Tell the client this is his character
 	packet << (sf::Uint16)newcharacter->getId();
@@ -498,7 +483,7 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 	}
 }
 
-void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, sf::Packet *> &received)
+void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, std::unique_ptr<sf::Packet>> &received)
 {
 	if(!playerExists(std::get<0>(received)))
 	{
@@ -549,7 +534,7 @@ void ServerSimulator::disconnectPlayer(sf::Uint8 id, sf::Uint8 reason)
 	{
 		m_udpmgr.removePlayer(id);
 		//Remove the entities that need to be removed
-		const std::unordered_map<sf::Uint16, GameEntity *> &entities = getEntities();
+		const std::unordered_map<sf::Uint16, std::unique_ptr<GameEntity>> &entities = getEntities();
 		auto it = entities.begin();
 		while(it != entities.end())
 		{

@@ -1,5 +1,6 @@
 #include "ResourceManager.hpp"
 #include <iostream>
+#include "make_unique.hpp"
 
 static constexpr const char *TEXTURE_PATH = "data/textures/";
 static constexpr const char *FONT_PATH = "data/fonts/";
@@ -20,9 +21,9 @@ ResourceManager::ResourceManager()
 	{
 		Section &sec = m_sections[(int)ResourceSection::Base];
 		sec.tex_files.resize(BASE_TEXTURES_COUNT);
-		sec.textures.resize(BASE_TEXTURES_COUNT, nullptr);
+		sec.textures.resize(BASE_TEXTURES_COUNT);
 		sec.font_files.resize(BASE_FONTS_COUNT);
-		sec.fonts.resize(BASE_FONTS_COUNT, nullptr);
+		sec.fonts.resize(BASE_FONTS_COUNT);
 
 		sec.tex_files[CURSOR_TEX] = "cursor.png";
 		sec.tex_files[BUTTON_STANDARD_TEX] = "btn_bg.png";
@@ -38,7 +39,7 @@ ResourceManager::ResourceManager()
 	{
 		Section &sec = m_sections[(int)ResourceSection::Menu];
 		sec.tex_files.resize(MENU_TEXTURES_COUNT);
-		sec.textures.resize(MENU_TEXTURES_COUNT, nullptr);
+		sec.textures.resize(MENU_TEXTURES_COUNT);
 
 		sec.tex_files[LOGO_TEX] = "logo.png";
 	}
@@ -47,7 +48,7 @@ ResourceManager::ResourceManager()
 	{
 		Section &sec = m_sections[(int)ResourceSection::Map];
 		sec.tex_files.resize(MAP_TEXTURES_COUNT);
-		sec.textures.resize(MAP_TEXTURES_COUNT, nullptr);
+		sec.textures.resize(MAP_TEXTURES_COUNT);
 
 		sec.tex_files[BASE_TILES_TEX] = "tiles/base.png";
 		sec.tex_files[BASE_WALLS_TEX] = "tiles/walls.png";
@@ -57,7 +58,7 @@ ResourceManager::ResourceManager()
 	{
 		Section &sec = m_sections[(int)ResourceSection::Game];
 		sec.tex_files.resize(GAME_TEXTURES_COUNT);
-		sec.textures.resize(GAME_TEXTURES_COUNT, nullptr);
+		sec.textures.resize(GAME_TEXTURES_COUNT);
 
 		sec.tex_files[GHOST_TEX] = "ghost.png";
 		sec.tex_files[BASIC_SPELL] = "spells/basic.png";
@@ -77,13 +78,13 @@ void ResourceManager::loadSection(ResourceSection name)
 	//Load all fonts
 	for(unsigned int i = 0 ; i < sec.fonts.size(); i++)
 	{
-		sec.fonts[i] = new sf::Font;
+		sec.fonts[i] = make_unique<sf::Font>();
 		sec.fonts[i]->loadFromFile(FONT_PATH + sec.font_files[i]);
 	}
 	//Load all textures
 	for(unsigned int i = 0 ; i < sec.textures.size(); i++)
 	{
-		sec.textures[i] = new sf::Texture;
+		sec.textures[i] = make_unique<sf::Texture>();
 		sec.textures[i]->loadFromFile(TEXTURE_PATH + sec.tex_files[i]);
 	}
 	sec.loaded = true;
@@ -95,17 +96,11 @@ void ResourceManager::unloadSection(ResourceSection name)
 	if(!sec.loaded)
 		return;
 	//Unload all fonts
-	for(sf::Font *&font : sec.fonts)
-	{
-		delete font;
-		font = nullptr;
-	}
+	for(std::unique_ptr<sf::Font> &font : sec.fonts)
+		font.reset();
 	//Unload all textures
-	for(sf::Texture *&tex : sec.textures)
-	{
-		delete tex;
-		tex = nullptr;
-	}
+	for(std::unique_ptr<sf::Texture> &tex : sec.textures)
+		tex.reset();
 	sec.loaded = false;
 }
 
@@ -116,17 +111,11 @@ void ResourceManager::unloadAllSections()
 		if(!sec.loaded)
 			continue;
 		//Unload all fonts
-		for(sf::Font *&font : sec.fonts)
-		{
-			delete font;
-			font = nullptr;
-		}
+		for(std::unique_ptr<sf::Font> &font : sec.fonts)
+			font.reset();
 		//Unload all textures
-		for(sf::Texture *&tex : sec.textures)
-		{
-			delete tex;
-			tex = nullptr;
-		}
+		for(std::unique_ptr<sf::Texture> &tex : sec.textures)
+			tex.reset();
 		sec.loaded = false;
 	}
 }

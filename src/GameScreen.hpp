@@ -4,6 +4,7 @@
 #include "GameSimulator.hpp"
 #include "DrawableMap.hpp"
 #include "DrawableEntity.hpp"
+#include <memory>
 
 class GameScreen : public SimulatorStateListener
 {
@@ -48,7 +49,7 @@ class GameScreen : public SimulatorStateListener
 	GameSimulator *m_simulator;
 	DrawableMap m_map;
 
-	std::unordered_map<sf::Uint16, DrawableEntity *> m_entities;
+	std::unordered_map<sf::Uint16, std::unique_ptr<DrawableEntity>> m_entities;
 	std::list<sf::Uint16> m_visibleentities;
 
 	enum

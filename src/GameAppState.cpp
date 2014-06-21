@@ -5,9 +5,9 @@
 #include "Config.hpp"
 #include "Menu.hpp"
 
-GameAppState::GameAppState(sf::RenderWindow &window, float vratio, float xyratio, GameSimulator *simulator):
+GameAppState::GameAppState(sf::RenderWindow &window, float vratio, float xyratio, std::unique_ptr<GameSimulator> &&simulator):
 	m_window(window),
-	m_simulator(simulator),
+	m_simulator(std::move(simulator)),
 	m_gscr(vratio, xyratio),
 	m_guimgr(window),
 	m_camera(sf::FloatRect(0.f, 0.f, xyratio * DEFAULT_SCREEN_HEIGHT, DEFAULT_SCREEN_HEIGHT)),
@@ -22,7 +22,6 @@ GameAppState::~GameAppState()
 	ResourceManager &rsmgr = ResourceManager::getInstance();
 	rsmgr.unloadSection(ResourceSection::Map);
 	rsmgr.unloadSection(ResourceSection::Game);
-	delete m_simulator;
 }
 
 void GameAppState::load()
@@ -36,7 +35,7 @@ void GameAppState::load()
 	m_cursor.setTexture(rsmgr.getTexture(ResourceSection::Base, Resource::CURSOR_TEX));
 
 	//We can now attach the GameScreen to the GameSimulator
-	m_gscr.setSimulator(m_simulator);
+	m_gscr.setSimulator(m_simulator.get());
 }
 
 void GameAppState::update(float etime)
@@ -117,6 +116,6 @@ void GameAppState::onTextEntered(const sf::Event::TextEvent &evt)
 
 void GameAppState::quit()
 {
-	Menu *menu = new Menu(m_window, m_vratio, m_xyratio);
+	auto menu = std::make_shared<Menu>(m_window, m_vratio, m_xyratio);
 	Application::getInstance().setNextAppState(menu);
 }

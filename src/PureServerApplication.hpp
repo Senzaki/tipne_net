@@ -25,7 +25,7 @@ class PureServerApplication : public SimulatorStateListener
 
 	bool m_running;
 
-	ServerSimulator *m_simulator;
+	std::unique_ptr<ServerSimulator> m_simulator;
 };
 
 #endif // PURESERVERAPPLICATION_HPP_INCLUDED

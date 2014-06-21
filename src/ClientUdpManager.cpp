@@ -1,5 +1,6 @@
 #include "ClientUdpManager.hpp"
 #include "ClientSimulator.hpp"
+#include "make_unique.hpp"
 #include <iostream>
 #include <cassert>
 
@@ -53,11 +54,10 @@ bool ClientUdpManager::update(float etime)
 		m_lastpacketreceived = 0.f;
 		m_keepaliveinterval = KEEPALIVE_INTERVAL;//Stop connection attempts
 		//Treat the packets
-		m_receivedpackets.treat([this, &success](sf::Packet *&packet)
+		m_receivedpackets.treat([this, &success](std::unique_ptr<sf::Packet> &packet)
 		{
 			if(success)
 				success = parseReceivedPacket(*packet);
-			delete packet;
 		});
 	}
 
@@ -77,13 +77,13 @@ unsigned short ClientUdpManager::startNetThread(sf::IpAddress addr, unsigned sho
 	m_thrrunning = true;
 	try
 	{
-		m_thread = new std::thread(&ClientUdpManager::netThread, this);
+		m_thread = make_unique<std::thread>(&ClientUdpManager::netThread, this);
 	}
 	catch(const std::exception &e)
 	{
 		//Thread could not start
 		m_thrrunning = false;
-		m_thread = nullptr;
+		m_thread.reset();
 		std::cerr << "Cannot start UDP networking thread." << std::endl;
 		std::cerr << e.what() << std::endl;
 		m_server.unbind();
@@ -111,13 +111,9 @@ void ClientUdpManager::stopNetThread()
 			std::cerr << "Could not stop UDP networking thread." << std::endl;
 			std::cerr << e.what() << std::endl;
 		}
-		delete m_thread;
-		m_thread = nullptr;
+		m_thread.reset();
 		//Delete the remaining packets
-		m_receivedpackets.treat([](sf::Packet *&packet)
-		{
-			delete packet;
-		});
+		m_receivedpackets.clear();
 	}
 }
 
@@ -147,7 +143,7 @@ void ClientUdpManager::netThread()
 bool ClientUdpManager::receiveNewPackets()
 {
 	sf::Socket::Status status;
-	sf::Packet *packet = new sf::Packet;
+	auto packet = make_unique<sf::Packet>();
 	sf::IpAddress senderaddr;
 	unsigned short senderport;
 	//Receive all the packets
@@ -159,11 +155,9 @@ bool ClientUdpManager::receiveNewPackets()
 			std::cerr << "[Warning]UDP packet received, but not from server. Ignoring it." << std::endl;
 			continue;
 		}
-		m_receivedpackets.emplaceBack(packet);
-		packet = new sf::Packet;
+		m_receivedpackets.emplaceBack(std::move(packet));
+		packet =make_unique<sf::Packet>();
 	}
-	//Delete the last (unused) packet
-	delete packet;
 	//Error, or just no packets left ?
 	if(status == sf::Socket::NotReady)
 		return true;
