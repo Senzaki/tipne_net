@@ -1,8 +1,9 @@
 #include "DamageSpell.hpp"
 #include "GameSimulator.hpp"
+#include "Character.hpp"
 
-DamageSpell::DamageSpell(GameSimulator &simulator, Character *caster, sf::Uint8 damage, bool destroyonhit, bool ignorewalls):
-	SpellProjectile(simulator, NO_ENTITY_ID, 0),//Will never be called
+DamageSpell::DamageSpell(RoundState &round, Character *caster, sf::Uint8 damage, bool destroyonhit, bool ignorewalls):
+	SpellProjectile(round, NO_ENTITY_ID, 0),//Will never be called
 	m_caster(caster),
 	m_damage(damage),
 	m_ignorewalls(ignorewalls),
@@ -33,12 +34,12 @@ void DamageSpell::onCollision(CollisionObject *other)
 		switch(other->getEntityType())
 		{
 			case CollisionEntityType::Bound:
-				m_simulator.removeEntityLater(getId());
+				m_round.removeEntityLater(getId());
 				break;
 
 			case CollisionEntityType::Wall:
 				if(!m_ignorewalls)
-					m_simulator.removeEntityLater(getId());
+					m_round.removeEntityLater(getId());
 				break;
 
 			case CollisionEntityType::Entity:
@@ -55,7 +56,7 @@ void DamageSpell::onCollision(CollisionObject *other)
 							m_hit.emplace_back(character);
 					}
 					if(m_destroy)
-						m_simulator.removeEntityLater(getId());
+						m_round.removeEntityLater(getId());
 				}
 				break;
 

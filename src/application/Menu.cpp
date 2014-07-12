@@ -309,10 +309,10 @@ void Menu::host(DecoratedLineEdit *tcpportwidget, DecoratedLineEdit *udpportwidg
 	Config::getInstance().save();
 
 	auto simulator = make_unique<ServerSimulator>(false);
-	//Load map
-	if(!simulator->loadMap("default"))
+	//Start new round
+	if(!simulator->startNewRound("default"))
 	{
-		std::cerr << "Unable to host game : map cannot be loaded." << std::endl;
+		std::cerr << "Unable to host game : new round cannot be started." << std::endl;
 		return;
 	}
 	//Launch simulator

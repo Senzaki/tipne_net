@@ -1,7 +1,7 @@
 #include "SpellProjectile.hpp"
 
-SpellProjectile::SpellProjectile(GameSimulator &simulator, sf::Uint16 id, sf::Uint16 appearance):
-	GameEntity(simulator, id),
+SpellProjectile::SpellProjectile(RoundState &round, sf::Uint16 id, sf::Uint16 appearance):
+	GameEntity(round, id),
 	m_listener(nullptr),
 	m_appearance(appearance)
 {

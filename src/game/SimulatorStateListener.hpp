@@ -14,7 +14,7 @@ class SimulatorStateListener
 	virtual void onPlayerLeft(Player &player, sf::Uint8 reason) { }
 	virtual void onNewEntity(GameEntity *entity) { }
 	virtual void onEntityRemoved(GameEntity *entity) { }
-	virtual void onMapLoaded(const Map &map) { }
+	virtual void onNewRoundStarted(const Map &map) { }
 	virtual void onVisibleEntitiesChanged(std::list<sf::Uint16> &&characters) { }
 };
 

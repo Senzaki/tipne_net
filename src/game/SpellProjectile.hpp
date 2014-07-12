@@ -7,7 +7,7 @@ class SpellProjectileStateListener;
 class SpellProjectile : public GameEntity
 {
 	public:
-	SpellProjectile(GameSimulator &simulator, sf::Uint16 id, sf::Uint16 appearance);
+	SpellProjectile(RoundState &state, sf::Uint16 id, sf::Uint16 appearance);
 	virtual ~SpellProjectile();
 
 	sf::Uint16 getAppearance() const;

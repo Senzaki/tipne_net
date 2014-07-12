@@ -28,12 +28,13 @@ class ClientSimulator : public GameSimulator
 	bool parseReceivedPacket(sf::Packet &packet);
 	bool onNewPlayerPacket(sf::Packet &packet);
 	bool onDisconnectionPacket(sf::Packet &packet);
-	bool onMapPacket(sf::Packet &packet);
+	bool onNewRoundPacket(sf::Packet &packet);
 	bool onNewEntityPacket(sf::Packet &packet);
 	bool onRemoveEntityPacket(sf::Packet &packet);
 
 	void netThread();
 	bool receivePackets();
+	bool checkState();
 
 	std::unique_ptr<std::thread> m_thread;
 	std::atomic<bool> m_thrrunning;

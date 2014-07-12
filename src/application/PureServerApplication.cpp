@@ -34,7 +34,7 @@ int PureServerApplication::execute(int argc, char **argv)
 	m_simulator->setStateListener(this);
 
 	//TEMP
-	if(!m_simulator->loadMap("default"))
+	if(!m_simulator->startNewRound("default"))
 		return 1;
 	//////
 
@@ -97,7 +97,7 @@ void PureServerApplication::onPlayerLeft(Player &player, sf::Uint8 reason)
 	}
 }
 
-void PureServerApplication::onMapLoaded(const Map &map)
+void PureServerApplication::onNewRoundStarted(const Map &map)
 {
-	std::cout << "New map loaded." << std::endl;
+	std::cout << "New round started." << std::endl;
 }

@@ -19,7 +19,7 @@ class Character : public GameEntity
 		Count
 	};
 
-	Character(GameSimulator &simulator, sf::Uint16 id, State state = State::Ghost);
+	Character(RoundState &round, sf::Uint16 id, State state = State::Ghost);
 	virtual ~Character();
 
 	Character(const Character &) = delete;

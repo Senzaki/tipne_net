@@ -1,6 +1,7 @@
 #include "ClientSimulator.hpp"
 #include "NetworkCodes.hpp"
 #include "make_unique.hpp"
+#include "Spell.hpp"
 #include <iostream>
 
 static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
@@ -40,6 +41,11 @@ bool ClientSimulator::update(float etime)
 
 	if(!success)
 		return false;
+	if(!checkState())
+	{
+		std::cerr << "Error : Received data makes client state invalid." << std::endl;
+		return false;
+	}
 	if(!m_udpmgr.update(etime))
 		return false;
 	return GameSimulator::update(etime);
@@ -227,7 +233,7 @@ bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
 			std::cerr << "Error in snapshot packet." << std::endl;
 			return false;
 		}
-		GameEntity *entity = getEntity(entid);
+		GameEntity *entity = m_round->getEntity(entid);
 		if(entity)
 		{
 			//Apply general position modifications
@@ -280,11 +286,12 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 	}
 	if(!playerExists(m_ownid))
 		return false;
-	//Get the map
+	//Get the map name
 	std::string mapname;
 	if(!(packet >> mapname))
 		return false;
-	if(!loadMap(mapname))
+	//Start the round
+	if(!startNewRound(mapname))
 		return false;
 	//Get the entities
 	sf::Uint8 entitytype;
@@ -292,7 +299,7 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 		return false;
 	while(entitytype != (sf::Uint8)EntityType::None)
 	{
-		if(!addNetworkEntity(entitytype, packet))
+		if(!m_round->addNetworkEntity(entitytype, packet))
 			return false;
 		if(!(packet >> entitytype))
 			return false;
@@ -301,7 +308,7 @@ bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 	sf::Uint16 charid;
 	if(!(packet >> charid))
 		return false;
-	if(!setOwnCharacter(charid))
+	if(!m_round->setOwnCharacter(charid))
 		return false;
 	return true;
 }
@@ -324,8 +331,8 @@ bool ClientSimulator::parseReceivedPacket(sf::Packet &packet)
 				success = onDisconnectionPacket(packet);
 				break;
 
-			case (sf::Uint8)PacketType::Map:
-				success = onMapPacket(packet);
+			case (sf::Uint8)PacketType::NewRound:
+				success = onNewRoundPacket(packet);
 				break;
 
 			case (sf::Uint8)PacketType::NewEntity:
@@ -380,13 +387,13 @@ bool ClientSimulator::onDisconnectionPacket(sf::Packet &packet)
 	return true;
 }
 
-bool ClientSimulator::onMapPacket(sf::Packet &packet)
+bool ClientSimulator::onNewRoundPacket(sf::Packet &packet)
 {
 	//Map name ?
-	std::string name;
-	if(!(packet >> name))
+	std::string mapname;
+	if(!(packet >> mapname))
 		return false;
-	if(!loadMap(name))
+	if(!startNewRound(mapname))
 		return false;
 	return true;
 }
@@ -397,7 +404,7 @@ bool ClientSimulator::onNewEntityPacket(sf::Packet &packet)
 	sf::Uint8 enttype;
 	if(!(packet >> enttype))
 		return false;
-	return addNetworkEntity(enttype, packet);
+	return m_round->addNetworkEntity(enttype, packet);
 }
 
 bool ClientSimulator::onRemoveEntityPacket(sf::Packet &packet)
@@ -408,8 +415,8 @@ bool ClientSimulator::onRemoveEntityPacket(sf::Packet &packet)
 		return false;
 	if(entid == NO_ENTITY_ID)
 		return false;
-	//Even if we cannot remove the entity, return true (the server might have failed to notify the creation of the entity in the first place
-	if(!removeEntity(entid))
+	//Even if we cannot remove the entity, return true (the server might have failed to notify the creation of the entity in the first place)
+	if(!m_round->removeEntity(entid))
 	{
 #ifndef NDEBUG
 		std::cerr << "[DEBUG]Client was told to remove entity " << (int)entid << " but it failed." << std::endl;
@@ -449,4 +456,9 @@ bool ClientSimulator::receivePackets()
 	else if(status == sf::Socket::Error)
 		std::cerr << "Unexpected network error." << std::endl;
 	return false;
+}
+
+bool ClientSimulator::checkState()
+{
+	return m_round->getOwnCharacter();
 }

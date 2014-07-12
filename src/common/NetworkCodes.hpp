@@ -12,7 +12,7 @@ enum class PacketType : sf::Uint8
 {
 	NewPlayer = 0,
 	Disconnection,
-	Map,
+	NewRound,
 	NewEntity,
 	RemoveEntity,
 	SetDirection,

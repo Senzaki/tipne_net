@@ -36,7 +36,7 @@ bool GameScreen::update(float etime)
 	if(m_simulator)
 		toreturn = m_simulator->update(etime);
 	//Update the camera
-	const Character *player = static_cast<const GameSimulator *>(m_simulator)->getOwnCharacter();
+	const Character *player = static_cast<const GameSimulator *>(m_simulator)->getRoundState().getOwnCharacter();
 	if(player)
 	{
 		sf::Vector2f camcenter = BasisChange::gridToPixel(player->getPosition());
@@ -266,7 +266,7 @@ void GameScreen::onEntityRemoved(GameEntity *entity)
 		m_entities.erase(it);
 }
 
-void GameScreen::onMapLoaded(const Map &map)
+void GameScreen::onNewRoundStarted(const Map &map)
 {
 	m_map.setMap(map);
 }
@@ -286,7 +286,7 @@ void GameScreen::startCastingSpell(sf::Uint8 id)
 {
 	if(m_simulator)
 	{
-		if(const Character *character = static_cast<const GameSimulator *>(m_simulator)->getOwnCharacter())
+		if(const Character *character = m_simulator->getRoundState().getOwnCharacter())
 		{
 			Spell spell;
 			spell.state = character->getState();

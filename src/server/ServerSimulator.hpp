@@ -27,7 +27,7 @@ class ServerSimulator : public GameSimulator
 
 	virtual void selfCastSpell(const Spell &spell);
 
-	virtual void onMapLoaded(const std::string &name);
+	virtual void onNewRoundStarted(const std::string &mapname);
 	virtual void onEntityAdded(GameEntity *entity);
 	virtual void onEntityRemoved(GameEntity *entity);
 
@@ -42,6 +42,7 @@ class ServerSimulator : public GameSimulator
 
 	bool playerNameExists(const std::string &name) const;
 
+	void resetRoundInfo();
 	void updateVisibility();
 
 	std::unique_ptr<std::thread> m_thread;

@@ -32,7 +32,7 @@ struct Spell
 	Spell::Type getAssociatedType() const;
 
 	bool isSameSpell(const Spell &other) const;
-	bool castSpell(GameSimulator &simulator, IDCreator<sf::Uint16> &idcreator, Character *character) const;
+	bool castSpell(RoundState &round, IDCreator<sf::Uint16> &idcreator, Character *character) const;
 };
 
 #endif // SPELL_HPP_INCLUDED

@@ -2,8 +2,8 @@
 #include "SpellProjectileStateListener.hpp"
 #include "GameSimulator.hpp"
 
-LineSpellProjectile::LineSpellProjectile(GameSimulator &simulator, const sf::Vector2f &speed, const sf::Vector2f &startpos, float range):
-	SpellProjectile(simulator, NO_ENTITY_ID, 0),//Will never be called
+LineSpellProjectile::LineSpellProjectile(RoundState &round, const sf::Vector2f &speed, const sf::Vector2f &startpos, float range):
+	SpellProjectile(round, NO_ENTITY_ID, 0),//Will never be called
 	m_start(startpos),
 	m_rangesq(range * range)
 {
@@ -36,6 +36,6 @@ void LineSpellProjectile::update(float etime)
 		const float dx = position.x - m_start.x;
 		const float dy = position.x - m_start.y;
 		if(dx * dx + dy * dy >= m_rangesq)
-			m_simulator.removeEntityLater(getId());
+			m_round.removeEntityLater(getId());
 	}
 }

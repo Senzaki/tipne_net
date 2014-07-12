@@ -6,8 +6,8 @@
 
 static const float DEFAULT_SPEED = 3.f;
 
-Character::Character(GameSimulator &simulator, sf::Uint16 id, State state):
-	GameEntity(simulator, id),
+Character::Character(RoundState &round, sf::Uint16 id, State state):
+	GameEntity(round, id),
 	m_state(state),
 	m_listener(nullptr)
 {

@@ -6,7 +6,7 @@
 class LineSpellProjectile : public virtual SpellProjectile
 {
 	public:
-	LineSpellProjectile(GameSimulator &simulator, const sf::Vector2f &speed = sf::Vector2f(), const sf::Vector2f &startpos = sf::Vector2f(), float range = 0.f);
+	LineSpellProjectile(RoundState &round, const sf::Vector2f &speed = sf::Vector2f(), const sf::Vector2f &startpos = sf::Vector2f(), float range = 0.f);
 	virtual ~LineSpellProjectile();
 
 	LineSpellProjectile(const LineSpellProjectile &) = delete;

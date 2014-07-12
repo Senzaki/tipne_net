@@ -4,14 +4,14 @@
 #include "Player.hpp"
 #include "CollisionManager.hpp"
 
-class GameSimulator;
+class RoundState;
 
 constexpr const sf::Uint16 NO_ENTITY_ID = 0;
 
 class GameEntity
 {
 	public:
-	GameEntity(GameSimulator &simulator, sf::Uint16 id);
+	GameEntity(RoundState &round, sf::Uint16 id);
 	virtual ~GameEntity();
 
 	GameEntity(const GameEntity &) = delete;
@@ -44,7 +44,7 @@ class GameEntity
 	protected:
 	CollisionObject m_colobj;
 	bool m_fullysimulated;
-	GameSimulator &m_simulator;
+	RoundState &m_round;
 
 	private:
 	sf::Uint16 m_id;

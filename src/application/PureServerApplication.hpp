@@ -18,7 +18,7 @@ class PureServerApplication : public SimulatorStateListener
 
 	virtual void onNewPlayer(Player &player);
 	virtual void onPlayerLeft(Player &player, sf::Uint8 reason);
-	virtual void onMapLoaded(const Map &map);
+	virtual void onNewRoundStarted(const Map &map);
 
 	private:
 	PureServerApplication();

@@ -7,7 +7,7 @@
 class LineDamageSpell : public LineSpellProjectile, public DamageSpell
 {
 	public:
-	LineDamageSpell(GameSimulator &simulator, sf::Uint16 id, sf::Uint16 appearance, Character *caster, float radius, sf::Uint8 damage, bool destroyonhit = true, bool ignorewalls = false);
+	LineDamageSpell(RoundState &round, sf::Uint16 id, sf::Uint16 appearance, Character *caster, float radius, sf::Uint8 damage, bool destroyonhit = true, bool ignorewalls = false);
 	virtual ~LineDamageSpell();
 };
 

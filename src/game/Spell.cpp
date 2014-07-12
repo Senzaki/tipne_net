@@ -25,7 +25,7 @@ bool Spell::isSameSpell(const Spell &other) const
 	return id == other.id && state == other.state;
 }
 
-bool Spell::castSpell(GameSimulator &simulator, IDCreator<sf::Uint16> &idcreator, Character *character) const
+bool Spell::castSpell(RoundState &round, IDCreator<sf::Uint16> &idcreator, Character *character) const
 {
 	if(state != character->getState() || getAssociatedType() == Spell::Type::None)
 	{
@@ -39,7 +39,7 @@ bool Spell::castSpell(GameSimulator &simulator, IDCreator<sf::Uint16> &idcreator
 		case Character::State::Ghost:
 			{
 				//Create the projectile
-				LineDamageSpell *projectile = simulator.addEntity<LineDamageSpell>(simulator, idcreator.getNewID(), (sf::Uint16)Spell::Appearance::Basic, character, 0.2f, 1);
+				LineDamageSpell *projectile = round.addEntity<LineDamageSpell>(round, idcreator.getNewID(), (sf::Uint16)Spell::Appearance::Basic, character, 0.2f, 1);
 				projectile->setOwner(character->getOwner());
 				sf::Vector2f startpos = character->getPosition();
 				projectile->setPosition(startpos);

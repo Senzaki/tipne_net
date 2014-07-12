@@ -6,7 +6,7 @@
 class DamageSpell : public virtual SpellProjectile
 {
 	public:
-	DamageSpell(GameSimulator &simulator, Character *caster, sf::Uint8 damage, bool destroyonhit = true, bool ignorewalls = false);
+	DamageSpell(RoundState &round, Character *caster, sf::Uint8 damage, bool destroyonhit = true, bool ignorewalls = false);
 	virtual ~DamageSpell();
 
 	DamageSpell(const DamageSpell &) = delete;
