@@ -14,8 +14,7 @@ static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 ServerSimulator::ServerSimulator(bool pure):
 	GameSimulator(true, 0.f),
 	m_thrrunning(false),
-	m_udpmgr(*this),
-	m_seqnumber(0)
+	m_udpmgr(*this)
 {
 	m_playersids.reserveID(NEUTRAL_PLAYER);
 	resetRoundInfo();
@@ -53,7 +52,7 @@ bool ServerSimulator::update(float etime)
 
 	bool rc = GameSimulator::update(etime);
 	updateVisibility();
-	sendGeneralPacket();
+	m_messages.sendMessages();
 	m_udpmgr.update(etime);
 	return rc;
 }
@@ -61,7 +60,7 @@ bool ServerSimulator::update(float etime)
 void ServerSimulator::buildSnapshotPacket(sf::Packet &packet, sf::Uint8 playerid)
 {
 	packet << (sf::Uint8)UdpPacketType::Snapshot;
-	packet << m_seqnumber;
+	packet << m_messages.getSequenceNumber(playerid);
 	Character *viewer = m_playerschars.at(playerid);
 	if(viewer)
 	{
@@ -371,7 +370,7 @@ void ServerSimulator::onNewRoundStarted(const std::string &mapname)
 	GameSimulator::onNewRoundStarted(mapname);
 
 	//Tell the players a new round has started
-	m_generalpacket << (sf::Uint8)PacketType::NewRound << mapname;
+	m_messages << (sf::Uint8)PacketType::NewRound << mapname;
 
 	//Add a character for each player
 	const auto &players = getPlayers();
@@ -395,7 +394,7 @@ void ServerSimulator::onEntityAdded(GameEntity *entity)
 	towrite << (sf::Uint8)PacketType::NewEntity;
 	//If everything was successful, add it to the general packet
 	if(RoundState::writeEntityInitData(entity, towrite, true))
-		m_generalpacket.append(towrite.getData(), towrite.getDataSize());
+		m_messages.append(towrite);
 }
 
 void ServerSimulator::onEntityRemoved(GameEntity *entity)
@@ -414,7 +413,7 @@ void ServerSimulator::onEntityRemoved(GameEntity *entity)
 	m_entitiesids.releaseID(entity->getId());
 
 	//Tell all the clients
-	m_generalpacket << (sf::Uint8)PacketType::RemoveEntity << (sf::Uint16)entity->getId();
+	m_messages << (sf::Uint8)PacketType::RemoveEntity << (sf::Uint16)entity->getId();
 }
 
 void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned short port, Player &toaccept)
@@ -456,14 +455,11 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 
 	assert(!playerExists(toaccept.id));
 	//Tell all the other players a new player connected
-	packet.clear();
-	packet << (sf::Uint8)PacketType::NewPlayer << toaccept;
-	sendToAllPlayers(packet);
+	m_messages << (sf::Uint8)PacketType::NewPlayer << toaccept;
 	//Add the character to the simulation
 	Character *newcharacter = m_round->addEntity<Character>(*m_round.get(), m_entitiesids.getNewID());
-	//Send the general packet, the new client should not receive it
-	sendGeneralPacket();
 	//Add the player to the simulation
+	m_messages.addSocket(toaccept.id, m_clients.at(toaccept.id));
 	Player *newplayer = addPlayer(std::move(toaccept));
 	m_playerschars[newplayer->id] = newcharacter;
 	newcharacter->setOwner(newplayer->id);
@@ -471,7 +467,7 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 	//Put the current state into a packet
 	packet.clear();
 	const std::unordered_map<sf::Uint8, Player> &players = getPlayers();
-	packet << (sf::Uint8)ConnectionStatus::Accepted << m_seqnumber << (sf::Uint8)players.size() << newplayer->id;
+	packet << (sf::Uint8)ConnectionStatus::Accepted << (sf::Uint8)players.size() << newplayer->id;
 	//List of players
 	for(const std::pair<const sf::Uint8, Player> &player : players)
 		packet << player.second;
@@ -546,9 +542,10 @@ void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, std::unique_ptr<sf::P
 
 void ServerSimulator::disconnectPlayer(sf::Uint8 id, sf::Uint8 reason)
 {
-	//Remove the player. Note : he may not exists if the client disconnects before being accepted or removed (e.g. the game is full).
+	//Remove the player. Note : he may not exist if the client disconnects before being accepted or removed (e.g. the game is full)
 	if(removePlayer(id, reason))
 	{
+		m_messages.removeSocket(id);
 		m_udpmgr.removePlayer(id);
 		//Remove the entities that need to be removed
 		const std::unordered_map<sf::Uint16, std::unique_ptr<GameEntity>> &entities = m_round->getEntities();
@@ -566,9 +563,7 @@ void ServerSimulator::disconnectPlayer(sf::Uint8 id, sf::Uint8 reason)
 				it++;
 		}
 		//Tell all the other players about the disconnection
-		sf::Packet packet;
-		packet << (sf::Uint8)PacketType::Disconnection << id << reason;
-		sendToAllPlayers(packet);
+		m_messages << (sf::Uint8)PacketType::Disconnection << id << reason;
 	}
 	//Tell the child thread to remove the client
 	m_clientstoremove.emplaceBack(id);
@@ -580,31 +575,25 @@ sf::Socket::Status ServerSimulator::sendToPlayer(sf::Uint8 id, sf::Packet &packe
 	std::lock_guard<std::mutex> lock(m_clientsmutex);
 	return m_clients[id].send(packet);
 }
-
-void ServerSimulator::sendToAllPlayers(sf::Packet &packet)
-{
-	m_seqnumber++;
-	const std::unordered_map<sf::Uint8, Player> &players = getPlayers();
-	//Lock m_clientsmutex
-	std::lock_guard<std::mutex> lock(m_clientsmutex);
-	//Send to all
-	for(const std::pair<const sf::Uint8, Player> &player : players)
-	{
-		if(player.first != m_ownid)
-			m_clients[player.first].send(packet);
-	}
-}
-
+/*
 void ServerSimulator::sendGeneralPacket()
 {
-	//Send the messages to all clients
-	if(m_generalpacket.getDataSize() != 0)
+	if(!m_messages.isEmpty())
 	{
-		sendToAllPlayers(m_generalpacket);
-		m_generalpacket.clear();
+		m_seqnumber++;
+		const std::unordered_map<sf::Uint8, Player> &players = getPlayers();
+		//Lock m_clientsmutex
+		std::lock_guard<std::mutex> lock(m_clientsmutex);
+		//Send to all
+		for(const std::pair<const sf::Uint8, Player> &player : players)
+		{
+			if(player.first != m_ownid)
+				m_messages.sendPacket(m_clients[player.first], player.first);
+		}
+		m_messages.clear();
 	}
 }
-
+*/
 bool ServerSimulator::onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet &packet)
 {
 	sf::Vector2f direction;

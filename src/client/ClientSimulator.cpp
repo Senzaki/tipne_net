@@ -3,6 +3,7 @@
 #include "make_unique.hpp"
 #include "Spell.hpp"
 #include <iostream>
+#include <iomanip>
 
 static const sf::Time SELECTOR_WAIT_TIME = sf::seconds(0.2f);
 static const sf::Time CONNECTION_MAX_TIME = sf::seconds(7.f);
@@ -57,8 +58,10 @@ int ClientSimulator::startNetThread(const sf::IpAddress &serveraddr, unsigned sh
 	if(m_thread)
 		return -1;
 
-	sf::Socket::Status status;
+	//Reinit seq nbr before connecting
+	m_seqnumber = 0;
 	//Try starting the UDP server
+	sf::Socket::Status status;
 	unsigned short localudpport = m_udpmgr.startNetThread(serveraddr, udpport);
 	if(localudpport == 0)
 	{
@@ -272,7 +275,7 @@ bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
 bool ClientSimulator::parseConnectionData(sf::Packet &packet)
 {
 	sf::Uint8 playerscount;
-	if(!(packet >> m_seqnumber >> playerscount >> m_ownid))
+	if(!(packet >> playerscount >> m_ownid))
 		return false;
 
 	//Add all the players
@@ -350,6 +353,13 @@ bool ClientSimulator::parseReceivedPacket(sf::Packet &packet)
 		if(!success)
 		{
 			std::cerr << "Error in packet : Invalid packet of type " << (int)type << ". Disconnecting." << std::endl;
+#ifndef NDEBUG
+			std::cerr << "[DEBUG]Packet content :" << std::endl;
+			const unsigned char *data = static_cast<const unsigned char *>(packet.getData());
+			for(unsigned int i = 0; i < packet.getDataSize(); i++)
+				std::cerr << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(data[i]) << ' ';
+			std::cerr << std::endl;
+#endif
 			return false;
 		}
 	}

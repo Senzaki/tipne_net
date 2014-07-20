@@ -3,7 +3,7 @@
 
 #include <list>
 
-template <typename IDType>
+template<typename IDType>
 class IDCreator
 {
 	public:

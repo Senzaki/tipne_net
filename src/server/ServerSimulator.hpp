@@ -4,6 +4,7 @@
 #include "GameSimulator.hpp"
 #include "IDCreator.hpp"
 #include "ServerUdpManager.hpp"
+#include "NetworkMessagesManager.hpp"
 
 class ServerSimulator : public GameSimulator
 {
@@ -34,8 +35,6 @@ class ServerSimulator : public GameSimulator
 	void acceptNewPlayer(const sf::IpAddress &address, unsigned short port, Player &toaccept);
 	void parseNewPacket(std::tuple<sf::Uint8, std::unique_ptr<sf::Packet>> &received);
 	sf::Socket::Status sendToPlayer(sf::Uint8 id, sf::Packet &packet);
-	void sendToAllPlayers(sf::Packet &packet);
-	void sendGeneralPacket();
 
 	bool onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet &packet);
 	bool onCastSpellPacketReceived(sf::Uint8 sender, sf::Packet &packet);
@@ -57,8 +56,7 @@ class ServerSimulator : public GameSimulator
 	std::unordered_map<sf::Uint8, SafeSocket<sf::TcpSocket>> m_clients;//Don't write to the container in main thread
 	std::mutex m_clientsmutex;
 	ServerUdpManager m_udpmgr;
-	sf::Packet m_generalpacket;
-	sf::Uint32 m_seqnumber;
+	NetworkMessagesManager m_messages;
 
 	//Communication between main thread/child thread
 	//Child->Main

@@ -16,8 +16,7 @@ SafeSocket<SocketType>::SafeSocket(std::unique_ptr<SocketType> &&socket):
 
 template<typename SocketType>
 SafeSocket<SocketType>::SafeSocket(SafeSocket &&other):
-	m_socket(std::move(other.m_socket)),
-	m_mutex(std::move(other.m_mutex))
+	m_socket(std::move(other.m_socket))
 {
 	other.m_socket.reset();
 }

@@ -1,7 +1,7 @@
 #include <stdexcept>
 #include <limits>
 
-template <typename IDType>
+template<typename IDType>
 IDCreator<IDType>::IDCreator():
 	m_min(std::numeric_limits<IDType>::min()),
 	m_max(std::numeric_limits<IDType>::max())
