@@ -52,7 +52,22 @@ bool ServerSimulator::update(float etime)
 
 	bool rc = GameSimulator::update(etime);
 	updateVisibility();
-	m_messages.sendMessages();
+	std::list<std::pair<sf::Uint8, sf::Socket::Status>> errors;
+	m_messages.sendMessages(errors);
+	//Handle connection errors
+	for(std::pair<sf::Uint8, sf::Socket::Status> &error : errors)
+	{
+		if(error.second == sf::Socket::Disconnected)
+			disconnectPlayer(error.first, (sf::Uint8)DisconnectionReason::Left);
+		else
+		{
+			if(error.second == sf::Socket::NotReady)
+				std::cerr << "Error while sending data : socket buffer overflow. Disconnecting the client." << std::endl;
+			else
+				std::cerr << "Unexpected error while sending data. Disconnecting the client." << std::endl;
+			disconnectPlayer(error.first, (sf::Uint8)DisconnectionReason::NetworkError);
+		}
+	}
 	m_udpmgr.update(etime);
 	return rc;
 }
@@ -339,7 +354,7 @@ int ServerSimulator::receiveNewPackets(sf::Uint8 id, SafeSocket<sf::TcpSocket> &
 	else if(status == sf::Socket::Error)
 	{
 		std::cerr << "Unexpected network error." << std::endl;
-		return (int)DisconnectionReason::Error;
+		return (int)DisconnectionReason::NetworkError;
 	}
 	return (int)DisconnectionReason::Left;
 }
@@ -491,7 +506,7 @@ void ServerSimulator::acceptNewPlayer(const sf::IpAddress &address, unsigned sho
 		else if(status == sf::Socket::NotReady)
 			std::cerr << "Cannot accept client : socket buffer is full." << std::endl;//Impossible, right ?
 		//On error, remove the new client
-		disconnectPlayer(newplayer->id, (sf::Uint8)DisconnectionReason::Error);
+		disconnectPlayer(newplayer->id, (sf::Uint8)DisconnectionReason::NetworkError);
 		return;
 	}
 }
@@ -511,7 +526,7 @@ void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, std::unique_ptr<sf::P
 	if(!(packet >> type))
 	{
 		std::cerr << "Invalid packet received. Disconnecting client." << std::endl;
-		disconnectPlayer(std::get<0>(received), (sf::Uint8)DisconnectionReason::Error);
+		disconnectPlayer(std::get<0>(received), (sf::Uint8)DisconnectionReason::DataError);
 		return;
 	}
 
@@ -535,7 +550,7 @@ void ServerSimulator::parseNewPacket(std::tuple<sf::Uint8, std::unique_ptr<sf::P
 	if(!success)
 	{
 		std::cerr << "Invalid packet data. Disconnecting client." << std::endl;
-		disconnectPlayer(std::get<0>(received), (sf::Uint8)DisconnectionReason::Error);
+		disconnectPlayer(std::get<0>(received), (sf::Uint8)DisconnectionReason::DataError);
 		return;
 	}
 }
@@ -565,6 +580,10 @@ void ServerSimulator::disconnectPlayer(sf::Uint8 id, sf::Uint8 reason)
 		//Tell all the other players about the disconnection
 		m_messages << (sf::Uint8)PacketType::Disconnection << id << reason;
 	}
+#ifndef NDEBUG
+	else
+		std::cout << "[DEBUG]Player could not be normally removed (client disconnected before being accepted/totally removed ?)" << std::endl;
+#endif
 	//Tell the child thread to remove the client
 	m_clientstoremove.emplaceBack(id);
 }
@@ -575,25 +594,7 @@ sf::Socket::Status ServerSimulator::sendToPlayer(sf::Uint8 id, sf::Packet &packe
 	std::lock_guard<std::mutex> lock(m_clientsmutex);
 	return m_clients[id].send(packet);
 }
-/*
-void ServerSimulator::sendGeneralPacket()
-{
-	if(!m_messages.isEmpty())
-	{
-		m_seqnumber++;
-		const std::unordered_map<sf::Uint8, Player> &players = getPlayers();
-		//Lock m_clientsmutex
-		std::lock_guard<std::mutex> lock(m_clientsmutex);
-		//Send to all
-		for(const std::pair<const sf::Uint8, Player> &player : players)
-		{
-			if(player.first != m_ownid)
-				m_messages.sendPacket(m_clients[player.first], player.first);
-		}
-		m_messages.clear();
-	}
-}
-*/
+
 bool ServerSimulator::onSetDirectionPacketReceived(sf::Uint8 sender, sf::Packet &packet)
 {
 	sf::Vector2f direction;

@@ -28,7 +28,8 @@ enum class UdpPacketType : sf::Uint8
 enum class DisconnectionReason : sf::Uint8
 {
 	Left = 0,
-	Error,
+	NetworkError,
+	DataError,
 	Kicked,
 	Timeout
 };

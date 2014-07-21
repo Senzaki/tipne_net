@@ -3,6 +3,7 @@
 
 #include "SafeSocket.hpp"
 #include <unordered_map>
+#include <list>
 
 class NetworkMessagesManager
 {
@@ -21,7 +22,7 @@ class NetworkMessagesManager
 	void append(const sf::Packet &packet);
 	sf::Packet &getIndividualPacket(sf::Uint8 id);//Will split the packets, less performance
 
-	void sendMessages();
+	void sendMessages(std::list<std::pair<sf::Uint8, sf::Socket::Status>> &errors);
 
 	private:
 	void split();

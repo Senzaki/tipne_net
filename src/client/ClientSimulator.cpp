@@ -181,7 +181,7 @@ void ClientSimulator::selfSetDirection(const sf::Vector2f &direction)
 	//Only tell the server we want to move, don't start to move until the server replies
 	sf::Packet packet;
 	packet << (sf::Uint8)PacketType::SetDirection << direction.x << direction.y;
-	m_server.send(packet);
+	checkSending(m_server.send(packet));
 }
 
 void ClientSimulator::selfCastSpell(const Spell &spell)
@@ -197,7 +197,7 @@ void ClientSimulator::selfCastSpell(const Spell &spell)
 		case Spell::Type::LineSpell:
 			packet << spell.targetpoint.x << spell.targetpoint.y;
 	}
-	m_server.send(packet);
+	checkSending(m_server.send(packet));
 }
 
 bool ClientSimulator::onSnapshotReceived(sf::Packet &packet)
@@ -471,4 +471,27 @@ bool ClientSimulator::receivePackets()
 bool ClientSimulator::checkState()
 {
 	return m_round->getOwnCharacter();
+}
+
+void ClientSimulator::checkSending(sf::Socket::Status status)
+{
+	switch(status)
+	{
+		case sf::Socket::Done:
+			break;
+
+		case sf::Socket::Error:
+			std::cerr << "Unexpected error while sending data. Disconnecting." << std::endl;
+			m_thrrunning = false;
+			break;
+
+		case sf::Socket::NotReady:
+			std::cerr << "Error while sending data : socket buffer overflow. Disconnecting." << std::endl;
+			m_thrrunning = false;
+			break;
+
+		case sf::Socket::Disconnected:
+			m_thrrunning = false;
+			break;
+	}
 }

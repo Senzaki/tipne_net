@@ -35,6 +35,7 @@ class ClientSimulator : public GameSimulator
 	void netThread();
 	bool receivePackets();
 	bool checkState();
+	void checkSending(sf::Socket::Status status);
 
 	std::unique_ptr<std::thread> m_thread;
 	std::atomic<bool> m_thrrunning;

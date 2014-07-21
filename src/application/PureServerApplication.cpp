@@ -87,13 +87,24 @@ void PureServerApplication::onPlayerLeft(Player &player, sf::Uint8 reason)
 			std::cout << player.name << " left the game." << std::endl;
 			break;
 
-		case (sf::Uint8)DisconnectionReason::Error:
-			std::cout << player.name << " was disconnected from the game." << std::endl;
+		case (sf::Uint8)DisconnectionReason::NetworkError:
+			std::cout << player.name << " was disconnected from the game. (Network error.)" << std::endl;
+			break;
+
+		case (sf::Uint8)DisconnectionReason::DataError:
+			std::cout << player.name << " was disconnected from the game. (Data error.)" << std::endl;
 			break;
 
 		case (sf::Uint8)DisconnectionReason::Kicked:
 			std::cout << player.name << " was kicked from the game." << std::endl;
 			break;
+
+		case (sf::Uint8)DisconnectionReason::Timeout:
+			std::cout << player.name << " was disconnected from the game. (Network timeout.)" << std::endl;
+			break;
+
+		default:
+			std::cout << player.name << " was disconnected from the game. (Unknown error.)" << std::endl;
 	}
 }
 

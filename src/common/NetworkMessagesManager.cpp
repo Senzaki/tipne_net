@@ -52,8 +52,9 @@ sf::Packet &NetworkMessagesManager::getIndividualPacket(sf::Uint8 id)
 	return m_receivers.at(id).packet;
 }
 
-void NetworkMessagesManager::sendMessages()
+void NetworkMessagesManager::sendMessages(std::list<std::pair<sf::Uint8, sf::Socket::Status>> &errors)
 {
+	sf::Socket::Status status;
 	//Send individual packets if split, m_general otherwise
 	if(m_split)
 	{
@@ -62,10 +63,13 @@ void NetworkMessagesManager::sendMessages()
 			MessageReceiver &info = receiver.second;
 			if(info.packet.getDataSize() != 0)
 			{
-				info.socket->send(info.packet);
+				status = info.socket->send(info.packet);
 				info.seqnbr++;
 				info.packet.clear();
 			}
+			//Handle error if any
+			if(status != sf::Socket::Done)
+				errors.emplace_back(receiver.first, status);
 		}
 		//Packets were cleared, go back to "do not split" state
 		m_split = false;
@@ -77,8 +81,11 @@ void NetworkMessagesManager::sendMessages()
 			for(std::pair<const sf::Uint8, MessageReceiver> &receiver : m_receivers)
 			{
 				MessageReceiver &info = receiver.second;
-				info.socket->send(m_general);
+				status = info.socket->send(m_general);
 				info.seqnbr++;
+				//Handle error if any
+				if(status != sf::Socket::Done)
+					errors.emplace_back(receiver.first, status);
 			}
 			m_general.clear();
 		}
