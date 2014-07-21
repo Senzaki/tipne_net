@@ -24,7 +24,8 @@ class SafeList
 	void popBack();
 	void clear();
 	bool empty();
-	void treat(std::function<void(T &)> tocall);
+	template<typename TreatingFunc>
+	void treat(TreatingFunc tocall);
 
 	private:
 	std::list<T> m_list;

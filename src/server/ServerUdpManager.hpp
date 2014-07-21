@@ -45,7 +45,7 @@ class ServerUdpManager
 	template<int hashsize>
 	static size_t hashPlayerInfo(const PlayerInfo &info);
 
-	std::unordered_map<PlayerInfo, sf::Uint8, std::function<size_t(const PlayerInfo &)>> m_playersinfo;
+	std::unordered_map<PlayerInfo, sf::Uint8, size_t (*)(const PlayerInfo &)> m_playersinfo;
 	std::unordered_map<sf::Uint8, float> m_lastpacketreceived;
 	float m_lastsnapshot;
 

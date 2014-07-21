@@ -77,7 +77,8 @@ bool SafeList<T>::empty()
 }
 
 template<typename T>
-void SafeList<T>::treat(std::function<void(T &)> tocall)
+template<typename TreatingFunc>
+void SafeList<T>::treat(TreatingFunc tocall)
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	for(T &item : m_list)
