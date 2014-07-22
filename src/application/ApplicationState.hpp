@@ -13,6 +13,8 @@ class ApplicationState
 	virtual void draw() = 0;
 
 	virtual void onWindowClosed() { }
+	virtual void onFocusGained() { }
+	virtual void onFocusLost() { }
 	virtual void onTextEntered(const sf::Event::TextEvent &evt) { }
 	virtual void onKeyPressed(const sf::Event::KeyEvent &evt) { }
 	virtual void onKeyReleased(const sf::Event::KeyEvent &evt) { }

@@ -85,6 +85,17 @@ void GameScreen::draw(sf::RenderWindow &window)
 	window.setView(oldview);
 }
 
+void GameScreen::onFocusLost()
+{
+	abortCurrentAction();
+	stopMoving();
+}
+
+void GameScreen::onFocusGained()
+{
+
+}
+
 void GameScreen::onKeyPressed(const sf::Event::KeyEvent &evt)
 {
 	//Interpret key
@@ -310,4 +321,18 @@ void GameScreen::startCastingSpell(sf::Uint8 id)
 			}
 		}
 	}
+}
+
+void GameScreen::abortCurrentAction()
+{
+	m_curaction = Normal;
+}
+
+void GameScreen::stopMoving()
+{
+	m_direction.x = 0.f;
+	m_direction.y = 0.f;
+	m_otherdirpressed.x = 0.f;
+	m_otherdirpressed.y = 0.f;
+	updateDirection();
 }

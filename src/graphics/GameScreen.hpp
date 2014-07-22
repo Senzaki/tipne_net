@@ -21,6 +21,8 @@ class GameScreen : public SimulatorStateListener
 	bool update(float etime);
 	void draw(sf::RenderWindow &window);
 
+	void onFocusLost();
+	void onFocusGained();
 	void onKeyPressed(const sf::Event::KeyEvent &evt);
 	void onKeyReleased(const sf::Event::KeyEvent &evt);
 	void onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt);
@@ -38,6 +40,8 @@ class GameScreen : public SimulatorStateListener
 	private:
 	void updateDirection();
 	void startCastingSpell(sf::Uint8 id);
+	void abortCurrentAction();
+	void stopMoving();
 
 	sf::View m_camera;//View for the drawables that NEED TO BE SCALED (e.g. images), but not the other ones (e.g. fonts)
 	sf::FloatRect m_seen;

@@ -20,6 +20,8 @@ class GameAppState : public ApplicationState
 	virtual void draw();
 
 	virtual void onWindowClosed();
+	virtual void onFocusGained();
+	virtual void onFocusLost();
 	virtual void onKeyPressed(const sf::Event::KeyEvent &evt);
 	virtual void onKeyReleased(const sf::Event::KeyEvent &evt);
 	virtual void onMouseButtonPressed(const sf::Event::MouseButtonEvent &evt);

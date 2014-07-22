@@ -65,6 +65,16 @@ void GameAppState::onWindowClosed()
 	Application::getInstance().setNextAppState(nullptr);
 }
 
+void GameAppState::onFocusLost()
+{
+	m_gscr.onFocusLost();
+}
+
+void GameAppState::onFocusGained()
+{
+	m_gscr.onFocusGained();
+}
+
 void GameAppState::onKeyPressed(const sf::Event::KeyEvent &evt)
 {
 	if(!m_guimgr.onKeyPressed(evt))

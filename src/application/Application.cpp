@@ -106,6 +106,14 @@ int Application::execute(int argc, char **argv)
 						m_curstate->onMouseMoved(evt.mouseMove);
 						break;
 
+					case sf::Event::LostFocus:
+						m_curstate->onFocusLost();
+						break;
+
+					case sf::Event::GainedFocus:
+						m_curstate->onFocusGained();
+						break;
+
 					default:
 						break;
 				}
