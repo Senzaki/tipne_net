@@ -28,7 +28,7 @@ static bool extractEnd(std::istringstream &strm, std::string &end)
 	std::stringbuf temp;
 	strm.get(temp);
 	end = temp.str();
-	return strm;
+	return !strm.fail();
 }
 
 void KeyMap::load()

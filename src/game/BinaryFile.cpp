@@ -37,7 +37,7 @@ bool BinaryFile::operator!() const
 
 BinaryFile::operator bool() const
 {
-	return m_file;
+	return !m_file.fail();
 }
 
 BinaryFile &BinaryFile::operator<<(sf::Int8 n)
