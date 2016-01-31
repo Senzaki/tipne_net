@@ -1,5 +1,11 @@
-Multiplayer game using C++11. One of the objectives is to deploy latency compensation techniques, so that the player enjoys the experience even with high latencies.
-This project is **old** and is not a **complete game**, but it still is functional and contains the aforementioned techniques.
+Multiplayer game using C++11.
+
+This project is **old** and is not a **complete game**, but it still is functional and contains the following features:
+* Multiplayer games, with latency compensation techniques so that user experience remains smooth even with high latencies.
+* A map editor, to create & modify the isometric maps easily (not very user friendly yet).
+* Collisions and shadowcasting (a player cannot see another player if there is an obstacle between them). The original goal of this project was to create a game in which stealth was the key to success.
+* Spells (well, a single spell for now, press 1 then click in the desired direction).
+* A custom UI based on widgets. No external dependency required.
 
 # How to build this project
 
